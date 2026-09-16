@@ -33,6 +33,9 @@ from paltas.paths import (  # noqa: E402
     ensure_dirs,
 )
 from paltas.viz import save, set_style  # noqa: E402
+from paltas.console import use_utf8  # noqa: E402
+
+use_utf8()
 
 
 def cargar(nombre: str, arquitectura: str, device):
@@ -128,7 +131,8 @@ def main() -> None:
         cam.remove()
 
     sufijo = "desacuerdo" if args.mode == "disagreement" else "aleatorio"
-    fig.suptitle("Donde mira cada arquitectura", fontsize=12, y=1.005)
+    fig.tight_layout(rect=(0, 0, 1, 0.965), h_pad=0.9)
+    fig.suptitle("Donde mira cada arquitectura", fontsize=13, y=0.995)
     save(fig, FIGURES_DIR / f"20_interpretabilidad_{sufijo}.png")
 
 

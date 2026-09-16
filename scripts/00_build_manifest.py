@@ -23,6 +23,9 @@ import pandas as pd
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1] / "src"))
 
 from paltas.paths import EXCEL_PATH, IMAGES_DIR, MANIFEST_CSV, ensure_dirs  # noqa: E402
+from paltas.console import use_utf8  # noqa: E402
+
+use_utf8()
 
 # T10_d01_002_a_1  ->  grupo, dia, muestra, lado, indice
 FILENAME_RE = re.compile(r"^(T10|T20|Tam)_d(\d{2})_(\d{3})_([ab])_([1-5])$")

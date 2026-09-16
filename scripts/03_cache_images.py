@@ -27,6 +27,9 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from paltas.paths import CACHE_DIR, IMAGES_DIR, ensure_dirs  # noqa: E402
+from paltas.console import use_utf8  # noqa: E402
+
+use_utf8()
 
 
 def _resize_one(args: tuple[Path, Path, int]) -> int:

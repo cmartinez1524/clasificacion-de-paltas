@@ -19,6 +19,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from paltas.paths import MANIFEST_CSV, SPLITS_CSV, ensure_dirs  # noqa: E402
 from paltas.splits import assert_no_leakage, class_weights, make_grouped_splits  # noqa: E402
+from paltas.console import use_utf8  # noqa: E402
+
+use_utf8()
 
 
 def main() -> None:

@@ -1,0 +1,102 @@
+{
+  "config": {
+    "name": "vit_small",
+    "model": "vit_small",
+    "pretrained": true,
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 10,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 15,
+    "lr": 0.0001,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 2.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.1,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Baseline ViT-S/16 (deit_small_patch16_224.fb_in1k, solo ImageNet-1k)"
+  },
+  "params_M": 21.668,
+  "params_entrenables_M": 21.668,
+  "gflops": 8.482,
+  "best_epoch": 4,
+  "train_minutes": 4.97,
+  "test": {
+    "accuracy": 0.7223695844385499,
+    "balanced_accuracy": 0.7042279777176803,
+    "macro_f1": 0.710886984035126,
+    "qwk": 0.9313234261865385,
+    "mae": 0.28249336870026526,
+    "off_by_one": 0.9951370468611848,
+    "per_class_f1": [
+      0.8950086058519794,
+      0.6644951140065146,
+      0.6341463414634146,
+      0.6432848588537211,
+      0.7175
+    ],
+    "confusion_matrix": [
+      [
+        520,
+        30,
+        0,
+        0,
+        0
+      ],
+      [
+        92,
+        204,
+        43,
+        3,
+        0
+      ],
+      [
+        0,
+        38,
+        247,
+        143,
+        4
+      ],
+      [
+        0,
+        0,
+        53,
+        376,
+        77
+      ],
+      [
+        0,
+        0,
+        4,
+        141,
+        287
+      ]
+    ]
+  },
+  "test_por_grupo": {
+    "T10": {
+      "n": 1350,
+      "accuracy": 0.7385,
+      "mae": 0.2674
+    },
+    "T20": {
+      "n": 466,
+      "accuracy": 0.6867,
+      "mae": 0.3176
+    },
+    "Tam": {
+      "n": 446,
+      "accuracy": 0.7108,
+      "mae": 0.2915
+    }
+  }
+}

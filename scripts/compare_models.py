@@ -25,6 +25,9 @@ from paltas.compare import cluster_bootstrap_ci, disagreement_table, paired_boot
 from paltas.metrics import METRIC_NAMES  # noqa: E402
 from paltas.paths import CLASS_NAMES, FIGURES_DIR, METRICS_DIR, ensure_dirs  # noqa: E402
 from paltas.viz import MODEL_COLORS, RIPENESS_COLORS, save, set_style  # noqa: E402
+from paltas.console import use_utf8  # noqa: E402
+
+use_utf8()
 
 ETIQUETAS = {
     "resnet50": "ResNet-50",

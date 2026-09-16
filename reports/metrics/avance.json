@@ -1,0 +1,89 @@
+{
+  "tabla": [
+    {
+      "modelo": "ResNet-50",
+      "params (M)": 23.518,
+      "GFLOPs": 8.174,
+      "min. entren.": 9.88,
+      "epoca best": 11,
+      "Accuracy": 0.7458,
+      "Acc. IC95%": "[0.716, 0.773]",
+      "Macro-F1": 0.735,
+      "QWK": 0.9356,
+      "QWK IC95%": "[0.926, 0.944]",
+      "MAE": 0.2617,
+      "Acc. ±1": 0.9925
+    },
+    {
+      "modelo": "ViT-S/16",
+      "params (M)": 21.668,
+      "GFLOPs": 8.482,
+      "min. entren.": 4.97,
+      "epoca best": 4,
+      "Accuracy": 0.7224,
+      "Acc. IC95%": "[0.694, 0.747]",
+      "Macro-F1": 0.7109,
+      "QWK": 0.9313,
+      "QWK IC95%": "[0.922, 0.939]",
+      "MAE": 0.2825,
+      "Acc. ±1": 0.9951
+    }
+  ],
+  "comparaciones": [
+    {
+      "modelo_a": "vit_small",
+      "modelo_b": "resnet50",
+      "metricas": {
+        "qwk": {
+          "diff": -0.004233853894986317,
+          "ci_low": -0.009513021314078923,
+          "ci_high": 0.0006030873353168388,
+          "p_value": 0.095,
+          "significativo": false
+        },
+        "accuracy": {
+          "diff": -0.023430592396109673,
+          "ci_low": -0.04349995837894827,
+          "ci_high": -0.003943736327437623,
+          "p_value": 0.026,
+          "significativo": true
+        },
+        "macro_f1": {
+          "diff": -0.024137324718719322,
+          "ci_low": -0.044757565552801,
+          "ci_high": -0.004619400757026429,
+          "p_value": 0.017,
+          "significativo": true
+        }
+      }
+    }
+  ],
+  "desacuerdo": {
+    "vit_small_vs_resnet50": {
+      "tabla": [
+        {
+          "caso": "Ambos aciertan",
+          "n": 1467,
+          "%": 64.85
+        },
+        {
+          "caso": "Solo ViT-S/16",
+          "n": 167,
+          "%": 7.38
+        },
+        {
+          "caso": "Solo ResNet-50",
+          "n": 220,
+          "%": 9.73
+        },
+        {
+          "caso": "Ambos fallan",
+          "n": 408,
+          "%": 18.04
+        }
+      ],
+      "oraculo_accuracy": 0.8196286472148541,
+      "ambos_fallan": 0.18037135278514588
+    }
+  }
+}

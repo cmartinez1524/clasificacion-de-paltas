@@ -31,6 +31,9 @@ from paltas.deck import (  # noqa: E402
     vinetas,
 )
 from paltas.paths import FIGURES_DIR, METRICS_DIR, ROOT  # noqa: E402
+from paltas.console import use_utf8  # noqa: E402
+
+use_utf8()
 
 SALIDA = ROOT / "entregables" / "final" / "presentacion_final.pptx"
 AUTOR = "Cristóbal Martínez"

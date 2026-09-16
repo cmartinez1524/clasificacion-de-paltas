@@ -20,6 +20,7 @@ from paltas.deck import (  # noqa: E402
     MORADO,
     ROJO,
     VERDE,
+    imagen,
     imagen_centrada,
     nota,
     nueva_presentacion,
@@ -32,6 +33,9 @@ from paltas.deck import (  # noqa: E402
     vinetas,
 )
 from paltas.paths import FIGURES_DIR, METRICS_DIR, ROOT  # noqa: E402
+from paltas.console import use_utf8  # noqa: E402
+
+use_utf8()
 
 SALIDA = ROOT / "entregables" / "avance" / "presentacion_avance.pptx"
 AUTOR = "Cristóbal Martínez"
@@ -106,7 +110,7 @@ def main() -> None:
     # ------------------------------------------------------------------ 4
     s, y = slide_titulo(prs, "El riesgo que define el proyecto",
                         "Fuga de datos longitudinal")
-    vinetas(s, Inches(0.7), y, Inches(5.9), [
+    vinetas(s, Inches(0.7), y, Inches(6.2), [
         ("La misma palta fue fotografiada a diario durante hasta 26 días.", True),
         "Dos fotos consecutivas de la fruta #173 son casi idénticas: misma piel, "
         "mismas manchas, misma forma.",
@@ -115,9 +119,9 @@ def main() -> None:
         "sería alta y completamente falsa.",
         "Hay 6.871 pares de días consecutivos de la misma fruta en el dataset.",
         ("Partimos las 478 frutas, no las 14.710 imágenes.", True),
-    ])
-    imagen_centrada(s, FIGURES_DIR / "04_particiones.png", y + Inches(2.9),
-                    Inches(11.2), Inches(2.5))
+    ], size=15)
+    imagen(s, FIGURES_DIR / "04_particiones.png", Inches(7.25), y + Inches(1.0),
+           Inches(5.4), Inches(2.4))
     nota(s, "Estratificado por grupo de almacenamiento · assert en el código que falla "
             "si una fruta aparece en dos particiones.")
 
@@ -214,10 +218,10 @@ def main() -> None:
                           f"de las imágenes.")
     puntos.append("Las 2.262 imágenes de test vienen de solo 72 frutas: asumir independencia "
                   "entre imágenes daría intervalos artificialmente angostos.")
-    vinetas(s, Inches(0.7), y + Inches(1.6), Inches(11.9), puntos, size=14)
+    vinetas(s, Inches(0.7), y + Inches(1.65), Inches(6.2), puntos, size=12.5)
 
-    imagen_centrada(s, FIGURES_DIR / "10_matrices_confusion.png", y + Inches(3.35),
-                    Inches(9.6), Inches(2.1))
+    imagen(s, FIGURES_DIR / "10_matrices_confusion.png", Inches(7.25), y + Inches(1.9),
+           Inches(5.4), Inches(2.9))
     nota(s, "Las dos matrices concentran el error en la diagonal vecina: el modelo confunde "
             "estados contiguos, no extremos.")
 

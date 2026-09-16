@@ -23,6 +23,7 @@ from paltas.paths import (  # noqa: E402
     SPLITS_CSV,
     ensure_dirs,
 )
+from paltas.console import use_utf8  # noqa: E402
 from paltas.viz import (  # noqa: E402
     GROUP_COLORS,
     GROUP_LABEL,
@@ -31,6 +32,8 @@ from paltas.viz import (  # noqa: E402
     save,
     set_style,
 )
+
+use_utf8()
 
 ORDEN_SPLIT = ["train", "val", "test"]
 GRUPOS = ["T10", "T20", "Tam"]

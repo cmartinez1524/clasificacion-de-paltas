@@ -36,6 +36,9 @@ from paltas.paths import (  # noqa: E402
     ensure_dirs,
 )
 from paltas.splits import class_weights  # noqa: E402
+from paltas.console import use_utf8  # noqa: E402
+
+use_utf8()
 
 
 def main() -> None:
