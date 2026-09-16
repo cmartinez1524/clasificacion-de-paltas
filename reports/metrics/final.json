@@ -1,0 +1,366 @@
+{
+  "n_boot": 2000,
+  "modelos": [
+    "resnet50",
+    "vit_small",
+    "resnet50_scratch",
+    "vit_small_scratch",
+    "hybrid_fusion",
+    "hybrid_vit_r26"
+  ],
+  "tabla": [
+    {
+      "modelo": "ResNet-50",
+      "params (M)": 23.518,
+      "GFLOPs": 8.174,
+      "min. entren.": 9.88,
+      "epoca best": 11,
+      "Accuracy": 0.7458,
+      "Acc. IC95%": "[0.716, 0.773]",
+      "Macro-F1": 0.735,
+      "QWK": 0.9356,
+      "QWK IC95%": "[0.926, 0.944]",
+      "MAE": 0.2617,
+      "Acc. ±1": 0.9925
+    },
+    {
+      "modelo": "ViT-S/16",
+      "params (M)": 21.668,
+      "GFLOPs": 8.482,
+      "min. entren.": 4.97,
+      "epoca best": 4,
+      "Accuracy": 0.7224,
+      "Acc. IC95%": "[0.694, 0.747]",
+      "Macro-F1": 0.7109,
+      "QWK": 0.9313,
+      "QWK IC95%": "[0.922, 0.939]",
+      "MAE": 0.2825,
+      "Acc. ±1": 0.9951
+    },
+    {
+      "modelo": "ResNet-50 (scratch)",
+      "params (M)": 23.518,
+      "GFLOPs": 8.174,
+      "min. entren.": 17.64,
+      "epoca best": 23,
+      "Accuracy": 0.6715,
+      "Acc. IC95%": "[0.641, 0.700]",
+      "Macro-F1": 0.6546,
+      "QWK": 0.9152,
+      "QWK IC95%": "[0.901, 0.928]",
+      "MAE": 0.3519,
+      "Acc. ±1": 0.9766
+    },
+    {
+      "modelo": "ViT-S/16 (scratch)",
+      "params (M)": 21.668,
+      "GFLOPs": 8.482,
+      "min. entren.": 6.02,
+      "epoca best": 5,
+      "Accuracy": 0.6123,
+      "Acc. IC95%": "[0.575, 0.648]",
+      "Macro-F1": 0.5787,
+      "QWK": 0.8891,
+      "QWK IC95%": "[0.860, 0.909]",
+      "MAE": 0.4094,
+      "Acc. ±1": 0.981
+    },
+    {
+      "modelo": "Fusion tardia",
+      "params (M)": 46.427,
+      "GFLOPs": 16.658,
+      "min. entren.": 3.52,
+      "epoca best": 2,
+      "Accuracy": 0.7675,
+      "Acc. IC95%": "[0.738, 0.794]",
+      "Macro-F1": 0.7595,
+      "QWK": 0.941,
+      "QWK IC95%": "[0.931, 0.950]",
+      "MAE": 0.2378,
+      "Acc. ±1": 0.9947
+    },
+    {
+      "modelo": "ViT-Hybrid R26",
+      "params (M)": 36.049,
+      "GFLOPs": 6.881,
+      "min. entren.": 14.91,
+      "epoca best": 10,
+      "Accuracy": 0.7617,
+      "Acc. IC95%": "[0.733, 0.790]",
+      "Macro-F1": 0.7519,
+      "QWK": 0.9411,
+      "QWK IC95%": "[0.932, 0.949]",
+      "MAE": 0.2418,
+      "Acc. ±1": 0.9965
+    }
+  ],
+  "comparaciones": [
+    {
+      "modelo_a": "vit_small",
+      "modelo_b": "resnet50",
+      "metricas": {
+        "qwk": {
+          "diff": -0.004233853894986317,
+          "ci_low": -0.009513021314078923,
+          "ci_high": 0.0006030873353168388,
+          "p_value": 0.095,
+          "significativo": false
+        },
+        "accuracy": {
+          "diff": -0.023430592396109673,
+          "ci_low": -0.04349995837894827,
+          "ci_high": -0.003943736327437623,
+          "p_value": 0.026,
+          "significativo": true
+        },
+        "macro_f1": {
+          "diff": -0.024137324718719322,
+          "ci_low": -0.044757565552801,
+          "ci_high": -0.004619400757026429,
+          "p_value": 0.017,
+          "significativo": true
+        }
+      }
+    },
+    {
+      "modelo_a": "resnet50_scratch",
+      "modelo_b": "resnet50",
+      "metricas": {
+        "qwk": {
+          "diff": -0.020338183672522936,
+          "ci_low": -0.028276798065664466,
+          "ci_high": -0.012277970383337717,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "accuracy": {
+          "diff": -0.07427055702917773,
+          "ci_low": -0.09879219184093413,
+          "ci_high": -0.048217336937864064,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "macro_f1": {
+          "diff": -0.08045800245183243,
+          "ci_low": -0.10596070194694908,
+          "ci_high": -0.053640210220429536,
+          "p_value": 0.0,
+          "significativo": true
+        }
+      }
+    },
+    {
+      "modelo_a": "vit_small_scratch",
+      "modelo_b": "resnet50",
+      "metricas": {
+        "qwk": {
+          "diff": -0.04646992429107788,
+          "ci_low": -0.06915392176713336,
+          "ci_high": -0.031606483740204805,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "accuracy": {
+          "diff": -0.1335101679929266,
+          "ci_low": -0.15968308245840843,
+          "ci_high": -0.10618110350429337,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "macro_f1": {
+          "diff": -0.15636766451599726,
+          "ci_low": -0.18369852581839727,
+          "ci_high": -0.12875461458529386,
+          "p_value": 0.0,
+          "significativo": true
+        }
+      }
+    },
+    {
+      "modelo_a": "hybrid_fusion",
+      "modelo_b": "resnet50",
+      "metricas": {
+        "qwk": {
+          "diff": 0.0054762049860653805,
+          "ci_low": 0.0020957366673259453,
+          "ci_high": 0.00867367837076766,
+          "p_value": 0.001,
+          "significativo": true
+        },
+        "accuracy": {
+          "diff": 0.021662245800176838,
+          "ci_low": 0.009660747230455794,
+          "ci_high": 0.03302828114337705,
+          "p_value": 0.001,
+          "significativo": true
+        },
+        "macro_f1": {
+          "diff": 0.024487657401615515,
+          "ci_low": 0.011749050055698004,
+          "ci_high": 0.03656157013777488,
+          "p_value": 0.0,
+          "significativo": true
+        }
+      }
+    },
+    {
+      "modelo_a": "hybrid_vit_r26",
+      "modelo_b": "resnet50",
+      "metricas": {
+        "qwk": {
+          "diff": 0.005526773771698634,
+          "ci_low": 0.00045051198846182694,
+          "ci_high": 0.010395738845885388,
+          "p_value": 0.031,
+          "significativo": true
+        },
+        "accuracy": {
+          "diff": 0.01591511936339518,
+          "ci_low": -0.002770339829379284,
+          "ci_high": 0.03429680340726395,
+          "p_value": 0.098,
+          "significativo": false
+        },
+        "macro_f1": {
+          "diff": 0.0169147486386636,
+          "ci_low": -0.0020897793975897137,
+          "ci_high": 0.03558161273950186,
+          "p_value": 0.091,
+          "significativo": false
+        }
+      }
+    }
+  ],
+  "desacuerdo": {
+    "vit_small_vs_resnet50": {
+      "tabla": [
+        {
+          "caso": "Ambos aciertan",
+          "n": 1467,
+          "%": 64.85
+        },
+        {
+          "caso": "Solo ViT-S/16",
+          "n": 167,
+          "%": 7.38
+        },
+        {
+          "caso": "Solo ResNet-50",
+          "n": 220,
+          "%": 9.73
+        },
+        {
+          "caso": "Ambos fallan",
+          "n": 408,
+          "%": 18.04
+        }
+      ],
+      "oraculo_accuracy": 0.8196286472148541,
+      "ambos_fallan": 0.18037135278514588
+    },
+    "resnet50_scratch_vs_resnet50": {
+      "tabla": [
+        {
+          "caso": "Ambos aciertan",
+          "n": 1336,
+          "%": 59.06
+        },
+        {
+          "caso": "Solo ResNet-50 (scratch)",
+          "n": 183,
+          "%": 8.09
+        },
+        {
+          "caso": "Solo ResNet-50",
+          "n": 351,
+          "%": 15.52
+        },
+        {
+          "caso": "Ambos fallan",
+          "n": 392,
+          "%": 17.33
+        }
+      ],
+      "oraculo_accuracy": 0.8267020335985853,
+      "ambos_fallan": 0.17329796640141468
+    },
+    "vit_small_scratch_vs_resnet50": {
+      "tabla": [
+        {
+          "caso": "Ambos aciertan",
+          "n": 1189,
+          "%": 52.56
+        },
+        {
+          "caso": "Solo ViT-S/16 (scratch)",
+          "n": 196,
+          "%": 8.66
+        },
+        {
+          "caso": "Solo ResNet-50",
+          "n": 498,
+          "%": 22.02
+        },
+        {
+          "caso": "Ambos fallan",
+          "n": 379,
+          "%": 16.76
+        }
+      ],
+      "oraculo_accuracy": 0.832449160035367,
+      "ambos_fallan": 0.16755083996463307
+    },
+    "hybrid_fusion_vs_resnet50": {
+      "tabla": [
+        {
+          "caso": "Ambos aciertan",
+          "n": 1626,
+          "%": 71.88
+        },
+        {
+          "caso": "Solo Fusion tardia",
+          "n": 110,
+          "%": 4.86
+        },
+        {
+          "caso": "Solo ResNet-50",
+          "n": 61,
+          "%": 2.7
+        },
+        {
+          "caso": "Ambos fallan",
+          "n": 465,
+          "%": 20.56
+        }
+      ],
+      "oraculo_accuracy": 0.7944297082228117,
+      "ambos_fallan": 0.20557029177718833
+    },
+    "hybrid_vit_r26_vs_resnet50": {
+      "tabla": [
+        {
+          "caso": "Ambos aciertan",
+          "n": 1531,
+          "%": 67.68
+        },
+        {
+          "caso": "Solo ViT-Hybrid R26",
+          "n": 192,
+          "%": 8.49
+        },
+        {
+          "caso": "Solo ResNet-50",
+          "n": 156,
+          "%": 6.9
+        },
+        {
+          "caso": "Ambos fallan",
+          "n": 383,
+          "%": 16.93
+        }
+      ],
+      "oraculo_accuracy": 0.8306808134394341,
+      "ambos_fallan": 0.16931918656056588
+    }
+  }
+}

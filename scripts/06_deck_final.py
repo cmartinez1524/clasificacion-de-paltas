@@ -12,13 +12,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from pptx.util import Inches  # noqa: E402
+from pptx.util import Inches, Pt  # noqa: E402
 
 from paltas.deck import (  # noqa: E402
     AZUL,
     MORADO,
     ROJO,
     VERDE,
+    imagen,
     imagen_centrada,
     nota,
     nueva_presentacion,
@@ -168,22 +169,26 @@ def main() -> None:
     nota(s, "Fila destacada: mejor QWK. El híbrido ViT-R26 usa pesos de ImageNet-21k "
             "y más parámetros: es cota superior de referencia, no competidor equiparable.")
 
-    s, y = slide_titulo(prs, "ResNet vs ViT: la comparación, no solo el número final")
-    imagen_centrada(s, FIGURES_DIR / "10_matrices_confusion.png", y, Inches(12.2), Inches(2.9))
+    s, y = slide_titulo(prs, "ResNet vs ViT: la comparación, no solo el número final",
+                        "Todas las diferencias contra ResNet-50, bootstrap pareado "
+                        "agrupado por fruta")
+    imagen(s, FIGURES_DIR / "10_matrices_confusion_final.png", Inches(0.7), y,
+           Inches(6.3), Inches(4.6))
     puntos = []
     if comp:
         for c in comp.get("comparaciones", []):
             d = c["metricas"]["qwk"]
             puntos.append((
-                f"{ETIQUETA.get(c['modelo_a'], c['modelo_a'])} vs "
-                f"{ETIQUETA.get(c['modelo_b'], c['modelo_b'])}:  Δ QWK = {d['diff']:+.4f} "
-                f"IC 95 % [{d['ci_low']:+.4f}, {d['ci_high']:+.4f}]  p = {d['p_value']:.3f} → "
-                f"{'SIGNIFICATIVA' if d['significativo'] else 'no significativa'}", True))
-    puntos.append("Las dos matrices son estrictamente bandeadas: los errores de distancia ≥ 2 "
-                  "son casi inexistentes. El modelo confunde estados contiguos, no extremos.")
+                f"{ETIQUETA.get(c['modelo_a'], c['modelo_a'])}:  Δ QWK = {d['diff']:+.4f}  "
+                f"[{d['ci_low']:+.4f}, {d['ci_high']:+.4f}]  p = {d['p_value']:.3f}  → "
+                f"{'significativa' if d['significativo'] else 'NO significativa'}", True))
+    puntos.append("Todas las matrices son bandeadas: los errores de distancia ≥ 2 son casi "
+                  "inexistentes. Ningún modelo confunde una palta verde con una sobremadura.")
     puntos.append("El cuello de botella son las clases intermedias (2, 3 y 4), donde la "
                   "frontera es un corte continuo y las etiquetas son más subjetivas.")
-    vinetas(s, Inches(0.7), y + Inches(3.1), Inches(11.9), puntos, size=14)
+    puntos.append("Los dos modelos desde cero pierden la estructura: el ViT colapsa hacia las "
+                  "clases altas y predice 4 para el 68 % de las paltas que son clase 5.")
+    vinetas(s, Inches(7.3), y, Inches(5.4), puntos, size=11.5, espacio=Pt(9))
 
     s, y = slide_titulo(prs, "Por qué difieren (o no) ResNet y ViT",
                         "La ablación sin pre-entrenamiento es la evidencia")
@@ -193,13 +198,19 @@ def main() -> None:
             ["", "ResNet-50", "ViT-S/16", "Lectura"],
             ["QWK con ImageNet-1k", f"{r['test']['qwk']:.3f}", f"{v['test']['qwk']:.3f}", ""],
             ["QWK desde cero", f"{rs['test']['qwk']:.3f}", f"{vs['test']['qwk']:.3f}", ""],
-            ["Caída sin pre-entrenamiento",
-             f"{r['test']['qwk'] - rs['test']['qwk']:+.3f}",
-             f"{v['test']['qwk'] - vs['test']['qwk']:+.3f}",
-             "el ViT depende más" if (v['test']['qwk'] - vs['test']['qwk']) >
-             (r['test']['qwk'] - rs['test']['qwk']) else "la CNN depende más"],
+            # Delta con signo: quitar el pre-entrenamiento BAJA la metrica.
+            ["Δ sin pre-entrenamiento",
+             f"{rs['test']['qwk'] - r['test']['qwk']:+.4f}",
+             f"{vs['test']['qwk'] - v['test']['qwk']:+.4f}",
+             f"el ViT pierde "
+             f"{(v['test']['qwk'] - vs['test']['qwk']) / max(r['test']['qwk'] - rs['test']['qwk'], 1e-9):.1f}× más"],
+            ["Δ accuracy sin pre-entren.",
+             f"{100 * (rs['test']['accuracy'] - r['test']['accuracy']):+.1f} pts",
+             f"{100 * (vs['test']['accuracy'] - v['test']['accuracy']):+.1f} pts",
+             f"el ViT pierde "
+             f"{(v['test']['accuracy'] - vs['test']['accuracy']) / max(r['test']['accuracy'] - rs['test']['accuracy'], 1e-9):.1f}× más"],
         ], anchos=[3.4, 2, 2, 3], size=13)
-        yy = y + Inches(2.0)
+        yy = y + Inches(2.5)
     else:
         yy = y
     vinetas(s, Inches(0.7), yy, Inches(11.9), [
@@ -239,10 +250,10 @@ def main() -> None:
             "El ViT-Hybrid R26 no es equiparable: 36 M de parámetros y pesos de ImageNet-21k. "
             "Va como cota superior de referencia, no como competidor.",
         ]
-        vinetas(s, Inches(0.7), y + Inches(1.9), Inches(11.9), puntos, size=15)
-        if (FIGURES_DIR / "13_costo_beneficio.png").exists():
-            imagen_centrada(s, FIGURES_DIR / "13_costo_beneficio.png",
-                            y + Inches(3.6), Inches(10.4), Inches(2.3))
+        vinetas(s, Inches(0.7), y + Inches(1.95), Inches(6.2), puntos, size=12.5)
+        if (FIGURES_DIR / "13_costo_beneficio_final.png").exists():
+            imagen(s, FIGURES_DIR / "13_costo_beneficio_final.png",
+                   Inches(7.1), y + Inches(2.1), Inches(5.6), Inches(2.4))
 
     # ------------------------------------------------------------------ interpretabilidad
     fig_int = FIGURES_DIR / "20_interpretabilidad_desacuerdo.png"
@@ -251,8 +262,10 @@ def main() -> None:
     if fig_int.exists():
         s, y = slide_titulo(prs, "Dónde mira cada arquitectura",
                             "Grad-CAM en la ResNet · attention rollout en el ViT")
-        imagen_centrada(s, fig_int, y, Inches(5.6), Inches(4.7))
-        vinetas(s, Inches(6.9), y + Inches(0.3), Inches(5.7), [
+        # La figura es muy alta (5 filas): va como columna izquierda angosta,
+        # no centrada, o el texto se le monta encima.
+        imagen(s, fig_int, Inches(0.7), y - Inches(0.35), Inches(3.1), Inches(5.2))
+        vinetas(s, Inches(4.3), y, Inches(8.3), [
             "No usamos la misma técnica en ambos a propósito: Grad-CAM necesita un mapa "
             "de activaciones con estructura espacial, y en un ViT ese mapa es una secuencia "
             "de tokens que produce resultados ruidosos.",
@@ -267,14 +280,29 @@ def main() -> None:
     # ------------------------------------------------------------------ velocidad vs precisión
     s, y = slide_titulo(prs, "Decisión: velocidad frente a precisión",
                         "Qué modelo llevaríamos a una línea de empaque")
-    filas = [["Modelo", "QWK", "GFLOPs", "Costo relativo", "Veredicto"]]
-    base_gf = min(res[k]["gflops"] for k in disponibles)
-    for k in disponibles:
+    # Solo los modelos pre-entrenados: las corridas desde cero son una ablacion
+    # explicativa, no candidatas a despliegue. Costo relativo a la ResNet-50,
+    # que es la referencia de la decision.
+    candidatos = [k for k in disponibles if "scratch" not in k]
+    base_gf = res["resnet50"]["gflops"]
+    base_qwk = res["resnet50"]["test"]["qwk"]
+    veredicto = {
+        "resnet50": "Referencia. La recomendación operativa.",
+        "vit_small": "Empata en QWK al mismo costo y converge 2× más rápido.",
+        "hybrid_fusion": "Mejora real pero marginal: +0,6 % de QWK por 2× de cómputo.",
+        "hybrid_vit_r26": "Mejor QWK y 16 % más barato, pero con ventaja de ImageNet-21k.",
+    }
+    filas = [["Modelo", "QWK", "Δ QWK", "GFLOPs", "Costo rel.", "Veredicto"]]
+    for k in candidatos:
         d = res[k]
-        filas.append([ETIQUETA[k], f"{d['test']['qwk']:.3f}", f"{d['gflops']:.1f}",
-                      f"{d['gflops']/base_gf:.2f}×", ""])
+        dq = d["test"]["qwk"] - base_qwk
+        filas.append([ETIQUETA[k], f"{d['test']['qwk']:.4f}",
+                      "—" if k == "resnet50" else f"{dq:+.4f}",
+                      f"{d['gflops']:.2f}", f"{d['gflops']/base_gf:.2f}×",
+                      veredicto.get(k, "")])
+    fila_rec = 1 + candidatos.index("resnet50")
     tabla(s, Inches(0.7), y, Inches(11.9), Inches(0.5 + 0.38 * len(filas)), filas,
-          anchos=[3, 1.2, 1.2, 1.6, 4], size=12)
+          anchos=[2.4, 1.1, 1.1, 1.1, 1.1, 5.4], size=11.5, destacar_fila=fila_rec)
     vinetas(s, Inches(0.7), y + Inches(0.6 + 0.38 * len(filas)), Inches(11.9), [
         ("El criterio no es el QWK máximo, es el QWK por unidad de cómputo.", True),
         "En un packing la inferencia corre sobre miles de frutas por hora, probablemente "

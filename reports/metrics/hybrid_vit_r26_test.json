@@ -1,0 +1,102 @@
+{
+  "config": {
+    "name": "hybrid_vit_r26",
+    "model": "hybrid_vit_r26",
+    "pretrained": true,
+    "img_size": 224,
+    "batch_size": 48,
+    "num_workers": 10,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 15,
+    "lr": 0.0001,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 2.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.1,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "ViT-Hybrid R26+S/32 (ImageNet-21k): cota superior, NO equiparable"
+  },
+  "params_M": 36.049,
+  "params_entrenables_M": 36.049,
+  "gflops": 6.881,
+  "best_epoch": 10,
+  "train_minutes": 14.91,
+  "test": {
+    "accuracy": 0.7617152961980548,
+    "balanced_accuracy": 0.7452823120603441,
+    "macro_f1": 0.7519390573925089,
+    "qwk": 0.9410840538532235,
+    "mae": 0.24182139699381078,
+    "off_by_one": 0.9964633068081344,
+    "per_class_f1": [
+      0.9014567266495287,
+      0.6918032786885245,
+      0.6951364175563464,
+      0.6889089269612263,
+      0.7823899371069183
+    ],
+    "confusion_matrix": [
+      [
+        526,
+        24,
+        0,
+        0,
+        0
+      ],
+      [
+        91,
+        211,
+        39,
+        1,
+        0
+      ],
+      [
+        0,
+        33,
+        293,
+        102,
+        4
+      ],
+      [
+        0,
+        0,
+        76,
+        382,
+        48
+      ],
+      [
+        0,
+        0,
+        3,
+        118,
+        311
+      ]
+    ]
+  },
+  "test_por_grupo": {
+    "T10": {
+      "n": 1350,
+      "accuracy": 0.777,
+      "mae": 0.2274
+    },
+    "T20": {
+      "n": 466,
+      "accuracy": 0.7575,
+      "mae": 0.2468
+    },
+    "Tam": {
+      "n": 446,
+      "accuracy": 0.7197,
+      "mae": 0.2803
+    }
+  }
+}

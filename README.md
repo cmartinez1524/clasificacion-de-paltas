@@ -97,7 +97,49 @@ imágenes de test vienen de solo 72 paltas, así que asumir independencia entre 
 intervalos artificialmente angostos. Las comparaciones entre modelos usan bootstrap
 **pareado** sobre las mismas frutas.
 
-## 4. Reproducir
+## 4. Resultados
+
+Test: 2.262 imágenes de 72 frutas que ningún modelo vio durante el entrenamiento.
+
+| Modelo | Params | GFLOPs | QWK | Accuracy | Macro-F1 | MAE | Acc. ±1 | min |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| ResNet-50 | 23,5 M | 8,17 | 0,9356 | 74,6 % | 0,735 | 0,262 | 99,25 % | 9,9 |
+| ViT-S/16 | 21,7 M | 8,48 | 0,9313 | 72,2 % | 0,711 | 0,283 | 99,51 % | 5,0 |
+| ResNet-50 *(desde cero)* | 23,5 M | 8,17 | 0,9152 | 67,2 % | 0,655 | 0,352 | 97,66 % | 17,6 |
+| ViT-S/16 *(desde cero)* | 21,7 M | 8,48 | 0,8891 | 61,2 % | 0,579 | 0,409 | 98,10 % | 6,0 |
+| Híbrido · fusión tardía | 46,4 M | 16,66 | **0,9410** | **76,8 %** | **0,760** | **0,238** | 99,47 % | 3,5 |
+| ViT-Hybrid R26+S/32 † | 36,0 M | 6,88 | **0,9411** | 76,2 % | 0,752 | 0,242 | **99,65 %** | 14,9 |
+
+† Usa pesos de ImageNet-21k y 1,5× los parámetros: es cota superior de referencia, no un
+competidor equiparable.
+
+**El resultado principal, y es matizado.** Bootstrap pareado agrupado por fruta (2.000 réplicas),
+ViT menos ResNet:
+
+| Métrica | Δ | IC 95 % | p | |
+|---|--:|:--:|--:|---|
+| QWK | −0,0042 | [−0,0095, +0,0006] | 0,095 | **no significativa** |
+| Accuracy | −0,0234 | [−0,0435, −0,0039] | 0,026 | significativa |
+| Macro-F1 | −0,0241 | [−0,0448, −0,0046] | 0,017 | significativa |
+
+La ResNet acierta la clase exacta significativamente más seguido, pero cuando el ViT se equivoca
+lo hace por menos distancia. Sobre la métrica que pondera el error por distancia —la que refleja
+el costo operativo real— **las dos arquitecturas son estadísticamente indistinguibles**.
+Reportar solo accuracy habría dado "gana la ResNet"; reportar solo QWK habría dado "empatan".
+
+**Dónde sí difieren: la dependencia del pre-entrenamiento.** Al entrenar desde cero, el ViT
+pierde 2,1× más QWK y 1,5× más accuracy que la ResNet (−0,0422 contra −0,0203; −11,0 contra
+−7,4 puntos). El sesgo inductivo convolucional es un sustituto de datos, y el ViT, que no lo
+tiene, debe comprarlo con ImageNet.
+
+**Complementariedad.** ResNet y ViT fallan simultáneamente en solo el 18 % de las imágenes; un
+oráculo que eligiera siempre el modelo correcto llegaría a 82,0 % frente al 74,6 % del mejor
+individual. Eso es lo que explotan los híbridos, aunque la ganancia final sea modesta: la fusión
+tardía mejora +0,0055 de QWK (p = 0,001) a cambio de 2× de cómputo.
+
+Análisis completo en el [informe técnico](entregables/final/informe_tecnico.md).
+
+## 5. Reproducir
 
 ### Requisitos
 
@@ -175,7 +217,7 @@ python app/gradio_app.py
 Abre `http://localhost:7860`. Los ejemplos precargados provienen **solo del conjunto de test**:
 son frutas que ningún modelo vio durante el entrenamiento.
 
-## 5. Estructura
+## 6. Estructura
 
 ```
 ├── configs/                 # un YAML por experimento
@@ -197,7 +239,7 @@ son frutas que ningún modelo vio durante el entrenamiento.
 └── reports/{figures,metrics}
 ```
 
-## 6. Decisiones de diseño
+## 7. Decisiones de diseño
 
 **Aumentaciones de color deliberadamente suaves.** En la mayoría de las tareas de clasificación
 el color es una variable molesta que conviene perturbar con fuerza. Aquí el color **es la
@@ -217,7 +259,7 @@ el costo real de los errores.
 la selección de algoritmo no sea determinista. Las corridas son reproducibles a nivel de datos
 y pesos iniciales, no bit a bit.
 
-## 7. Entregables
+## 8. Entregables
 
 | Entregable | Ubicación |
 |---|---|
@@ -227,7 +269,7 @@ y pesos iniciales, no bit a bit.
 | Presentación final | [`entregables/final/`](entregables/final/) |
 | Demo | [`app/gradio_app.py`](app/gradio_app.py) |
 
-## 8. Cita
+## 9. Cita
 
 Si usas este dataset, cita a los autores originales:
 

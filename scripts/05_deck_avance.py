@@ -220,14 +220,14 @@ def main() -> None:
                   "entre imágenes daría intervalos artificialmente angostos.")
     vinetas(s, Inches(0.7), y + Inches(1.65), Inches(6.2), puntos, size=12.5)
 
-    imagen(s, FIGURES_DIR / "10_matrices_confusion.png", Inches(7.25), y + Inches(1.9),
+    imagen(s, FIGURES_DIR / "10_matrices_confusion_avance.png", Inches(7.25), y + Inches(1.9),
            Inches(5.4), Inches(2.9))
     nota(s, "Las dos matrices concentran el error en la diagonal vecina: el modelo confunde "
             "estados contiguos, no extremos.")
 
     # ------------------------------------------------------------------ 10
     s, y = slide_titulo(prs, "Curvas de entrenamiento")
-    imagen_centrada(s, FIGURES_DIR / "11_curvas_entrenamiento.png", y, Inches(12.0), Inches(3.5))
+    imagen_centrada(s, FIGURES_DIR / "11_curvas_entrenamiento_avance.png", y, Inches(12.0), Inches(3.5))
     vinetas(s, Inches(0.7), y + Inches(3.7), Inches(11.9), [
         f"ResNet-50 alcanza su mejor QWK de validación en la época {r['best_epoch']}; "
         f"ViT-S/16 en la {v['best_epoch']}.",

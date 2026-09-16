@@ -1,0 +1,94 @@
+{
+  "n_boot": 2000,
+  "modelos": [
+    "vit_small",
+    "vit_small_scratch"
+  ],
+  "tabla": [
+    {
+      "modelo": "ViT-S/16",
+      "params (M)": 21.668,
+      "GFLOPs": 8.482,
+      "min. entren.": 4.97,
+      "epoca best": 4,
+      "Accuracy": 0.7224,
+      "Acc. IC95%": "[0.694, 0.747]",
+      "Macro-F1": 0.7109,
+      "QWK": 0.9313,
+      "QWK IC95%": "[0.922, 0.939]",
+      "MAE": 0.2825,
+      "Acc. ±1": 0.9951
+    },
+    {
+      "modelo": "ViT-S/16 (scratch)",
+      "params (M)": 21.668,
+      "GFLOPs": 8.482,
+      "min. entren.": 6.02,
+      "epoca best": 5,
+      "Accuracy": 0.6123,
+      "Acc. IC95%": "[0.575, 0.648]",
+      "Macro-F1": 0.5787,
+      "QWK": 0.8891,
+      "QWK IC95%": "[0.860, 0.909]",
+      "MAE": 0.4094,
+      "Acc. ±1": 0.981
+    }
+  ],
+  "comparaciones": [
+    {
+      "modelo_a": "vit_small_scratch",
+      "modelo_b": "vit_small",
+      "metricas": {
+        "qwk": {
+          "diff": -0.04223607039609156,
+          "ci_low": -0.06633195005008218,
+          "ci_high": -0.02691333587623606,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "accuracy": {
+          "diff": -0.11007957559681691,
+          "ci_low": -0.1368052736098852,
+          "ci_high": -0.08464755977726833,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "macro_f1": {
+          "diff": -0.13223033979727794,
+          "ci_low": -0.16047988690549883,
+          "ci_high": -0.10523858602967451,
+          "p_value": 0.0,
+          "significativo": true
+        }
+      }
+    }
+  ],
+  "desacuerdo": {
+    "vit_small_scratch_vs_vit_small": {
+      "tabla": [
+        {
+          "caso": "Ambos aciertan",
+          "n": 1232,
+          "%": 54.47
+        },
+        {
+          "caso": "Solo ViT-S/16 (scratch)",
+          "n": 153,
+          "%": 6.76
+        },
+        {
+          "caso": "Solo ViT-S/16",
+          "n": 402,
+          "%": 17.77
+        },
+        {
+          "caso": "Ambos fallan",
+          "n": 475,
+          "%": 21.0
+        }
+      ],
+      "oraculo_accuracy": 0.7900088417329797,
+      "ambos_fallan": 0.20999115826702033
+    }
+  }
+}

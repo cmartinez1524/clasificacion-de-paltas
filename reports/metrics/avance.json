@@ -1,4 +1,9 @@
 {
+  "n_boot": 2000,
+  "modelos": [
+    "resnet50",
+    "vit_small"
+  ],
   "tabla": [
     {
       "modelo": "ResNet-50",

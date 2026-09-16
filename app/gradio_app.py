@@ -112,19 +112,36 @@ def predecir(imagen: Image.Image, clave_modelo: str, mostrar_mapa: bool):
     overlay = None
     if mostrar_mapa:
         try:
-            if clave == "resnet50":
-                with GradCAM(model, resnet_target_layer(model)) as cam:
-                    mapa, _ = cam(x)
-            elif clave == "vit_small":
-                mapa, _ = attention_rollout(model, x)
-            else:
-                mapa = None
+            mapa = mapa_de_atencion(model, clave, x)
             if mapa is not None:
                 overlay = superponer(base, mapa)
         except Exception as e:  # la demo no debe caerse por el mapa
             print(f"[aviso] no se pudo generar el mapa: {e}")
 
     return etiquetas, overlay, texto
+
+
+def mapa_de_atencion(model, clave: str, x):
+    """Devuelve el mapa de saliencia adecuado a cada arquitectura.
+
+    Para la fusion tardia usamos Grad-CAM sobre su ResNet interna: el gradiente
+    viaja desde el logit final, a traves de la cabeza y de la proyeccion, hasta
+    las activaciones convolucionales, asi que el mapa refleja lo que el modelo
+    COMPLETO usa de la rama convolucional, no lo que usaria la ResNet sola.
+    """
+    if clave == "resnet50":
+        with GradCAM(model, resnet_target_layer(model)) as cam:
+            return cam(x)[0]
+    if clave == "vit_small":
+        return attention_rollout(model, x)[0]
+    if clave == "hybrid_fusion":
+        with GradCAM(model, model.cnn.layer4[-1]) as cam:
+            return cam(x)[0]
+    if clave == "hybrid_vit_r26":
+        # Arquitectura ViT de timm con stem convolucional: expone .blocks igual
+        # que un ViT puro, asi que el rollout se aplica sin cambios.
+        return attention_rollout(model, x)[0]
+    return None
 
 
 def ejemplos_de_test(n_por_clase: int = 2, seed: int = 11) -> list[str]:

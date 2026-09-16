@@ -1,0 +1,102 @@
+{
+  "config": {
+    "name": "resnet50_scratch",
+    "model": "resnet50",
+    "pretrained": false,
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 10,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 30,
+    "lr": 0.001,
+    "head_lr_mult": 1.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 2.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 8,
+    "eval_tta_hflip": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Ablacion sin pre-entrenamiento: cuanto aporta ImageNet a la CNN"
+  },
+  "params_M": 23.518,
+  "params_entrenables_M": 23.518,
+  "gflops": 8.174,
+  "best_epoch": 23,
+  "train_minutes": 17.64,
+  "test": {
+    "accuracy": 0.6715296198054819,
+    "balanced_accuracy": 0.6660133177696107,
+    "macro_f1": 0.6545663063020128,
+    "qwk": 0.9152190964090019,
+    "mae": 0.35190097259062775,
+    "off_by_one": 0.9765694076038903,
+    "per_class_f1": [
+      0.896431679721497,
+      0.6752,
+      0.6189856957087126,
+      0.41379310344827586,
+      0.6684210526315789
+    ],
+    "confusion_matrix": [
+      [
+        515,
+        35,
+        0,
+        0,
+        0
+      ],
+      [
+        84,
+        211,
+        44,
+        3,
+        0
+      ],
+      [
+        0,
+        37,
+        238,
+        117,
+        40
+      ],
+      [
+        0,
+        0,
+        45,
+        174,
+        287
+      ],
+      [
+        0,
+        0,
+        10,
+        41,
+        381
+      ]
+    ]
+  },
+  "test_por_grupo": {
+    "T10": {
+      "n": 1350,
+      "accuracy": 0.6778,
+      "mae": 0.3511
+    },
+    "T20": {
+      "n": 466,
+      "accuracy": 0.6502,
+      "mae": 0.3712
+    },
+    "Tam": {
+      "n": 446,
+      "accuracy": 0.6749,
+      "mae": 0.3341
+    }
+  }
+}

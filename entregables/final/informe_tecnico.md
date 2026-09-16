@@ -222,11 +222,68 @@ motiva los modelos híbridos de la sección siguiente, y es una evidencia más f
 simplemente observar que los números finales son parecidos: **los dos modelos no están
 cometiendo los mismos errores**, aunque cometan una cantidad similar.
 
-### 4.5 Ablación sin pre-entrenamiento y modelos híbridos
+### 4.5 Ablación sin pre-entrenamiento
 
-*(Sección completada con los resultados de las corridas de ablación y de los dos híbridos;
-ver `reports/metrics/final.json` y la tabla comparativa generada por
-`scripts/compare_models.py --tag final`.)*
+Reentrenamos las dos arquitecturas desde inicialización aleatoria, con 30 épocas en lugar de
+15 y learning rate mayor para compensar la partida en frío:
+
+Cada modelo se compara contra **su propia** versión pre-entrenada, no contra la otra
+arquitectura:
+
+| Modelo | QWK | Δ QWK propio | Accuracy | Δ Acc. | Macro-F1 | Δ F1 |
+|---|--:|:--:|--:|:--:|--:|:--:|
+| ResNet-50 (ImageNet-1k) | 0,9356 | — | 74,6 % | — | 0,735 | — |
+| ResNet-50 (desde cero) | 0,9152 | **−0,0203** | 67,2 % | **−7,4 pts** | 0,655 | −0,081 |
+| ViT-S/16 (ImageNet-1k) | 0,9313 | — | 72,2 % | — | 0,711 | — |
+| ViT-S/16 (desde cero) | 0,8891 | **−0,0422** | 61,2 % | **−11,0 pts** | 0,579 | −0,132 |
+
+Las cuatro caídas son significativas (p < 0,0001, bootstrap pareado; IC 95 % de la caída del ViT
+en QWK: [−0,0663, −0,0269], de la ResNet: [−0,0283, −0,0123]). **El ViT pierde 2,1 veces más QWK,
+1,5 veces más accuracy y 1,6 veces más macro-F1 que la ResNet al quitarle el pre-entrenamiento.**
+Este es el resultado que sostiene la discusión de la sección 5: con presupuesto igualado y
+pre-entrenamiento igualado las dos arquitecturas empatan, pero *dependen* del pre-entrenamiento
+de forma muy distinta.
+
+La estructura del fracaso también es distinta. La matriz de confusión del ViT desde cero colapsa
+hacia las clases centrales y altas: predice la clase 4 para el 45 % de las paltas que son clase 3
+y para el 68 % de las que son clase 5. La ResNet desde cero mantiene una matriz bandeada y su
+error se concentra en un sesgo sistemático 4→5. Sin sesgo inductivo ni pre-entrenamiento, el ViT
+no llega a construir una representación ordenada del problema; la ResNet, con el mismo
+presupuesto de datos, sí.
+
+### 4.6 Modelos híbridos
+
+| Modelo | Params | GFLOPs | QWK | Δ QWK vs. ResNet | Accuracy | Δ Acc | min |
+|---|--:|--:|--:|:--:|--:|:--:|--:|
+| Fusión tardía | 46,4 M | 16,66 | **0,9410** | +0,0055 (p=0,001) ✓ | **76,8 %** | +2,2 pts (p=0,001) ✓ | 3,5 |
+| ViT-Hybrid R26+S/32 | 36,0 M | 6,88 | **0,9411** | +0,0055 (p=0,031) ✓ | 76,2 % | +1,6 pts (p=0,098) ✗ | 14,9 |
+
+Ambos híbridos superan a los dos baselines en QWK de forma estadísticamente significativa, y la
+fusión tardía también en accuracy y macro-F1. Tres lecturas, en orden de importancia:
+
+**La mejora es real pero pequeña, y cuesta el doble.** La fusión tardía gana +0,0055 de QWK a
+cambio de 16,66 GFLOPs contra 8,17: dos backbones completos en cada forward. Es una mejora
+significativa en el sentido estadístico y marginal en el sentido práctico.
+
+**La fusión tardía es asombrosamente barata de entrenar.** Con los backbones congelados solo se
+entrenan las proyecciones y la cabeza (≈1,3 M de parámetros), y alcanza su mejor checkpoint en
+la **época 2**, en 3,5 minutos: menos que cualquier otro modelo del estudio. Confirma que las
+representaciones de ambos baselines ya contenían la información necesaria, y que lo que faltaba
+era combinarlas.
+
+**El ViT-Hybrid R26 no es un competidor equiparable y hay que decirlo.** Tiene 36 M de
+parámetros (1,5× los baselines) y —más importante— los únicos pesos disponibles en `timm` para
+esa arquitectura provienen de **ImageNet-21k**, no de ImageNet-1k. Va incluido como cota
+superior de referencia, no como participante de la comparación controlada. Dicho eso, resulta
+notable que sea el modelo **más barato en inferencia de todo el estudio** (6,88 GFLOPs, un 16 %
+menos que la ResNet-50): el stem convolucional reduce la resolución antes de tokenizar, de modo
+que el transformer opera sobre muchos menos tokens.
+
+Un dato que tempera el entusiasmo por la fusión: su tabla de desacuerdo contra la ResNet muestra
+que **ambos fallan a la vez en el 20,6 % de las imágenes**, más que el 18,0 % del par
+ResNet/ViT. La fusión no elimina los casos difíciles, los absorbe: convierte aciertos exclusivos
+de cada backbone en aciertos compartidos, pero el núcleo duro de imágenes ambiguas sigue ahí. Es
+coherente con la hipótesis de que ese núcleo es ruido de etiquetado y no un déficit de capacidad.
 
 ## 5. Discusión: por qué difieren (o no) ResNet y ViT
 
@@ -240,6 +297,15 @@ sobre la fruta. La ResNet trae ese supuesto incorporado en la arquitectura y no 
 aprenderlo. El ViT, con auto-atención global desde la primera capa, no asume nada sobre
 estructura espacial y debe inferirlo de los datos —o heredarlo del pre-entrenamiento. Con
 10.208 imágenes de 334 frutas, el pre-entrenamiento es lo que lo salva.
+
+La ablación de la sección 4.5 lo muestra directamente y es la evidencia más fuerte del trabajo:
+**al quitar ImageNet, el ViT pierde 2,1 veces más QWK y 1,5 veces más accuracy que la ResNet**
+(−0,0422 contra −0,0203 de QWK; −11,0 contra −7,4 puntos de accuracy). Con presupuesto igualado
+y pre-entrenamiento igualado las dos arquitecturas empatan; sin pre-entrenamiento, no. La
+diferencia relevante entre CNN y transformer en este problema no está en el techo que alcanzan,
+sino en **cuánto dependen de datos externos para llegar a él**. Y eso es exactamente lo que
+predice la teoría: el sesgo inductivo es un sustituto de datos, y el ViT, que no lo tiene, debe
+comprarlo con ImageNet.
 
 **2. Esta es una tarea de textura local, no de forma global.** El índice de madurez se lee en
 el color de la cáscara, en las manchas y en el arrugamiento superficial. Toda la señal
@@ -271,6 +337,29 @@ Si el criterio fuera "mejor QWK por minuto de entrenamiento", la conclusión se 
 dado que la diferencia de QWK no es estadísticamente significativa, la decisión de qué modelo
 llevar a una línea de empaque debería tomarse por costo de inferencia y no por métrica: cuando
 los intervalos se solapan, gana el modelo más barato.
+
+### 5.1 Decisión: velocidad frente a precisión
+
+Poniendo los cinco modelos comparables sobre la misma mesa, con el costo de inferencia como
+segunda dimensión:
+
+| Modelo | QWK | GFLOPs | Costo relativo | ¿Justifica el costo? |
+|---|--:|--:|--:|---|
+| ViT-S/16 | 0,9313 | 8,48 | 1,04× | Empata con la ResNet en QWK, cuesta lo mismo, converge al doble de velocidad |
+| **ResNet-50** | 0,9356 | 8,17 | 1,00× | **Referencia** |
+| Fusión tardía | 0,9410 | 16,66 | 2,04× | +0,6 % de QWK por 2× de cómputo |
+| ViT-Hybrid R26 | 0,9411 | 6,88 | 0,84× | El mejor QWK al menor costo, pero con ventaja de ImageNet-21k |
+
+En una línea de empaque la inferencia corre sobre miles de frutas por hora, probablemente en un
+equipo sin GPU dedicada. Bajo esa restricción, **la fusión tardía no se justifica**: duplicar el
+cómputo para ganar seis milésimas de QWK es un mal negocio cuando el error residual ya está
+dominado por el ruido de etiquetado. La recomendación operativa es **ResNet-50**, con el
+ViT-Hybrid R26 como candidato a evaluar seriamente si se confirma que su ventaja sobrevive al
+control de pre-entrenamiento —porque si lo hace, es más preciso *y* un 16 % más barato.
+
+Vale la pena decirlo explícitamente: con accuracy ±1 clase por sobre el 99 % en todos los
+modelos pre-entrenados, el retorno de seguir optimizando la arquitectura es marginal. El retorno
+está en cerrar el domain gap.
 
 ## 6. Trabajo futuro
 

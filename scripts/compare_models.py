@@ -88,10 +88,15 @@ def tabla_principal(models: list[str], res: dict, preds: dict, n_boot: int) -> p
     return pd.DataFrame(filas)
 
 
-def fig_confusiones(models: list[str], res: dict) -> None:
+def fig_confusiones(models: list[str], res: dict, tag: str) -> None:
+    # Con mas de tres modelos una sola fila queda ilegible: envolvemos en dos.
     n = len(models)
-    fig, axes = plt.subplots(1, n, figsize=(4.3 * n, 4.1))
-    axes = np.atleast_1d(axes)
+    ncols = n if n <= 3 else (n + 1) // 2
+    nrows = 1 if n <= 3 else 2
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4.3 * ncols, 4.3 * nrows))
+    axes = np.atleast_1d(axes).ravel()
+    for ax in axes[n:]:
+        ax.axis("off")
     for ax, m in zip(axes, models):
         cm = np.array(res[m]["test"]["confusion_matrix"], dtype=float)
         cmn = cm / cm.sum(1, keepdims=True)
@@ -104,18 +109,19 @@ def fig_confusiones(models: list[str], res: dict) -> None:
         ax.set_xticks(range(5), range(1, 6))
         ax.set_yticks(range(5), range(1, 6))
         ax.set_xlabel("Prediccion")
-        if m == models[0]:
+        if list(axes).index(ax) % ncols == 0:
             ax.set_ylabel("Etiqueta real")
         ax.set_title(f"{etiqueta(m)}\nQWK {res[m]['test']['qwk']:.3f} · "
                      f"acc {res[m]['test']['accuracy']:.3f}", fontsize=10)
         ax.grid(False)
-    fig.colorbar(im, ax=axes.tolist(), fraction=0.02, pad=0.02, label="% de la fila")
+    fig.colorbar(im, ax=axes.tolist(), fraction=0.025, pad=0.02, label="% de la fila")
     fig.suptitle("Los errores se concentran en la diagonal vecina: el modelo confunde "
-                 "estados adyacentes, no extremos", fontsize=11, y=1.04)
-    save(fig, FIGURES_DIR / "10_matrices_confusion.png")
+                 "estados adyacentes, no extremos",
+                 fontsize=11, y=1.06 if nrows == 1 else 0.99)
+    save(fig, FIGURES_DIR / f"10_matrices_confusion_{tag}.png")
 
 
-def fig_curvas(models: list[str], hist: dict) -> None:
+def fig_curvas(models: list[str], hist: dict, tag: str) -> None:
     if not hist:
         return
     fig, axes = plt.subplots(1, 3, figsize=(14, 4))
@@ -131,10 +137,10 @@ def fig_curvas(models: list[str], hist: dict) -> None:
     for ax in axes:
         ax.set_xlabel("Epoca")
     axes[0].legend(frameon=False, fontsize=9)
-    save(fig, FIGURES_DIR / "11_curvas_entrenamiento.png")
+    save(fig, FIGURES_DIR / f"11_curvas_entrenamiento_{tag}.png")
 
 
-def fig_f1_por_clase(models: list[str], res: dict) -> None:
+def fig_f1_por_clase(models: list[str], res: dict, tag: str) -> None:
     fig, ax = plt.subplots(figsize=(8.5, 4))
     ancho = 0.8 / len(models)
     x = np.arange(5)
@@ -149,31 +155,31 @@ def fig_f1_por_clase(models: list[str], res: dict) -> None:
     ax.set_ylim(0, 1)
     ax.set_title("F1 por clase: el cuello de botella son los estados intermedios")
     ax.legend(frameon=False, fontsize=9, ncol=2)
-    save(fig, FIGURES_DIR / "12_f1_por_clase.png")
+    save(fig, FIGURES_DIR / f"12_f1_por_clase_{tag}.png")
 
 
-def fig_costo_beneficio(models: list[str], res: dict) -> None:
+def fig_costo_beneficio(models: list[str], res: dict, tag: str) -> None:
     """Accuracy contra costo: la figura que respalda la decision velocidad/precision."""
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
-    for m in models:
+    # ResNet-50 y ViT-S/16 estan casi superpuestos en GFLOPs (8,17 vs 8,48): sin
+    # alternar la posicion de la etiqueta, una tapa el marcador de la otra.
+    for k, m in enumerate(models):
         r = res[m]
         c = color(m)
         mk = "s" if "hybrid" in m else ("^" if "scratch" in m else "o")
-        axes[0].scatter(r["params_M"], r["test"]["qwk"], s=150, color=c, marker=mk,
-                        edgecolor="white", zorder=3)
-        axes[0].annotate(etiqueta(m), (r["params_M"], r["test"]["qwk"]),
-                         textcoords="offset points", xytext=(0, 12), ha="center", fontsize=8)
-        axes[1].scatter(r["gflops"], r["test"]["qwk"], s=150, color=c, marker=mk,
-                        edgecolor="white", zorder=3)
-        axes[1].annotate(etiqueta(m), (r["gflops"], r["test"]["qwk"]),
-                         textcoords="offset points", xytext=(0, 12), ha="center", fontsize=8)
+        dy = 13 if k % 2 == 0 else -20
+        for ax, x in ((axes[0], r["params_M"]), (axes[1], r["gflops"])):
+            ax.scatter(x, r["test"]["qwk"], s=150, color=c, marker=mk,
+                       edgecolor="white", zorder=3)
+            ax.annotate(etiqueta(m), (x, r["test"]["qwk"]), textcoords="offset points",
+                        xytext=(0, dy), ha="center", fontsize=8, color=c, zorder=4)
     axes[0].set_xlabel("Parametros (M)")
     axes[1].set_xlabel("GFLOPs por imagen")
     for ax in axes:
         ax.set_ylabel("QWK en test")
         ax.margins(x=0.22, y=0.22)
     fig.suptitle("Costo computacional frente a desempeno", fontsize=12, y=1.02)
-    save(fig, FIGURES_DIR / "13_costo_beneficio.png")
+    save(fig, FIGURES_DIR / f"13_costo_beneficio_{tag}.png")
 
 
 def main() -> None:
@@ -194,7 +200,11 @@ def main() -> None:
     print(tabla.to_string(index=False))
     tabla.to_csv(METRICS_DIR / f"{args.tag}_tabla.csv", index=False)
 
-    salida = {"tabla": tabla.to_dict("records"), "comparaciones": [], "desacuerdo": {}}
+    # Registramos n_boot: el numero de replicas determina la resolucion del
+    # p-valor, y sin dejarlo escrito es facil comparar salidas de corridas con
+    # distinto presupuesto de bootstrap y creer que el resultado cambio.
+    salida = {"n_boot": args.n_boot, "modelos": args.models,
+              "tabla": tabla.to_dict("records"), "comparaciones": [], "desacuerdo": {}}
 
     # --- Comparaciones pareadas contra el primer modelo de la lista ---
     base = args.models[0]
@@ -223,10 +233,10 @@ def main() -> None:
         }
 
     print("\nGenerando figuras...")
-    fig_confusiones(args.models, res)
-    fig_curvas(args.models, hist)
-    fig_f1_por_clase(args.models, res)
-    fig_costo_beneficio(args.models, res)
+    fig_confusiones(args.models, res, args.tag)
+    fig_curvas(args.models, hist, args.tag)
+    fig_f1_por_clase(args.models, res, args.tag)
+    fig_costo_beneficio(args.models, res, args.tag)
 
     (METRICS_DIR / f"{args.tag}.json").write_text(
         json.dumps(salida, indent=2, ensure_ascii=False), encoding="utf-8"

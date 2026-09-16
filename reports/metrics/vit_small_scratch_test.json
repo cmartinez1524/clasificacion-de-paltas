@@ -1,0 +1,102 @@
+{
+  "config": {
+    "name": "vit_small_scratch",
+    "model": "vit_small",
+    "pretrained": false,
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 10,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 30,
+    "lr": 0.0005,
+    "head_lr_mult": 1.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 3.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.1,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 8,
+    "eval_tta_hflip": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Ablacion sin pre-entrenamiento: cuanto aporta ImageNet al ViT"
+  },
+  "params_M": 21.668,
+  "params_entrenables_M": 21.668,
+  "gflops": 8.482,
+  "best_epoch": 5,
+  "train_minutes": 6.02,
+  "test": {
+    "accuracy": 0.612290008841733,
+    "balanced_accuracy": 0.5872486266170476,
+    "macro_f1": 0.578656644237848,
+    "qwk": 0.889087355790447,
+    "mae": 0.4093722369584439,
+    "off_by_one": 0.9809902740937224,
+    "per_class_f1": [
+      0.883248730964467,
+      0.6069802731411229,
+      0.46153846153846156,
+      0.5638067772170151,
+      0.37770897832817335
+    ],
+    "confusion_matrix": [
+      [
+        522,
+        28,
+        0,
+        0,
+        0
+      ],
+      [
+        110,
+        200,
+        27,
+        5,
+        0
+      ],
+      [
+        0,
+        76,
+        150,
+        193,
+        13
+      ],
+      [
+        0,
+        7,
+        29,
+        391,
+        79
+      ],
+      [
+        0,
+        6,
+        12,
+        292,
+        122
+      ]
+    ]
+  },
+  "test_por_grupo": {
+    "T10": {
+      "n": 1350,
+      "accuracy": 0.6274,
+      "mae": 0.4044
+    },
+    "T20": {
+      "n": 466,
+      "accuracy": 0.6159,
+      "mae": 0.3906
+    },
+    "Tam": {
+      "n": 446,
+      "accuracy": 0.5628,
+      "mae": 0.4439
+    }
+  }
+}
