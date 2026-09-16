@@ -1,0 +1,31 @@
+# Entorno reproducible - Proyecto clasificacion de paltas Hass
+# Python 3.11.x
+#
+# PyTorch con CUDA 12.1 (instalar primero, desde el indice de PyTorch):
+#   pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu121
+torch==2.5.1
+torchvision==0.20.1
+
+# Modelos pre-entrenados (ResNet-50, ViT-S/16, ViT-Hybrid R26+S/32)
+timm==1.0.19
+
+# Datos y metricas
+numpy==2.3.2
+pandas==2.3.1
+openpyxl==3.1.5
+scikit-learn==1.7.1
+Pillow==11.3.0
+
+# Visualizacion
+matplotlib==3.10.5
+seaborn==0.13.2
+
+# Utilidades
+PyYAML==6.0.2
+tqdm==4.67.1
+
+# Demo (entregable final)
+gradio==5.9.1
+
+# Generacion de entregables (.pptx)
+python-pptx==1.0.2

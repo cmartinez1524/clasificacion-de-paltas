@@ -1,0 +1,32 @@
+# ---- Datos crudos (no se versionan: 485 MB, se descargan desde Mendeley) ----
+Hass Avocado Ripening Photographic Dataset/
+data/cache/
+data/raw/
+
+# ---- Artefactos de entrenamiento ----
+checkpoints/
+runs/
+*.pt
+*.pth
+*.onnx
+wandb/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+
+# ---- SO / editor ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ---- Temporales ----
+*.log
+tmp/
