@@ -1,0 +1,26 @@
+# Ablacion: misma arquitectura, sin pesos de ImageNet.
+# Mas epocas y LR mayor porque partir de cero requiere mas presupuesto.
+name: resnet50_scratch
+model: resnet50
+pretrained: false
+
+img_size: 224
+batch_size: 64
+num_workers: 10
+use_cache: true
+use_class_weights: true
+
+epochs: 30
+lr: 0.001
+head_lr_mult: 1.0      # no hay backbone pre-entrenado: todo parte igual
+weight_decay: 0.05
+warmup_epochs: 2.0
+label_smoothing: 0.05
+drop_path_rate: 0.0
+grad_clip: 1.0
+amp: true
+
+seed: 42
+early_stop_patience: 8
+
+notes: "Ablacion sin pre-entrenamiento: cuanto aporta ImageNet a la CNN"

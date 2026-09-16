@@ -1,0 +1,31 @@
+# Hibrido 1: fusion tardia de los dos backbones ya afinados.
+# Backbones congelados -> solo entrenan las proyecciones y la cabeza (~1,3 M
+# parametros). Converge en pocas epocas y con LR alto porque es, en la practica,
+# entrenar un clasificador lineal sobre features fijas.
+name: hybrid_fusion
+model: hybrid_fusion
+pretrained: true
+
+img_size: 224
+batch_size: 48          # dos backbones en memoria: batch menor para caber en 8 GB
+num_workers: 10
+use_cache: true
+use_class_weights: true
+
+epochs: 12
+lr: 0.0005
+head_lr_mult: 1.0
+weight_decay: 0.01
+warmup_epochs: 1.0
+label_smoothing: 0.05
+grad_clip: 1.0
+amp: true
+
+seed: 42
+early_stop_patience: 5
+
+freeze_backbones: true
+cnn_ckpt: checkpoints/resnet50.pt
+vit_ckpt: checkpoints/vit_small.pt
+
+notes: "Fusion tardia: pooled ResNet-50 (2048) + CLS ViT-S/16 (384) -> cabeza MLP"

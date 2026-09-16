@@ -1,0 +1,33 @@
+# Hibrido 2: la arquitectura hibrida del paper original de ViT. Un stem
+# convolucional ResNet-26 produce el mapa de features que el transformer trata
+# como tokens (patch 32 sobre ese mapa).
+#
+# Caveat de comparabilidad, a declarar en el informe: los unicos pesos
+# disponibles en timm para esta arquitectura vienen de ImageNet-21k, no de
+# ImageNet-1k como los dos baselines. Tiene ventaja de pre-entrenamiento y mas
+# parametros (36,05 M vs ~22-24 M), asi que no es un competidor equiparable:
+# es una cota superior de referencia.
+name: hybrid_vit_r26
+model: hybrid_vit_r26
+pretrained: true
+
+img_size: 224
+batch_size: 48
+num_workers: 10
+use_cache: true
+use_class_weights: true
+
+epochs: 15
+lr: 0.0001
+head_lr_mult: 10.0
+weight_decay: 0.05
+warmup_epochs: 2.0
+label_smoothing: 0.05
+drop_path_rate: 0.1
+grad_clip: 1.0
+amp: true
+
+seed: 42
+early_stop_patience: 5
+
+notes: "ViT-Hybrid R26+S/32 (ImageNet-21k): cota superior, NO equiparable"

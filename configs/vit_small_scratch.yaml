@@ -1,0 +1,28 @@
+# Ablacion: el ViT sin ImageNet. Es la corrida que sostiene la discusion central
+# del informe -- un transformer no tiene sesgo inductivo de localidad ni de
+# invariancia a la traslacion, asi que tiene que aprenderlos de los datos, y
+# 10.208 imagenes de 334 frutas no alcanzan.
+name: vit_small_scratch
+model: vit_small
+pretrained: false
+
+img_size: 224
+batch_size: 64
+num_workers: 10
+use_cache: true
+use_class_weights: true
+
+epochs: 30
+lr: 0.0005
+head_lr_mult: 1.0
+weight_decay: 0.05
+warmup_epochs: 3.0     # warmup largo: sin el, la atencion colapsa al inicio
+label_smoothing: 0.05
+drop_path_rate: 0.1
+grad_clip: 1.0
+amp: true
+
+seed: 42
+early_stop_patience: 8
+
+notes: "Ablacion sin pre-entrenamiento: cuanto aporta ImageNet al ViT"
