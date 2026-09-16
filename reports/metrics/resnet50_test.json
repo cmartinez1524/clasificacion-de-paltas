@@ -1,0 +1,102 @@
+{
+  "config": {
+    "name": "resnet50",
+    "model": "resnet50",
+    "pretrained": true,
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 10,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 15,
+    "lr": 0.0003,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Baseline ResNet-50 (resnet50.a1_in1k, solo ImageNet-1k)"
+  },
+  "params_M": 23.518,
+  "params_entrenables_M": 23.518,
+  "gflops": 8.174,
+  "best_epoch": 11,
+  "train_minutes": 9.88,
+  "test": {
+    "accuracy": 0.7458001768346596,
+    "balanced_accuracy": 0.7301957638937044,
+    "macro_f1": 0.7350243087538453,
+    "qwk": 0.9355572800815248,
+    "mae": 0.26171529619805484,
+    "off_by_one": 0.9924845269672856,
+    "per_class_f1": [
+      0.896969696969697,
+      0.6786296900489397,
+      0.6674846625766871,
+      0.6678865507776761,
+      0.7641509433962265
+    ],
+    "confusion_matrix": [
+      [
+        518,
+        32,
+        0,
+        0,
+        0
+      ],
+      [
+        87,
+        208,
+        46,
+        1,
+        0
+      ],
+      [
+        0,
+        31,
+        272,
+        118,
+        11
+      ],
+      [
+        0,
+        0,
+        60,
+        365,
+        81
+      ],
+      [
+        0,
+        0,
+        5,
+        103,
+        324
+      ]
+    ]
+  },
+  "test_por_grupo": {
+    "T10": {
+      "n": 1350,
+      "accuracy": 0.7533,
+      "mae": 0.2585
+    },
+    "T20": {
+      "n": 466,
+      "accuracy": 0.7511,
+      "mae": 0.2489
+    },
+    "Tam": {
+      "n": 446,
+      "accuracy": 0.7175,
+      "mae": 0.2848
+    }
+  }
+}
