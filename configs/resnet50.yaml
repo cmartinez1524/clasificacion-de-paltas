@@ -1,0 +1,25 @@
+# Baseline convolucional. LR relativamente alto: las CNN con BatchNorm lo toleran.
+name: resnet50
+model: resnet50
+pretrained: true
+
+img_size: 224
+batch_size: 64
+num_workers: 10
+use_cache: true
+use_class_weights: true
+
+epochs: 15
+lr: 0.0003
+head_lr_mult: 10.0
+weight_decay: 0.05
+warmup_epochs: 1.0
+label_smoothing: 0.05
+drop_path_rate: 0.0
+grad_clip: 1.0
+amp: true
+
+seed: 42
+early_stop_patience: 5
+
+notes: "Baseline ResNet-50 (resnet50.a1_in1k, solo ImageNet-1k)"

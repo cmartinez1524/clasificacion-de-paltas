@@ -1,0 +1,30 @@
+# Baseline transformer, equiparable a resnet50.yaml en params y FLOPs.
+# Diferencias deliberadas respecto de la ResNet:
+#   - lr 3x menor: los ViT divergen con el LR que la ResNet tolera.
+#   - warmup mas largo: sin warmup la atencion colapsa en las primeras epocas.
+#   - drop_path 0.1: stochastic depth es el regularizador estandar de los ViT.
+# Todo lo demas (datos, aumentaciones, perdida, schedule, epocas) es identico.
+name: vit_small
+model: vit_small
+pretrained: true
+
+img_size: 224
+batch_size: 64
+num_workers: 10
+use_cache: true
+use_class_weights: true
+
+epochs: 15
+lr: 0.0001
+head_lr_mult: 10.0
+weight_decay: 0.05
+warmup_epochs: 2.0
+label_smoothing: 0.05
+drop_path_rate: 0.1
+grad_clip: 1.0
+amp: true
+
+seed: 42
+early_stop_patience: 5
+
+notes: "Baseline ViT-S/16 (deit_small_patch16_224.fb_in1k, solo ImageNet-1k)"
