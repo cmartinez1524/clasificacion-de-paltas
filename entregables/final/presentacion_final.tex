@@ -80,6 +80,19 @@
     \end{minipage}}%
   \end{minipage}%
 }
+% Caja con titulo y borde de color: para contraponer dos ideas lado a lado.
+% Se dibuja con LaTeX, no como imagen: una figura hecha de texto queda
+% ilegible en cuanto hay que reducirla para que entre en el slide.
+\newcommand{\caja}[4][verdeosc]{%
+  \begin{minipage}[t]{#2}%
+    \setlength{\fboxsep}{7pt}%
+    \fcolorbox{#1}{grisFondo}{\begin{minipage}[t]{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}%
+      {\small\bfseries\color{#1}#3}\\[0.45em]%
+      #4%
+      \vspace{0.2em}%
+    \end{minipage}}%
+  \end{minipage}%
+}
 \newcommand{\sig}{\textcolor{verdeosc}{\textbf{significativa}}}
 \newcommand{\nosig}{\textcolor{rojo}{\textbf{NO significativa}}}
 
@@ -89,7 +102,7 @@
 % Descomenta para imprimir con notas del orador:
 % \setbeameroption{show notes}
 
-\title{Clasificación de madurez de paltas Hass — Final}
+\title{Clasificación de madurez de paltas Hass --- Final}
 \author{Cristóbal Martínez}
 
 \begin{document}
@@ -171,61 +184,98 @@
 \cierre{Detalle completo en la data card (\texttt{entregables/final/data\_card.md}).}
 \end{frame}
 
-\begin{frame}{Las redes que comparamos}{Qué es cada una y qué asume}
+\begin{frame}{Las dos redes, en una imagen}{La diferencia es CÓMO miran la foto}
+\begin{center}
+  \includegraphics[width=0.95\textwidth,height=4.25cm,keepaspectratio]{30-como-mira-cada-red}
+\end{center}
+\vspace{0.25em}
 \begin{columns}[T]
 \begin{column}{0.47\textwidth}
-{\footnotesize\textbf{\color{azul}ResNet-50} \;\textit{(convolucional, 2015)}}
 {\tiny
-\setlength{\itemsep}{0.18em}
+\setlength{\itemsep}{0.12em}
 \begin{itemize}
-  \item Filtros pequeños que se deslizan por toda la imagen, apilados en 50 capas con conexiones residuales.
-  \item {\bfseries Trae un supuesto incorporado: localidad y equivarianza a la traslación.}
-  \item Una mancha café significa lo mismo esté donde esté sobre la fruta. Eso \emph{no hay que aprenderlo}: está en la arquitectura.
+  \item Va de a pedacitos y reutiliza el mismo detector en toda la foto \textit{(convolución)}.
+  \item Buena para detalles: manchas, arrugas, tono.
 \end{itemize}
 }
 \end{column}
 \begin{column}{0.47\textwidth}
-{\footnotesize\textbf{\color{rojo}ViT-S/16} \;\textit{(transformer, 2020)}}
 {\tiny
-\setlength{\itemsep}{0.18em}
+\setlength{\itemsep}{0.12em}
 \begin{itemize}
-  \item Corta la imagen de $224\times224$ en 196 parches de $16\times16$ y los procesa con auto-atención.
-  \item Cada parche mira a todos los demás desde la primera capa; un token \texttt{CLS} resume la imagen.
-  \item {\bfseries No asume nada sobre estructura espacial.}
-  \item Tiene que aprender de los datos lo que la convolución trae gratis.
+  \item Parte la foto en 196 cuadraditos y los compara todos contra todos \textit{(auto-atención)}.
+  \item Buena para relacionar zonas distantes.
 \end{itemize}
 }
 \end{column}
 \end{columns}
-\vspace{0.35em}
-{\color{verdecla}\rule{\textwidth}{0.8pt}}
-\vspace{0.2em}
-\begin{columns}[T]
-\begin{column}{0.47\textwidth}
-{\footnotesize\textbf{\color{morado}Híbrido 1: fusión tardía}}
-{\tiny
-\setlength{\itemsep}{0.12em}
-\begin{itemize}
-  \item Los dos \emph{backbones} corren en paralelo sobre la misma imagen; sus salidas se proyectan a 512 y se concatenan.
-  \item Es el único modelo escrito a mano (\texttt{src/paltas/models.py}).
-\end{itemize}
-}
-\end{column}
-\begin{column}{0.47\textwidth}
-{\footnotesize\textbf{\color{morado}Híbrido 2: ViT-Hybrid R26+S/32}}
-{\tiny
-\setlength{\itemsep}{0.12em}
-\begin{itemize}
-  \item El híbrido del paper original de ViT: un \emph{stem} convolucional alimenta al transformer con su mapa de features.
-  \item Híbrido \emph{interno}, no una unión de dos redes.
-\end{itemize}
-}
-\end{column}
-\end{columns}
-\cierre{Los dos híbridos NO son equiparables a los baselines (2$\times$ cómputo uno, ImageNet-21k el otro). Van como referencia.}
+\cierre{Ninguna se programó desde cero: las dos vienen de \texttt{timm}, la biblioteca estándar de modelos de visión.}
 \end{frame}
 
-\begin{frame}{Diseño de la comparación}{Tres ejes igualados a la vez, no solo los parámetros}
+\begin{frame}{Por qué entrenan tan distinto}{Todo se explica por lo que cada red ya sabe antes de empezar}
+\caja[azul]{0.465\textwidth}{ResNet-50 trae dos reglas de fábrica}{{\scriptsize
+\setlength{\itemsep}{0.1em}
+\begin{itemize}
+  \item Lo que importa está \textbf{cerca}
+  \item \textbf{No importa} en qué parte de la foto esté
+\end{itemize}
+}
+\vspace{0.25em}
+{\tiny\color{grisSuave}\itshape Una mancha café es una mancha café, arriba o abajo de la fruta. Eso no lo aprende: ya lo trae.}}\hfill
+\caja[rojo]{0.465\textwidth}{ViT-S/16 no trae ninguna}{{\scriptsize
+\setlength{\itemsep}{0.1em}
+\begin{itemize}
+  \item Todos los cuadraditos le parecen \textbf{iguales}
+  \item Ni siquiera sabe cuáles son \textbf{vecinos}
+\end{itemize}
+}
+\vspace{0.25em}
+{\tiny\color{grisSuave}\itshape Tiene que deducir de los ejemplos hasta la noción de \guillemotleft{}al lado\guillemotright{}.}}
+\vspace{0.55em}
+{\tiny
+\setlength{\itemsep}{0.2em}
+\begin{itemize}
+  \item {\bfseries El ViT necesita muchísimos más ejemplos.}
+  \item La ResNet arranca sabiendo mirar imágenes; el ViT tiene que descubrir primero \emph{cómo} se mira una imagen, y recién después aprender de paltas.
+  \item {\bfseries Por eso los dos parten desde ImageNet.}
+  \item Antes de ver una sola palta ya vieron 1,3 millones de fotos de cosas cotidianas. Ahí el ViT compensa: llega con el oficio aprendido.
+  \item {\bfseries Y por eso el ViT es más delicado de entrenar.}
+  \item Entrenar es bajar un cerro a ciegas y el \emph{learning rate} es el tamaño del paso. La ResNet aguanta pasos grandes; el ViT se cae.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{Los dos híbridos}{Dos formas distintas de juntar ambas ideas}
+\begin{columns}[T]
+\begin{column}{0.47\textwidth}
+{\small\textbf{\color{morado}1. Fusión tardía}}
+{\scriptsize
+\setlength{\itemsep}{0.15em}
+\begin{itemize}
+  \item Las dos redes miran la misma foto por separado y al final se juntan sus dos opiniones para decidir.
+  \item Como pedir una segunda opinión médica.
+  \item Es el único modelo que escribimos nosotros (\texttt{src/paltas/models.py}).
+  \item {\bfseries Cuesta el doble: corre las dos redes enteras.}
+\end{itemize}
+}
+\end{column}
+\begin{column}{0.47\textwidth}
+{\small\textbf{\color{morado}2. ViT-Hybrid R26+S/32}}
+{\scriptsize
+\setlength{\itemsep}{0.15em}
+\begin{itemize}
+  \item Una sola red: la parte convolucional procesa la foto primero y le entrega el resultado al transformer.
+  \item En vez de dos opiniones, es una cadena de montaje.
+  \item Es la arquitectura del paper original de ViT.
+  \item {\bfseries Tiene ventaja: más parámetros y más pre-entrenamiento.}
+\end{itemize}
+}
+\end{column}
+\end{columns}
+\cierre{Ninguno de los dos es equiparable a los baselines, y hay que decirlo: van como referencia, no como competidores.}
+\end{frame}
+
+\begin{frame}{Cómo hacemos que la comparación sea justa}{Igualar tres cosas, no solo el tamaño}
 {\scriptsize
 \centering
 \begin{tabular}{lccc}
@@ -242,49 +292,46 @@ Pre-entrenamiento & ImageNet-1k & ImageNet-1k & ninguna \\
 {\scriptsize
 \setlength{\itemsep}{0.25em}
 \begin{itemize}
-  \item {\bfseries El tercer eje es el que casi nadie iguala, y el que más distorsiona.}
-  \item Los pesos ViT-S más usados de \texttt{timm} (\texttt{vit\_small\_patch16\_224.augreg\_in21k\_ft\_in1k}) vienen de \textbf{ImageNet-21k}: catorce veces más datos que los de la ResNet. Con esos pesos la comparación mediría el tamaño del corpus, no la arquitectura.
-  \item Por eso usamos \textbf{DeiT-S}: exactamente la arquitectura ViT-S/16, pero entrenada solo en ImageNet-1k, frente a \texttt{resnet50.a1\_in1k}.
+  \item {\bfseries Si una red es más grande y gana, no aprendimos nada: ganó por grande.}
+  \item Por eso igualamos el tamaño (parámetros), el trabajo que hace por foto (GFLOPs) y --- lo que casi nadie iguala --- \textbf{cuántas fotos vio antes}.
+  \item {\bfseries El tercer punto es el que más distorsiona.}
+  \item El ViT que usa todo el mundo viene entrenado con 14 millones de fotos; la ResNet, con 1,3 millones. Comparándolos así estaríamos midiendo quién estudió más, no qué arquitectura es mejor.
+  \item Usamos una versión del ViT llamada \textbf{DeiT-S}: es exactamente la misma red, pero entrenada con las mismas 1,3 millones de fotos que la ResNet. Ahí sí la comparación es limpia.
 \end{itemize}
 }
-\cierre{Comparar \guillemotleft{}una ResNet\guillemotright{} contra \guillemotleft{}un ViT\guillemotright{} sin igualar el presupuesto no dice nada: cualquier diferencia se explicaría por el tamaño.}
+\cierre{Como comparar dos atletas: sirve si entrenaron lo mismo y compiten en la misma categoría de peso.}
 \end{frame}
 
-\begin{frame}{La receta de entrenamiento}{Idéntica para ambas redes, salvo lo que tiene que cambiar}
+\begin{frame}{Cómo las entrenamos}{Todo igual para las dos, salvo lo que tiene que cambiar}
 \begin{columns}[T]
 \begin{column}{0.47\textwidth}
-{\small\textbf{Igual para las dos}}
-{\tiny
-\setlength{\itemsep}{0.15em}
+{\small\textbf{Idéntico para ambas}}
+{\scriptsize
+\setlength{\itemsep}{0.16em}
 \begin{itemize}
-  \item AdamW, schedule coseno con warmup
-  \item AMP fp16 (casi duplica la velocidad en la 4070)
-  \item Label smoothing 0{,}05
-  \item Pesos de clase inversos a la frecuencia
-  \item Recorte de gradiente a 1{,}0
-  \item Mismas aumentaciones y mismos datos
-  \item Checkpoint elegido por \textbf{QWK de validación}, no por accuracy
-  \item Early stopping a las 5 épocas sin mejora
+  \item Las mismas fotos, en el mismo orden
+  \item Las mismas deformaciones de las fotos
+  \item La misma cantidad de vueltas al dataset
+  \item El mismo criterio para elegir el mejor modelo
+  \item El mismo criterio para cortar el entrenamiento
 \end{itemize}
 }
 \end{column}
 \begin{column}{0.47\textwidth}
-{\small\textbf{Distinto en el ViT, y por qué}}
-{\tiny
-\setlength{\itemsep}{0.15em}
+{\small\textbf{Distinto en el ViT}}
+{\scriptsize
+\setlength{\itemsep}{0.16em}
 \begin{itemize}
-  \item {\bfseries Learning rate $3\times$ menor ($1$e-4 vs $3$e-4).}
-  \item Los transformers divergen con los LR que una ResNet con BatchNorm tolera sin problema.
-  \item {\bfseries Warmup más largo (2 épocas vs 1).}
-  \item Sin warmup, la atención colapsa en las primeras épocas.
-  \item {\bfseries \texttt{drop\_path} $=0{,}1$.}
-  \item \emph{Stochastic depth}, el regularizador estándar de los ViT.
+  \item {\bfseries Pasos 3 veces más chicos.}
+  \item Con pasos grandes el ViT se desestabiliza y deja de aprender.
+  \item {\bfseries Arranque más lento (\emph{warmup}).}
+  \item Las primeras vueltas van a media máquina para que no se rompa.
 \end{itemize}
 }
 \end{column}
 \end{columns}
-\vspace{0.3em}
-{\scriptsize\textbf{Aumentaciones de color deliberadamente suaves} (\texttt{hue=0.02} en vez de \texttt{0.1}): acá el color \emph{es} la etiqueta, y un \texttt{ColorJitter} estándar convertiría una clase 2 en una clase 4 sin cambiarle la etiqueta. Las geométricas sí son agresivas: recorte 0{,}65--1{,}0, volteo, rotación $\pm 20^{\circ}$.}
+\vspace{0.4em}
+{\scriptsize\textbf{Un detalle que suele hacerse mal:} en casi cualquier otra tarea conviene alterar mucho los colores de las fotos de entrenamiento, para que el modelo no dependa del color. Acá el color \emph{es} la respuesta: si alteramos mucho el tono, una palta clase 2 se vuelve idéntica a una clase 4 pero con la etiqueta vieja. Le estaríamos enseñando mal. Por eso el color casi no se toca; girar y recortar la foto, en cambio, sí.}
 \cierre{Igualar el learning rate \guillemotleft{}por justicia\guillemotright{} no sería más justo: sería solo peor para el ViT.}
 \end{frame}
 
@@ -341,33 +388,35 @@ Híbrido: fusión tardía & 46{,}4\,M & 16{,}7 & 0{,}941 & 76{,}7\,\% & 0{,}760 
 \end{columns}
 \end{frame}
 
-\begin{frame}{Por qué difieren (o no) ResNet y ViT}{La ablación sin pre-entrenamiento es la evidencia}
-{\scriptsize
-\centering
-\begin{tabular}{lccl}
-\toprule
-\rowcolor{verdeosc}\color{white}\bfseries  & \color{white}\bfseries ResNet-50 & \color{white}\bfseries ViT-S/16 & \color{white}\bfseries Lectura \\
-\midrule
-QWK con ImageNet-1k & 0{,}9356 & 0{,}9313 &  \\
-QWK desde cero & 0{,}9152 & 0{,}8891 &  \\
-$\Delta$ QWK sin pre-entren. & $-$0{,}0203 & $-$0{,}0422 & el ViT pierde 2{,}1$\times$ más \\
-$\Delta$ accuracy sin pre-entren. & $-$7{,}4\,pts & $-$11{,}0\,pts & el ViT pierde 1{,}5$\times$ más \\
-\bottomrule
-\end{tabular}
-}
-\vspace{0.5em}
-{\scriptsize
-\setlength{\itemsep}{0.2em}
+\begin{frame}{El experimento que lo demuestra}{Reentrenamos las dos redes SIN ImageNet, solo con las fotos de paltas}
+\begin{center}
+  \includegraphics[width=0.84\textwidth,height=3.6cm,keepaspectratio]{32-dependencia-pretraining}
+\end{center}
+\vspace{0.3em}
+{\tiny
+\setlength{\itemsep}{0.22em}
 \begin{itemize}
-  \item {\bfseries La ResNet trae el sesgo inductivo incorporado en la arquitectura.}
-  \item La convolución asume localidad y equivarianza a la traslación. Eso no hay que aprenderlo.
-  \item {\bfseries El ViT tiene que aprender ese sesgo de los datos.}
-  \item La auto-atención es global desde la primera capa y no asume nada sobre estructura espacial. Con 10.208 imágenes de 334 frutas no alcanza para descubrirlo desde cero; con ImageNet-1k detrás, sí.
-  \item {\bfseries Es un problema de textura local, no de forma global.}
-  \item El índice se lee en el color y las manchas de la cáscara, justo donde la convolución es fuerte. El campo receptivo global del ViT aporta poco.
+  \item {\bfseries El ViT pierde 2{,}1$\times$ más QWK y 1{,}5$\times$ más accuracy que la ResNet.}
+  \item Es lo que predice la idea de las \guillemotleft{}reglas de fábrica\guillemotright{}: la ResNet ya sabía mirar imágenes, el ViT tenía que aprenderlo, y 10.208 fotos de paltas no alcanzan para eso.
+  \item Las cuatro caídas son estadísticamente sólidas ($p<0{,}0001$), y cada red se compara contra \emph{su propia} versión con ImageNet.
 \end{itemize}
 }
-\cierre{Cada modelo comparado contra \emph{su propia} versión pre-entrenada. Las cuatro caídas son significativas ($p<0{,}0001$). El sesgo inductivo es un sustituto de datos.}
+\cierre{Con ImageNet las dos empatan. Sin ImageNet, no. La diferencia real entre ellas no es el techo, es cuántos datos necesitan para llegar.}
+\end{frame}
+
+\begin{frame}{Y hay una segunda razón}{Esta tarea juega en la cancha de la convolución}
+{\small
+\setlength{\itemsep}{0.3em}
+\begin{itemize}
+  \item {\bfseries El estado de madurez se lee en detalles pequeños y locales.}
+  \item El color de la cáscara, las manchas, el arrugamiento. Todo eso está repartido por la superficie de la fruta y se ve de cerca.
+  \item {\bfseries Justo lo que la ResNet hace bien con su lupa.}
+  \item La gran ventaja del ViT es relacionar zonas lejanas de una imagen. Acá no hay nada lejano que relacionar: todas las paltas tienen la misma forma, están centradas y sobre el mismo fondo.
+  \item {\bfseries Por eso el empate no es casualidad.}
+  \item En un problema donde importara la composición global de la escena, probablemente el ViT sacaría ventaja. En este, su superpoder no suma.
+\end{itemize}
+}
+\cierre{Conclusión honesta: no es que el ViT sea peor, es que este problema no le pide lo que él hace mejor.}
 \end{frame}
 
 \begin{frame}{Los híbridos}{\textquestiondown{}Suma combinar ambos enfoques?}

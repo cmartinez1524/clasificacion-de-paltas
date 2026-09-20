@@ -30,7 +30,7 @@ Proyecto paltas/
 │   ├── Avocado Ripening Dataset/                 ← 14.710 archivos .jpg de 800×800
 │   └── Avocado Ripening Dataset.xlsx             ← planilla con las etiquetas
 │
-├── src/paltas/        ← LA BIBLIOTECA. Toda la lógica vive acá. 13 módulos.
+├── src/paltas/        ← LA BIBLIOTECA. Toda la lógica vive acá. 14 módulos.
 ├── scripts/           ← LOS EJECUTABLES. Se corren desde la terminal, en orden.
 ├── configs/           ← 6 archivos YAML, uno por experimento. Los hiperparámetros.
 ├── app/               ← la demo interactiva (Gradio)
@@ -242,7 +242,8 @@ informe.
 | [`interpret.py`](src/paltas/interpret.py) | 170 | Grad-CAM y attention rollout | Muestra *dónde mira* cada red |
 | [`viz.py`](src/paltas/viz.py) | 47 | Colores y estilo común de figuras | Que todos los gráficos se vean igual |
 | [`deck.py`](src/paltas/deck.py) | 246 | Constructores de slides .pptx | Para no repetir código de layout en cada slide |
-| [`beamer.py`](src/paltas/beamer.py) | 210 | Constructores de slides LaTeX (Beamer) | Lo mismo para las versiones .tex. Valida que no se cuelen caracteres que LaTeX imprime mal |
+| [`beamer.py`](src/paltas/beamer.py) | 290 | Constructores de slides LaTeX (Beamer) | Lo mismo para las versiones .tex. Valida que no se cuelen caracteres que LaTeX imprime mal |
+| [`slides_comunes.py`](src/paltas/slides_comunes.py) | 70 | Las slides que explican las redes | Viven en un solo lugar para que el avance y la final expliquen lo mismo |
 | [`console.py`](src/paltas/console.py) | 19 | Fuerza UTF-8 en stdout | La consola de Windows es cp1252 y hacía caer los scripts al imprimir `Δ` |
 
 ### Detalle de `engine.py` — cómo se entrena
@@ -359,6 +360,7 @@ difíciles) se cancele.
 | `05_deck_avance.py` | Presentación de avance (.pptx) | `entregables/avance/` |
 | `06_deck_final.py` | Presentación final (.pptx) | `entregables/final/` |
 | `07_deck_latex.py` | Ambas presentaciones en Beamer (.tex + figuras) | `entregables/*/` |
+| `08_figuras_didacticas.py` | Figuras explicativas de las arquitecturas | `reports/figures/3*.png` |
 | `run_all.sh` | Corre **todo** lo anterior en orden | ~2 h |
 
 Notas sobre dos de ellos:

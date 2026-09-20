@@ -80,6 +80,19 @@
     \end{minipage}}%
   \end{minipage}%
 }
+% Caja con titulo y borde de color: para contraponer dos ideas lado a lado.
+% Se dibuja con LaTeX, no como imagen: una figura hecha de texto queda
+% ilegible en cuanto hay que reducirla para que entre en el slide.
+\newcommand{\caja}[4][verdeosc]{%
+  \begin{minipage}[t]{#2}%
+    \setlength{\fboxsep}{7pt}%
+    \fcolorbox{#1}{grisFondo}{\begin{minipage}[t]{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}%
+      {\small\bfseries\color{#1}#3}\\[0.45em]%
+      #4%
+      \vspace{0.2em}%
+    \end{minipage}}%
+  \end{minipage}%
+}
 \newcommand{\sig}{\textcolor{verdeosc}{\textbf{significativa}}}
 \newcommand{\nosig}{\textcolor{rojo}{\textbf{NO significativa}}}
 
@@ -89,7 +102,7 @@
 % Descomenta para imprimir con notas del orador:
 % \setbeameroption{show notes}
 
-\title{Clasificación de madurez de paltas Hass — Avance}
+\title{Clasificación de madurez de paltas Hass --- Avance}
 \author{Cristóbal Martínez}
 
 \begin{document}
@@ -180,47 +193,75 @@
 \end{column}
 \begin{column}{0.48\textwidth}
 \begin{center}
-  \includegraphics[width=\textwidth,height=3.1cm,keepaspectratio]{04-particiones}
+  \includegraphics[width=\textwidth,height=2.9cm,keepaspectratio]{04-particiones}
 \end{center}
 \end{column}
 \end{columns}
 \cierre{Estratificado por grupo de almacenamiento, con un \texttt{assert} en el código que falla si una fruta aparece en dos particiones.}
 \end{frame}
 
-\begin{frame}{Las redes que comparamos}{Qué es cada una y qué asume}
+\begin{frame}{Las dos redes, en una imagen}{La diferencia es CÓMO miran la foto}
+\begin{center}
+  \includegraphics[width=0.95\textwidth,height=4.25cm,keepaspectratio]{30-como-mira-cada-red}
+\end{center}
+\vspace{0.25em}
 \begin{columns}[T]
 \begin{column}{0.47\textwidth}
-{\small\textbf{\color{azul}ResNet-50} \;\textit{(convolucional, 2015)}}
-{\scriptsize
-\setlength{\itemsep}{0.18em}
+{\tiny
+\setlength{\itemsep}{0.12em}
 \begin{itemize}
-  \item Filtros pequeños que se deslizan por toda la imagen, apilados en 50 capas con conexiones residuales.
-  \item {\bfseries Trae un supuesto incorporado: localidad y equivarianza a la traslación.}
-  \item Una mancha café significa lo mismo esté donde esté sobre la fruta. Eso \emph{no hay que aprenderlo}: está en la arquitectura.
+  \item Va de a pedacitos y reutiliza el mismo detector en toda la foto \textit{(convolución)}.
+  \item Buena para detalles: manchas, arrugas, tono.
 \end{itemize}
 }
-\vspace{0.3em}
-{\scriptsize\color{grisSuave}\texttt{timm: resnet50.a1\_in1k}}
 \end{column}
 \begin{column}{0.47\textwidth}
-{\small\textbf{\color{rojo}ViT-S/16} \;\textit{(transformer, 2020)}}
-{\scriptsize
-\setlength{\itemsep}{0.18em}
+{\tiny
+\setlength{\itemsep}{0.12em}
 \begin{itemize}
-  \item Corta la imagen de $224\times224$ en 196 parches de $16\times16$ y los procesa con auto-atención.
-  \item Cada parche mira a todos los demás desde la primera capa; un token \texttt{CLS} resume la imagen.
-  \item {\bfseries No asume nada sobre estructura espacial.}
-  \item Tiene que aprender de los datos lo que la convolución trae gratis.
+  \item Parte la foto en 196 cuadraditos y los compara todos contra todos \textit{(auto-atención)}.
+  \item Buena para relacionar zonas distantes.
 \end{itemize}
 }
-\vspace{0.3em}
-{\scriptsize\color{grisSuave}\texttt{timm: deit\_small\_patch16\_224.fb\_in1k}}
 \end{column}
 \end{columns}
-\cierre{Ninguna se escribió desde cero: usamos \texttt{timm}, la biblioteca estándar de modelos de visión pre-entrenados.}
+\cierre{Ninguna se programó desde cero: las dos vienen de \texttt{timm}, la biblioteca estándar de modelos de visión.}
 \end{frame}
 
-\begin{frame}{Diseño de la comparación}{Tres ejes igualados a la vez, no solo los parámetros}
+\begin{frame}{Por qué entrenan tan distinto}{Todo se explica por lo que cada red ya sabe antes de empezar}
+\caja[azul]{0.465\textwidth}{ResNet-50 trae dos reglas de fábrica}{{\scriptsize
+\setlength{\itemsep}{0.1em}
+\begin{itemize}
+  \item Lo que importa está \textbf{cerca}
+  \item \textbf{No importa} en qué parte de la foto esté
+\end{itemize}
+}
+\vspace{0.25em}
+{\tiny\color{grisSuave}\itshape Una mancha café es una mancha café, arriba o abajo de la fruta. Eso no lo aprende: ya lo trae.}}\hfill
+\caja[rojo]{0.465\textwidth}{ViT-S/16 no trae ninguna}{{\scriptsize
+\setlength{\itemsep}{0.1em}
+\begin{itemize}
+  \item Todos los cuadraditos le parecen \textbf{iguales}
+  \item Ni siquiera sabe cuáles son \textbf{vecinos}
+\end{itemize}
+}
+\vspace{0.25em}
+{\tiny\color{grisSuave}\itshape Tiene que deducir de los ejemplos hasta la noción de \guillemotleft{}al lado\guillemotright{}.}}
+\vspace{0.55em}
+{\tiny
+\setlength{\itemsep}{0.2em}
+\begin{itemize}
+  \item {\bfseries El ViT necesita muchísimos más ejemplos.}
+  \item La ResNet arranca sabiendo mirar imágenes; el ViT tiene que descubrir primero \emph{cómo} se mira una imagen, y recién después aprender de paltas.
+  \item {\bfseries Por eso los dos parten desde ImageNet.}
+  \item Antes de ver una sola palta ya vieron 1,3 millones de fotos de cosas cotidianas. Ahí el ViT compensa: llega con el oficio aprendido.
+  \item {\bfseries Y por eso el ViT es más delicado de entrenar.}
+  \item Entrenar es bajar un cerro a ciegas y el \emph{learning rate} es el tamaño del paso. La ResNet aguanta pasos grandes; el ViT se cae.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{Cómo hacemos que la comparación sea justa}{Igualar tres cosas, no solo el tamaño}
 {\scriptsize
 \centering
 \begin{tabular}{lccc}
@@ -237,49 +278,46 @@ Pre-entrenamiento & ImageNet-1k & ImageNet-1k & ninguna \\
 {\scriptsize
 \setlength{\itemsep}{0.25em}
 \begin{itemize}
-  \item {\bfseries El tercer eje es el que casi nadie iguala, y el que más distorsiona.}
-  \item Los pesos ViT-S más usados de \texttt{timm} (\texttt{vit\_small\_patch16\_224.augreg\_in21k\_ft\_in1k}) vienen de \textbf{ImageNet-21k}: catorce veces más datos que los de la ResNet. Con esos pesos la comparación mediría el tamaño del corpus, no la arquitectura.
-  \item Por eso usamos \textbf{DeiT-S}: exactamente la arquitectura ViT-S/16, pero entrenada solo en ImageNet-1k, frente a \texttt{resnet50.a1\_in1k}.
+  \item {\bfseries Si una red es más grande y gana, no aprendimos nada: ganó por grande.}
+  \item Por eso igualamos el tamaño (parámetros), el trabajo que hace por foto (GFLOPs) y --- lo que casi nadie iguala --- \textbf{cuántas fotos vio antes}.
+  \item {\bfseries El tercer punto es el que más distorsiona.}
+  \item El ViT que usa todo el mundo viene entrenado con 14 millones de fotos; la ResNet, con 1,3 millones. Comparándolos así estaríamos midiendo quién estudió más, no qué arquitectura es mejor.
+  \item Usamos una versión del ViT llamada \textbf{DeiT-S}: es exactamente la misma red, pero entrenada con las mismas 1,3 millones de fotos que la ResNet. Ahí sí la comparación es limpia.
 \end{itemize}
 }
-\cierre{Comparar \guillemotleft{}una ResNet\guillemotright{} contra \guillemotleft{}un ViT\guillemotright{} sin igualar el presupuesto no dice nada: cualquier diferencia se explicaría por el tamaño.}
+\cierre{Como comparar dos atletas: sirve si entrenaron lo mismo y compiten en la misma categoría de peso.}
 \end{frame}
 
-\begin{frame}{La receta de entrenamiento}{Idéntica para ambas redes, salvo lo que tiene que cambiar}
+\begin{frame}{Cómo las entrenamos}{Todo igual para las dos, salvo lo que tiene que cambiar}
 \begin{columns}[T]
 \begin{column}{0.47\textwidth}
-{\small\textbf{Igual para las dos}}
-{\tiny
-\setlength{\itemsep}{0.15em}
+{\small\textbf{Idéntico para ambas}}
+{\scriptsize
+\setlength{\itemsep}{0.16em}
 \begin{itemize}
-  \item AdamW, schedule coseno con warmup
-  \item AMP fp16 (casi duplica la velocidad en la 4070)
-  \item Label smoothing 0{,}05
-  \item Pesos de clase inversos a la frecuencia
-  \item Recorte de gradiente a 1{,}0
-  \item Mismas aumentaciones y mismos datos
-  \item Checkpoint elegido por \textbf{QWK de validación}, no por accuracy
-  \item Early stopping a las 5 épocas sin mejora
+  \item Las mismas fotos, en el mismo orden
+  \item Las mismas deformaciones de las fotos
+  \item La misma cantidad de vueltas al dataset
+  \item El mismo criterio para elegir el mejor modelo
+  \item El mismo criterio para cortar el entrenamiento
 \end{itemize}
 }
 \end{column}
 \begin{column}{0.47\textwidth}
-{\small\textbf{Distinto en el ViT, y por qué}}
-{\tiny
-\setlength{\itemsep}{0.15em}
+{\small\textbf{Distinto en el ViT}}
+{\scriptsize
+\setlength{\itemsep}{0.16em}
 \begin{itemize}
-  \item {\bfseries Learning rate $3\times$ menor ($1$e-4 vs $3$e-4).}
-  \item Los transformers divergen con los LR que una ResNet con BatchNorm tolera sin problema.
-  \item {\bfseries Warmup más largo (2 épocas vs 1).}
-  \item Sin warmup, la atención colapsa en las primeras épocas.
-  \item {\bfseries \texttt{drop\_path} $=0{,}1$.}
-  \item \emph{Stochastic depth}, el regularizador estándar de los ViT.
+  \item {\bfseries Pasos 3 veces más chicos.}
+  \item Con pasos grandes el ViT se desestabiliza y deja de aprender.
+  \item {\bfseries Arranque más lento (\emph{warmup}).}
+  \item Las primeras vueltas van a media máquina para que no se rompa.
 \end{itemize}
 }
 \end{column}
 \end{columns}
-\vspace{0.3em}
-{\scriptsize\textbf{Aumentaciones de color deliberadamente suaves} (\texttt{hue=0.02} en vez de \texttt{0.1}): acá el color \emph{es} la etiqueta, y un \texttt{ColorJitter} estándar convertiría una clase 2 en una clase 4 sin cambiarle la etiqueta. Las geométricas sí son agresivas: recorte 0{,}65--1{,}0, volteo, rotación $\pm 20^{\circ}$.}
+\vspace{0.4em}
+{\scriptsize\textbf{Un detalle que suele hacerse mal:} en casi cualquier otra tarea conviene alterar mucho los colores de las fotos de entrenamiento, para que el modelo no dependa del color. Acá el color \emph{es} la respuesta: si alteramos mucho el tono, una palta clase 2 se vuelve idéntica a una clase 4 pero con la etiqueta vieja. Le estaríamos enseñando mal. Por eso el color casi no se toca; girar y recortar la foto, en cambio, sí.}
 \cierre{Igualar el learning rate \guillemotleft{}por justicia\guillemotright{} no sería más justo: sería solo peor para el ViT.}
 \end{frame}
 

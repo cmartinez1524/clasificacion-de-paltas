@@ -94,6 +94,19 @@ PREAMBULO = r"""% --------------------------------------------------------------
     \end{minipage}}%
   \end{minipage}%
 }
+% Caja con titulo y borde de color: para contraponer dos ideas lado a lado.
+% Se dibuja con LaTeX, no como imagen: una figura hecha de texto queda
+% ilegible en cuanto hay que reducirla para que entre en el slide.
+\newcommand{\caja}[4][verdeosc]{%
+  \begin{minipage}[t]{#2}%
+    \setlength{\fboxsep}{7pt}%
+    \fcolorbox{#1}{grisFondo}{\begin{minipage}[t]{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}%
+      {\small\bfseries\color{#1}#3}\\[0.45em]%
+      #4%
+      \vspace{0.2em}%
+    \end{minipage}}%
+  \end{minipage}%
+}
 \newcommand{\sig}{\textcolor{verdeosc}{\textbf{significativa}}}
 \newcommand{\nosig}{\textcolor{rojo}{\textbf{NO significativa}}}
 
@@ -183,6 +196,12 @@ def tabla(encabezados, filas, spec: str, tam: str = r"\small",
             + "\n\\bottomrule\n\\end{tabular}\n}")
 
 
+def cajas(pares, ancho: str = r"0.465\textwidth", sep: str = r"\hfill") -> str:
+    """Dos o mas cajas contrapuestas. Cada par: (color, titulo, contenido LaTeX)."""
+    return f"{sep}\n".join(rf"\caja[{c}]{{{ancho}}}{{{t}}}{{{cuerpo}}}"
+                           for c, t, cuerpo in pares)
+
+
 def kpis(tarjetas, ancho: str = "") -> str:
     """Fila de tarjetas KPI. Cada una: (etiqueta, valor, color).
 
@@ -229,6 +248,8 @@ CARACTERES_RIESGOSOS = {
     "‘": "`", "’": "'",
     "“": "``", "”": "''",
     "…": r"\ldots{}",
+    "—": "---",   # la raya no existe en las fuentes ec-*; LaTeX la compone con ---
+    "–": "--",
 }
 
 

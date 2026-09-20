@@ -34,6 +34,10 @@ from paltas.deck import (  # noqa: E402
 )
 from paltas.paths import FIGURES_DIR, METRICS_DIR, ROOT  # noqa: E402
 from paltas.console import use_utf8  # noqa: E402
+from paltas.slides_comunes import (  # noqa: E402
+    slide_como_miran,
+    slide_por_que_entrenan_distinto,
+)
 
 use_utf8()
 
@@ -124,6 +128,12 @@ def main() -> None:
            Inches(5.4), Inches(2.4))
     nota(s, "Estratificado por grupo de almacenamiento · assert en el código que falla "
             "si una fruta aparece en dos particiones.")
+
+    # --------------------------------------------- slides conceptuales
+    # Compartidas con la presentación final y espejo de los frames del
+    # generador Beamer: la explicación de las redes es una sola.
+    slide_como_miran(prs)
+    slide_por_que_entrenan_distinto(prs)
 
     # ------------------------------------------------------------------ 5
     s, y = slide_titulo(prs, "Diseño de la comparación",

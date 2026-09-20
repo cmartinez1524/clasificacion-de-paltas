@@ -33,6 +33,10 @@ from paltas.deck import (  # noqa: E402
 )
 from paltas.paths import FIGURES_DIR, METRICS_DIR, ROOT  # noqa: E402
 from paltas.console import use_utf8  # noqa: E402
+from paltas.slides_comunes import (  # noqa: E402
+    slide_como_miran,
+    slide_por_que_entrenan_distinto,
+)
 
 use_utf8()
 
@@ -127,6 +131,12 @@ def main() -> None:
         "inter-evaluador reportado: no conocemos el techo humano de esta tarea.",
     ], size=15)
     nota(s, "Detalle completo en la data card (entregables/final/data_card.md).")
+
+    # --------------------------------------------- slides conceptuales
+    # Compartidas con la presentación de avance y espejo de los frames del
+    # generador Beamer: la explicación de las redes es una sola.
+    slide_como_miran(prs)
+    slide_por_que_entrenan_distinto(prs)
 
     # ------------------------------------------------------------------ diseño
     s, y = slide_titulo(prs, "Diseño de la comparación",

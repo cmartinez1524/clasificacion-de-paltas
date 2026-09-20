@@ -224,6 +224,48 @@ def tarjeta(slide, x, y, w, h, titulo, valor, detalle="", color=VERDE):
               detalle, size=11, color=GRIS_CLARO)
 
 
+def caja_texto(slide, x, y, w, h, titulo, lineas, pie="", color=VERDE,
+               size=14, size_titulo=16):
+    """Caja con borde de color, un titulo y vinetas. Para contraponer dos ideas.
+
+    Equivale a `\\caja` del generador Beamer, para que las dos versiones de la
+    presentacion digan lo mismo y se vean parecidas.
+    """
+    caja = slide.shapes.add_shape(1, x, y, w, h)
+    caja.fill.solid()
+    caja.fill.fore_color.rgb = RGBColor(0xF6, 0xF7, 0xF4)
+    caja.line.color.rgb = color
+    caja.line.width = Pt(1.75)
+    caja.shadow.inherit = False
+    caja.text_frame.text = ""
+
+    _caja(slide, x + Inches(0.26), y + Inches(0.16), w - Inches(0.5), Inches(0.4),
+          titulo, size=size_titulo, bold=True, color=color)
+    tb = slide.shapes.add_textbox(x + Inches(0.26), y + Inches(0.66),
+                                  w - Inches(0.5), h - Inches(1.0))
+    tf = tb.text_frame
+    tf.word_wrap = True
+    for i, ln in enumerate(lineas):
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+        p.space_after = Pt(6)
+        punto = p.add_run()
+        punto.text = "▪  "
+        punto.font.size = Pt(size)
+        punto.font.color.rgb = color
+        punto.font.bold = True
+        r = p.add_run()
+        r.text = ln
+        r.font.size = Pt(size)
+        r.font.color.rgb = GRIS
+    if pie:
+        _caja(slide, x + Inches(0.26), y + h - Inches(0.92), w - Inches(0.5), Inches(0.8),
+              pie, size=11, color=GRIS_CLARO)
+        for p in slide.shapes[-1].text_frame.paragraphs:
+            for r in p.runs:
+                r.font.italic = True
+    return caja
+
+
 def nota(slide, texto, y=None, color=GRIS_CLARO, size=13):
     """Linea de cierre al pie del slide: el 'take-away'."""
     y = y or Inches(6.72)

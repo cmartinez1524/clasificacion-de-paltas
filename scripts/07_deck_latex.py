@@ -19,6 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from paltas.beamer import (  # noqa: E402
+    cajas,
     columnas,
     documento,
     figura,
@@ -120,65 +121,95 @@ def frame_problema(fecha_nota: str) -> str:
         nota=fecha_nota)
 
 
-def frame_redes(incluir_hibridos: bool) -> str:
-    """El frame que explica QUE redes se usaron y como funciona cada una.
+def frame_redes() -> str:
+    """Las dos arquitecturas explicadas con una imagen y una analogia.
 
-    Con los hibridos son cuatro arquitecturas en un slide, asi que el texto va
-    un punto mas chico y sin las lineas de \\texttt{timm}: si no, desborda.
+    Deliberadamente sin jerga: la figura hace el trabajo y el texto solo la
+    subtitula. Los nombres tecnicos (convolucion, auto-atencion) aparecen una
+    vez entre parentesis, para que queden asociados a algo concreto.
     """
-    tam = r"\tiny" if incluir_hibridos else r"\scriptsize"
-    enc = r"\footnotesize" if incluir_hibridos else r"\small"
-
-    izq = (rf"{{{enc}\textbf{{\color{{azul}}ResNet-50}} \;\textit{{(convolucional, 2015)}}}}"
-           + "\n" + items([
-               "Filtros pequeños que se deslizan por toda la imagen, apilados en "
-               "50 capas con conexiones residuales.",
-               ("Trae un supuesto incorporado: localidad y equivarianza a la "
-                "traslación.", True),
-               "Una mancha café significa lo mismo esté donde esté sobre la fruta. "
-               "Eso \\emph{no hay que aprenderlo}: está en la arquitectura.",
-           ], tam=tam, sep="0.18em"))
-    der = (rf"{{{enc}\textbf{{\color{{rojo}}ViT-S/16}} \;\textit{{(transformer, 2020)}}}}"
-           + "\n" + items([
-               "Corta la imagen de $224\\times224$ en 196 parches de $16\\times16$ "
-               "y los procesa con auto-atención.",
-               "Cada parche mira a todos los demás desde la primera capa; un token "
-               "\\texttt{CLS} resume la imagen.",
-               ("No asume nada sobre estructura espacial.", True),
-               "Tiene que aprender de los datos lo que la convolución trae gratis.",
-           ], tam=tam, sep="0.18em"))
-
-    if not incluir_hibridos:
-        izq += ("\n\\vspace{0.3em}\n"
-                + r"{\scriptsize\color{grisSuave}\texttt{timm: resnet50.a1\_in1k}}")
-        der += ("\n\\vspace{0.3em}\n"
-                + r"{\scriptsize\color{grisSuave}"
-                  r"\texttt{timm: deit\_small\_patch16\_224.fb\_in1k}}")
-
-    cuerpo = columnas(izq, der, "0.47", "0.47")
-    if incluir_hibridos:
-        cuerpo += "\n\\vspace{0.35em}\n" + r"{\color{verdecla}\rule{\textwidth}{0.8pt}}" + "\n"
-        cuerpo += "\\vspace{0.2em}\n" + columnas(
-            rf"{{{enc}\textbf{{\color{{morado}}Híbrido 1: fusión tardía}}}}" + "\n"
-            + items([
-                "Los dos \\emph{backbones} corren en paralelo sobre la misma imagen; "
-                "sus salidas se proyectan a 512 y se concatenan.",
-                "Es el único modelo escrito a mano (\\texttt{src/paltas/models.py}).",
-            ], tam=tam, sep="0.12em"),
-            rf"{{{enc}\textbf{{\color{{morado}}Híbrido 2: ViT-Hybrid R26+S/32}}}}" + "\n"
-            + items([
-                "El híbrido del paper original de ViT: un \\emph{stem} convolucional "
-                "alimenta al transformer con su mapa de features.",
-                "Híbrido \\emph{interno}, no una unión de dos redes.",
-            ], tam=tam, sep="0.12em"),
+    return frame(
+        "Las dos redes, en una imagen", "La diferencia es CÓMO miran la foto",
+        figura("30_como_mira_cada_red", r"0.95\textwidth", "4.25cm")
+        + "\n\\vspace{0.25em}\n"
+        + columnas(
+            items([
+                "Va de a pedacitos y reutiliza el mismo detector en toda la foto "
+                "\\textit{(convolución)}.",
+                "Buena para detalles: manchas, arrugas, tono.",
+            ], tam=r"\tiny", sep="0.12em"),
+            items([
+                "Parte la foto en 196 cuadraditos y los compara todos contra todos "
+                "\\textit{(auto-atención)}.",
+                "Buena para relacionar zonas distantes.",
+            ], tam=r"\tiny", sep="0.12em"),
             "0.47", "0.47")
-        cierre = (r"\cierre{Los dos híbridos NO son equiparables a los baselines "
-                  r"(2$\times$ cómputo uno, ImageNet-21k el otro). Van como referencia.}")
-    else:
-        cierre = (r"\cierre{Ninguna se escribió desde cero: usamos \texttt{timm}, "
-                  r"la biblioteca estándar de modelos de visión pre-entrenados.}")
-    return frame("Las redes que comparamos", "Qué es cada una y qué asume",
-                 cuerpo + "\n" + cierre)
+        + "\n" + r"\cierre{Ninguna se programó desde cero: las dos vienen de "
+                 r"\texttt{timm}, la biblioteca estándar de modelos de visión.}")
+
+
+def frame_por_que_entrenan_distinto() -> str:
+    """Por que uno depende tanto mas del pre-entrenamiento que el otro."""
+    return frame(
+        "Por qué entrenan tan distinto",
+        "Todo se explica por lo que cada red ya sabe antes de empezar",
+        cajas([
+            ("azul", "ResNet-50 trae dos reglas de fábrica",
+             items([
+                 "Lo que importa está \\textbf{cerca}",
+                 "\\textbf{No importa} en qué parte de la foto esté",
+             ], tam=r"\scriptsize", sep="0.1em")
+             + "\n\\vspace{0.25em}\n"
+             + r"{\tiny\color{grisSuave}\itshape Una mancha café es una mancha café, "
+               r"arriba o abajo de la fruta. Eso no lo aprende: ya lo trae.}"),
+            ("rojo", "ViT-S/16 no trae ninguna",
+             items([
+                 "Todos los cuadraditos le parecen \\textbf{iguales}",
+                 "Ni siquiera sabe cuáles son \\textbf{vecinos}",
+             ], tam=r"\scriptsize", sep="0.1em")
+             + "\n\\vspace{0.25em}\n"
+             + r"{\tiny\color{grisSuave}\itshape Tiene que deducir de los ejemplos hasta "
+               r"la noción de \guillemotleft{}al lado\guillemotright{}.}"),
+        ])
+        + "\n\\vspace{0.55em}\n"
+        + items([
+            ("El ViT necesita muchísimos más ejemplos.", True),
+            "La ResNet arranca sabiendo mirar imágenes; el ViT tiene que descubrir "
+            "primero \\emph{cómo} se mira una imagen, y recién después aprender de paltas.",
+            ("Por eso los dos parten desde ImageNet.", True),
+            "Antes de ver una sola palta ya vieron 1,3 millones de fotos de cosas "
+            "cotidianas. Ahí el ViT compensa: llega con el oficio aprendido.",
+            ("Y por eso el ViT es más delicado de entrenar.", True),
+            "Entrenar es bajar un cerro a ciegas y el \\emph{learning rate} es el tamaño "
+            "del paso. La ResNet aguanta pasos grandes; el ViT se cae.",
+        ], tam=r"\tiny", sep="0.2em"))
+
+
+def frame_hibridos_arquitectura() -> str:
+    """Que es cada hibrido, en criollo. Solo va en el deck final."""
+    return frame(
+        "Los dos híbridos", "Dos formas distintas de juntar ambas ideas",
+        columnas(
+            r"{\small\textbf{\color{morado}1. Fusión tardía}}" + "\n"
+            + items([
+                "Las dos redes miran la misma foto por separado y al final se juntan "
+                "sus dos opiniones para decidir.",
+                "Como pedir una segunda opinión médica.",
+                "Es el único modelo que escribimos nosotros "
+                "(\\texttt{src/paltas/models.py}).",
+                ("Cuesta el doble: corre las dos redes enteras.", True),
+            ], tam=r"\scriptsize", sep="0.15em"),
+            r"{\small\textbf{\color{morado}2. ViT-Hybrid R26+S/32}}" + "\n"
+            + items([
+                "Una sola red: la parte convolucional procesa la foto primero y le "
+                "entrega el resultado al transformer.",
+                "En vez de dos opiniones, es una cadena de montaje.",
+                "Es la arquitectura del paper original de ViT.",
+                ("Tiene ventaja: más parámetros y más pre-entrenamiento.", True),
+            ], tam=r"\scriptsize", sep="0.15em"),
+            "0.47", "0.47")
+        + "\n" + r"\cierre{Ninguno de los dos es equiparable a los baselines, y hay que "
+                 r"decirlo: van como referencia, no como competidores.}")
 
 
 def frame_comparabilidad(r: dict, v: dict) -> str:
@@ -193,51 +224,48 @@ def frame_comparabilidad(r: dict, v: dict) -> str:
          ["Pre-entrenamiento", "ImageNet-1k", "ImageNet-1k", "ninguna"]],
         spec="lccc", tam=r"\scriptsize")
     cuerpo = t + "\n\\vspace{0.5em}\n" + items([
-        ("El tercer eje es el que casi nadie iguala, y el que más distorsiona.", True),
-        "Los pesos ViT-S más usados de \\texttt{timm} "
-        "(\\texttt{vit\\_small\\_patch16\\_224.augreg\\_in21k\\_ft\\_in1k}) vienen de "
-        "\\textbf{ImageNet-21k}: catorce veces más datos que los de la ResNet. "
-        "Con esos pesos la comparación mediría el tamaño del corpus, no la arquitectura.",
-        "Por eso usamos \\textbf{DeiT-S}: exactamente la arquitectura ViT-S/16, pero "
-        "entrenada solo en ImageNet-1k, frente a \\texttt{resnet50.a1\\_in1k}.",
+        ("Si una red es más grande y gana, no aprendimos nada: ganó por grande.", True),
+        "Por eso igualamos el tamaño (parámetros), el trabajo que hace por foto "
+        "(GFLOPs) y --- lo que casi nadie iguala --- \\textbf{cuántas fotos vio antes}.",
+        ("El tercer punto es el que más distorsiona.", True),
+        "El ViT que usa todo el mundo viene entrenado con 14 millones de fotos; la "
+        "ResNet, con 1,3 millones. Comparándolos así estaríamos midiendo quién estudió "
+        "más, no qué arquitectura es mejor.",
+        "Usamos una versión del ViT llamada \\textbf{DeiT-S}: es exactamente la misma "
+        "red, pero entrenada con las mismas 1,3 millones de fotos que la ResNet. "
+        "Ahí sí la comparación es limpia.",
     ], tam=r"\scriptsize", sep="0.25em")
     return frame(
-        "Diseño de la comparación", "Tres ejes igualados a la vez, no solo los parámetros",
-        cuerpo + "\n" + r"\cierre{Comparar \guillemotleft{}una ResNet\guillemotright{} "
-                        r"contra \guillemotleft{}un ViT\guillemotright{} sin igualar el "
-                        r"presupuesto no dice nada: cualquier diferencia se explicaría "
-                        r"por el tamaño.}")
+        "Cómo hacemos que la comparación sea justa",
+        "Igualar tres cosas, no solo el tamaño",
+        cuerpo + "\n" + r"\cierre{Como comparar dos atletas: sirve si entrenaron lo mismo "
+                        r"y compiten en la misma categoría de peso.}")
 
 
 FRAME_RECETA = frame(
-    "La receta de entrenamiento", "Idéntica para ambas redes, salvo lo que tiene que cambiar",
+    "Cómo las entrenamos", "Todo igual para las dos, salvo lo que tiene que cambiar",
     columnas(
-        r"{\small\textbf{Igual para las dos}}" + "\n" + items([
-            "AdamW, schedule coseno con warmup",
-            "AMP fp16 (casi duplica la velocidad en la 4070)",
-            "Label smoothing 0{,}05",
-            "Pesos de clase inversos a la frecuencia",
-            "Recorte de gradiente a 1{,}0",
-            "Mismas aumentaciones y mismos datos",
-            "Checkpoint elegido por \\textbf{QWK de validación}, no por accuracy",
-            "Early stopping a las 5 épocas sin mejora",
-        ], tam=r"\tiny", sep="0.15em"),
-        r"{\small\textbf{Distinto en el ViT, y por qué}}" + "\n" + items([
-            ("Learning rate $3\\times$ menor ($1$e-4 vs $3$e-4).", True),
-            "Los transformers divergen con los LR que una ResNet con BatchNorm "
-            "tolera sin problema.",
-            ("Warmup más largo (2 épocas vs 1).", True),
-            "Sin warmup, la atención colapsa en las primeras épocas.",
-            ("\\texttt{drop\\_path} $=0{,}1$.", True),
-            "\\emph{Stochastic depth}, el regularizador estándar de los ViT.",
-        ], tam=r"\tiny", sep="0.15em"),
+        r"{\small\textbf{Idéntico para ambas}}" + "\n" + items([
+            "Las mismas fotos, en el mismo orden",
+            "Las mismas deformaciones de las fotos",
+            "La misma cantidad de vueltas al dataset",
+            "El mismo criterio para elegir el mejor modelo",
+            "El mismo criterio para cortar el entrenamiento",
+        ], tam=r"\scriptsize", sep="0.16em"),
+        r"{\small\textbf{Distinto en el ViT}}" + "\n" + items([
+            ("Pasos 3 veces más chicos.", True),
+            "Con pasos grandes el ViT se desestabiliza y deja de aprender.",
+            ("Arranque más lento (\\emph{warmup}).", True),
+            "Las primeras vueltas van a media máquina para que no se rompa.",
+        ], tam=r"\scriptsize", sep="0.16em"),
         "0.47", "0.47")
-    + "\n\\vspace{0.3em}\n"
-    + r"{\scriptsize\textbf{Aumentaciones de color deliberadamente suaves} "
-      r"(\texttt{hue=0.02} en vez de \texttt{0.1}): acá el color \emph{es} la etiqueta, "
-      r"y un \texttt{ColorJitter} estándar convertiría una clase 2 en una clase 4 sin "
-      r"cambiarle la etiqueta. Las geométricas sí son agresivas: recorte 0{,}65--1{,}0, "
-      r"volteo, rotación $\pm 20^{\circ}$.}"
+    + "\n\\vspace{0.4em}\n"
+    + r"{\scriptsize\textbf{Un detalle que suele hacerse mal:} en casi cualquier otra "
+      r"tarea conviene alterar mucho los colores de las fotos de entrenamiento, para que "
+      r"el modelo no dependa del color. Acá el color \emph{es} la respuesta: si alteramos "
+      r"mucho el tono, una palta clase 2 se vuelve idéntica a una clase 4 pero con la "
+      r"etiqueta vieja. Le estaríamos enseñando mal. Por eso el color casi no se toca; "
+      r"girar y recortar la foto, en cambio, sí.}"
     + "\n" + r"\cierre{Igualar el learning rate \guillemotleft{}por justicia"
              r"\guillemotright{} no sería más justo: "
              r"sería solo peor para el ViT.}")
@@ -344,13 +372,14 @@ def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
                 "Hay 6.871 pares de días consecutivos de la misma fruta.",
                 ("Partimos las 478 frutas, no las 14.710 imágenes.", True),
             ], tam=r"\scriptsize", sep="0.25em"),
-            figura("04_particiones", r"\textwidth", "3.1cm"),
+            figura("04_particiones", r"\textwidth", "2.9cm"),
             "0.48", "0.48")
         + "\n" + r"\cierre{Estratificado por grupo de almacenamiento, con un "
                  r"\texttt{assert} en el código que falla si una fruta aparece "
                  r"en dos particiones.}")
 
-    cuerpo += frame_redes(incluir_hibridos=False)
+    cuerpo += frame_redes()
+    cuerpo += frame_por_que_entrenan_distinto()
     cuerpo += frame_comparabilidad(r, v)
     cuerpo += FRAME_RECETA
 
@@ -468,7 +497,9 @@ def construir_final(res: dict, comp: dict | None,
         + "\n" + r"\cierre{Detalle completo en la data card "
                  r"(\texttt{entregables/final/data\_card.md}).}")
 
-    cuerpo += frame_redes(incluir_hibridos=True)
+    cuerpo += frame_redes()
+    cuerpo += frame_por_que_entrenan_distinto()
+    cuerpo += frame_hibridos_arquitectura()
     cuerpo += frame_comparabilidad(r, v)
     cuerpo += FRAME_RECETA
 
@@ -513,34 +544,41 @@ def construir_final(res: dict, comp: dict | None,
         d_v = v["test"]["qwk"] - vs["test"]["qwk"]
         a_r = r["test"]["accuracy"] - rs["test"]["accuracy"]
         a_v = v["test"]["accuracy"] - vs["test"]["accuracy"]
-        tab = tabla(
-            ["", "ResNet-50", "ViT-S/16", "Lectura"],
-            [["QWK con ImageNet-1k", num(r["test"]["qwk"], 4), num(v["test"]["qwk"], 4), ""],
-             ["QWK desde cero", num(rs["test"]["qwk"], 4), num(vs["test"]["qwk"], 4), ""],
-             ["$\\Delta$ QWK sin pre-entren.", signo(-d_r), signo(-d_v),
-              f"el ViT pierde {num(d_v / d_r, 1)}$\\times$ más"],
-             ["$\\Delta$ accuracy sin pre-entren.",
-              signo(-100 * a_r, 1) + "\\,pts", signo(-100 * a_v, 1) + "\\,pts",
-              f"el ViT pierde {num(a_v / a_r, 1)}$\\times$ más"]],
-            spec="lccl", tam=r"\scriptsize")
         cuerpo += frame(
-            "Por qué difieren (o no) ResNet y ViT",
-            "La ablación sin pre-entrenamiento es la evidencia",
-            tab + "\n\\vspace{0.5em}\n" + items([
-                ("La ResNet trae el sesgo inductivo incorporado en la arquitectura.", True),
-                "La convolución asume localidad y equivarianza a la traslación. "
-                "Eso no hay que aprenderlo.",
-                ("El ViT tiene que aprender ese sesgo de los datos.", True),
-                "La auto-atención es global desde la primera capa y no asume nada sobre "
-                "estructura espacial. Con 10.208 imágenes de 334 frutas no alcanza para "
-                "descubrirlo desde cero; con ImageNet-1k detrás, sí.",
-                ("Es un problema de textura local, no de forma global.", True),
-                "El índice se lee en el color y las manchas de la cáscara, justo donde la "
-                "convolución es fuerte. El campo receptivo global del ViT aporta poco.",
-            ], tam=r"\scriptsize", sep="0.2em")
-            + "\n" + r"\cierre{Cada modelo comparado contra \emph{su propia} versión "
-                     r"pre-entrenada. Las cuatro caídas son significativas ($p<0{,}0001$). "
-                     r"El sesgo inductivo es un sustituto de datos.}")
+            "El experimento que lo demuestra",
+            "Reentrenamos las dos redes SIN ImageNet, solo con las fotos de paltas",
+            figura("32_dependencia_pretraining", r"0.84\textwidth", "3.6cm")
+            + "\n\\vspace{0.3em}\n"
+            + items([
+                (f"El ViT pierde {num(d_v / d_r, 1)}$\\times$ más QWK y "
+                 f"{num(a_v / a_r, 1)}$\\times$ más accuracy que la ResNet.", True),
+                "Es lo que predice la idea de las \\guillemotleft{}reglas de "
+                "fábrica\\guillemotright{}: la ResNet ya sabía mirar imágenes, el ViT "
+                "tenía que aprenderlo, y 10.208 fotos de paltas no alcanzan para eso.",
+                "Las cuatro caídas son estadísticamente sólidas ($p<0{,}0001$), y cada "
+                "red se compara contra \\emph{su propia} versión con ImageNet.",
+            ], tam=r"\tiny", sep="0.22em")
+            + "\n" + r"\cierre{Con ImageNet las dos empatan. Sin ImageNet, no. "
+                     r"La diferencia real entre ellas no es el techo, es cuántos datos "
+                     r"necesitan para llegar.}")
+
+        cuerpo += frame(
+            "Y hay una segunda razón",
+            "Esta tarea juega en la cancha de la convolución",
+            items([
+                ("El estado de madurez se lee en detalles pequeños y locales.", True),
+                "El color de la cáscara, las manchas, el arrugamiento. Todo eso está "
+                "repartido por la superficie de la fruta y se ve de cerca.",
+                ("Justo lo que la ResNet hace bien con su lupa.", True),
+                "La gran ventaja del ViT es relacionar zonas lejanas de una imagen. Acá "
+                "no hay nada lejano que relacionar: todas las paltas tienen la misma "
+                "forma, están centradas y sobre el mismo fondo.",
+                ("Por eso el empate no es casualidad.", True),
+                "En un problema donde importara la composición global de la escena, "
+                "probablemente el ViT sacaría ventaja. En este, su superpoder no suma.",
+            ], tam=r"\small", sep="0.3em")
+            + "\n" + r"\cierre{Conclusión honesta: no es que el ViT sea peor, es que "
+                     r"este problema no le pide lo que él hace mejor.}")
 
     # --- híbridos ---
     hib = [k for k in ("hybrid_fusion", "hybrid_vit_r26") if res.get(k)]
@@ -685,7 +723,7 @@ def main() -> None:
         destino = ROOT / "entregables" / carpeta
         n_figs = copiar_figuras(cuerpo, destino / "figuras")
         tex = documento(
-            "", f"Clasificación de madurez de paltas Hass — {etiqueta}", AUTOR, cuerpo)
+            "", f"Clasificación de madurez de paltas Hass --- {etiqueta}", AUTOR, cuerpo)
         (destino / archivo).write_text(tex, encoding="utf-8")
         salidas.append((destino / archivo, cuerpo, n_figs))
 
