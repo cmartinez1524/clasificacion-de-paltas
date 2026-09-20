@@ -216,12 +216,15 @@ def frame_comparabilidad(r: dict, v: dict) -> str:
     dp = abs(r["params_M"] - v["params_M"]) / max(r["params_M"], v["params_M"]) * 100
     dg = abs(r["gflops"] - v["gflops"]) / max(r["gflops"], v["gflops"]) * 100
     t = tabla(
-        ["Eje igualado", "ResNet-50", "ViT-S/16 (DeiT-S)", "Diferencia"],
-        [["Parámetros", f"{num(r['params_M'], 2)}\\,M", f"{num(v['params_M'], 2)}\\,M",
+        ["Qué igualamos", "ResNet-50", "ViT-S/16", "Diferencia"],
+        [["Tamaño del \\guillemotleft{}cerebro\\guillemotright{} (conexiones)",
+          f"{num(r['params_M'], 1)} millones", f"{num(v['params_M'], 1)} millones",
           f"{num(dp, 1)}\\,\\%"],
-         ["GFLOPs @ 224\\,px", num(r["gflops"], 2), num(v["gflops"], 2),
+         ["Esfuerzo que hace por foto",
+          f"{num(r['gflops'], 1)} mil millones", f"{num(v['gflops'], 1)} mil millones",
           f"{num(dg, 1)}\\,\\%"],
-         ["Pre-entrenamiento", "ImageNet-1k", "ImageNet-1k", "ninguna"]],
+         ["Fotos que vio antes de empezar",
+          "1,3 millones", "1,3 millones", "ninguna"]],
         spec="lccc", tam=r"\scriptsize")
     cuerpo = t + "\n\\vspace{0.5em}\n" + items([
         ("Si una red es más grande y gana, no aprendimos nada: ganó por grande.", True),
@@ -252,11 +255,15 @@ FRAME_RECETA = frame(
             "El mismo criterio para elegir el mejor modelo",
             "El mismo criterio para cortar el entrenamiento",
         ], tam=r"\scriptsize", sep="0.16em"),
-        r"{\small\textbf{Distinto en el ViT}}" + "\n" + items([
-            ("Pasos 3 veces más chicos.", True),
-            "Con pasos grandes el ViT se desestabiliza y deja de aprender.",
-            ("Arranque más lento (\\emph{warmup}).", True),
-            "Las primeras vueltas van a media máquina para que no se rompa.",
+        r"{\small\textbf{Distinto en el ViT}}" + "\n"
+        + r"{\scriptsize\itshape Siguiendo con la imagen del cerro:}" + "\n"
+        + items([
+            ("Le pedimos pasos 3 veces más cortos.", True),
+            "Es el \\emph{learning rate}. Con pasos largos el ViT tropieza y "
+            "deja de aprender.",
+            ("Y que empiece a caminar más lento.", True),
+            "Es el \\emph{warmup}: las primeras vueltas van a media máquina "
+            "hasta que agarra el ritmo.",
         ], tam=r"\scriptsize", sep="0.16em"),
         "0.47", "0.47")
     + "\n\\vspace{0.4em}\n"
@@ -271,30 +278,161 @@ FRAME_RECETA = frame(
              r"sería solo peor para el ViT.}")
 
 
+FRAME_TRAMPA = frame(
+    "El riesgo de que la IA haga trampa",
+    "El error que habría inflado todos los resultados",
+    columnas(
+        items([
+            ("A cada palta le sacaron una foto por día, hasta 26 días seguidos.", True),
+            "La foto del día 5 y la del día 6 de la misma palta son casi idénticas: "
+            "misma piel, mismas manchas, misma forma.",
+            ("Si repartimos las fotos al azar, la trampa es inevitable.", True),
+            "El día 5 queda en el material de estudio y el día 6 en la prueba. "
+            "El modelo \\emph{reconoce esa palta} en vez de juzgar su madurez, "
+            "como un alumno que vio las respuestas antes del examen.",
+            "El resultado saldría altísimo y sería completamente falso.",
+            ("Por eso repartimos las 478 paltas, no las 14.710 fotos.", True),
+            "Todas las fotos de una misma palta van juntas: o están en el estudio, "
+            "o están en la prueba. Nunca en las dos.",
+        ], tam=r"\tiny", sep="0.2em"),
+        figura("04_particiones", r"\textwidth", "2.9cm"),
+        "0.52", "0.44")
+    + "\n" + r"\cierre{El código tiene un chequeo automático que falla si alguna "
+             r"palta llegara a aparecer en los dos lados.}")
+
+
 def frame_baseline(nombre: str, d: dict, color: str) -> str:
+    """Resultados de un baseline, con dos cifras grandes y el resto en letra chica.
+
+    El publico no es tecnico: cinco metricas del mismo tamano abruman y no
+    dicen nada. Van grandes las dos que se entienden sin explicacion previa
+    --cuanto se equivoca y por cuanto-- y el resto queda en una linea menor,
+    con el detalle completo en el anexo.
+    """
     t = d["test"]
-    k = kpis([("QWK (principal)", num(t["qwk"], 3), color),
-              ("Accuracy", pct(t["accuracy"]), color),
-              ("Acc. $\\pm$1 clase", pct(t["off_by_one"]), color),
-              ("MAE", num(t["mae"], 3), color),
-              ("Macro-F1", num(t["macro_f1"], 3), color)])
-    filas = [[GRUPO.get(g, g), str(int(x["n"])), pct(x["accuracy"]), num(x["mae"], 3)]
-             for g, x in d.get("test_por_grupo", {}).items()]
-    tg = tabla(["Grupo", "n", "Accuracy", "MAE"], filas,
-               spec="lccc", tam=r"\tiny")
-    der = items([
-        f"Los errores se concentran en clases adyacentes: {pct(t['off_by_one'])} "
-        "cae en la clase correcta o en una vecina.",
-        f"MAE de {num(t['mae'], 2)} escalones sobre una escala de 5.",
-        "Desempeño homogéneo entre grupos: el modelo \\textbf{no} está explotando "
-        "el sesgo \\guillemotleft{}verde $\\Rightarrow$ refrigerada\\guillemotright{}.",
-    ], tam=r"\tiny", sep="0.25em")
-    sub = (f"{num(d['params_M'], 2)}\\,M params, {num(d['gflops'], 2)} GFLOPs, "
-           f"{d['train_minutes']:.0f} min, mejor época {d['best_epoch']}")
+    grande = kpis([
+        ("Acierta, o se pasa por un solo escalón", pct(t["off_by_one"]), color),
+        ("Cuando se equivoca, se equivoca por", f"{num(t['mae'], 2)} escalones", color),
+    ], ancho=r"0.47\textwidth")
+    menores = (r"{\scriptsize\color{grisSuave}Acierta la clase exacta en el "
+               + pct(t["accuracy"])
+               + r" de las fotos \; \textbullet\; puntaje con castigo (QWK) "
+               + num(t["qwk"], 3)
+               + r" \; \textbullet\; Macro-F1 " + num(t["macro_f1"], 3) + r"}")
+    lectura = items([
+        ("Casi nunca se equivoca feo.", True),
+        f"En {pct(t['off_by_one'])} de las fotos dice la clase correcta o una "
+        "vecina. Confundir una palta verde con una podrida no le pasó nunca.",
+        ("Se equivoca por menos de medio escalón.", True),
+        f"{num(t['mae'], 2)} en una escala de 5 niveles: del orden de medio día "
+        "de maduración.",
+        ("Anda igual de bien en las tres temperaturas.", True),
+        "No está haciendo trampa con el atajo "
+        "\\guillemotleft{}verde $\\Rightarrow$ seguro venía del refrigerador"
+        "\\guillemotright{}.",
+    ], tam=r"\scriptsize", sep="0.22em")
+    sub = (f"Un cerebro de {num(d['params_M'], 1)} millones de conexiones, "
+           f"{d['train_minutes']:.0f} minutos de entrenamiento")
     return frame(
-        f"Baseline {nombre}", sub,
-        k + "\n\\vspace{0.4em}\n" + columnas(tg, der, "0.46", "0.50")
-        + "\n" + r"\cierre{Test: 2.262 imágenes de 72 frutas que ningún modelo vio.}")
+        f"Resultado: {nombre}", sub,
+        grande + "\n\\vspace{0.45em}\n" + menores + "\n\\vspace{0.6em}\n" + lectura
+        + "\n" + r"\cierre{Medido sobre 2.262 fotos de 72 paltas que el modelo "
+                 r"nunca había visto.}")
+
+
+def frame_empate(r: dict, v: dict, comp: dict | None) -> str:
+    """Las dos redes comparadas, sin jerga estadistica.
+
+    Los intervalos de confianza y los p-valores estan en el anexo y en el
+    informe. Aca solo la conclusion, que es la que le sirve a la audiencia.
+    """
+    puntos = [
+        ("Las dos rinden prácticamente igual.", True),
+        "La ResNet acierta la clase exacta un poco más seguido. Pero cuando el ViT "
+        "se equivoca, se equivoca por menos. Se compensa.",
+        "Hicimos la prueba estadística formal y la diferencia entre ambas no es "
+        "concluyente: para efectos prácticos, empatan.",
+    ]
+    if comp:
+        for _, dd in comp.get("desacuerdo", {}).items():
+            puntos += [
+                ("Pero no se equivocan en las mismas fotos.", True),
+                f"Fallan las dos a la vez en solo {pct(dd['ambos_fallan'])} de los "
+                f"casos. Si alguien pudiera elegir siempre cuál de las dos tiene "
+                f"razón, acertaría {pct(dd['oraculo_accuracy'])} en vez de "
+                f"{pct(max(r['test']['accuracy'], v['test']['accuracy']))}.",
+                "Eso es lo que van a intentar aprovechar los modelos híbridos.",
+            ]
+            break
+    return frame(
+        "ResNet-50 frente a ViT-S/16", "El resultado central del avance",
+        figura("33_matrices_didactica", r"0.86\textwidth", "3.6cm")
+        + "\n\\vspace{0.3em}\n" + items(puntos, tam=r"\tiny", sep="0.2em")
+        + "\n" + r"\cierre{Los números completos y las pruebas estadísticas están "
+                 r"en el anexo.}")
+
+
+def frames_anexo(modelos: list[str], res: dict, comp: dict | None) -> str:
+    """Anexo con el detalle que se saco del cuerpo de la presentacion.
+
+    No se borra: se mueve. La audiencia general no lo necesita, pero si alguien
+    del jurado pregunta por los intervalos de confianza o por el desglose por
+    temperatura, esta a una slide de distancia.
+    """
+    salida = seccion("A", "Anexo")
+
+    filas = []
+    for k in modelos:
+        d = res[k]
+        t = d["test"]
+        filas.append([ETIQUETA[k], f"{num(d['params_M'], 1)}\\,M", num(d["gflops"], 1),
+                      num(t["qwk"], 4), pct(t["accuracy"]), num(t["macro_f1"], 3),
+                      num(t["mae"], 3), pct(t["off_by_one"]),
+                      f"{d['train_minutes']:.0f}"])
+    salida += frame(
+        "Anexo: todas las métricas", "Test: 2.262 imágenes de 72 frutas nunca vistas",
+        tabla(["Modelo", "Params", "GFLOPs", "QWK", "Accuracy", "Macro-F1", "MAE",
+               "Acc. $\\pm$1", "min"], filas, spec="lcccccccc", tam=r"\scriptsize")
+        + "\n\\vspace{0.5em}\n"
+        + items([
+            "\\textbf{QWK}: kappa de Cohen con pesos cuadráticos. Penaliza el error "
+            "según el cuadrado de la distancia entre clases y corrige por acuerdo "
+            "azaroso. Es la métrica con la que elegimos el mejor modelo.",
+            "\\textbf{MAE}: error medio en escalones del índice de madurez.",
+            "\\textbf{Acc. $\\pm$1}: fracción de predicciones en la clase correcta "
+            "o una adyacente.",
+            "\\textbf{Macro-F1}: F1 promediado por clase; controla que las clases "
+            "minoritarias no queden abandonadas.",
+        ], tam=r"\tiny", sep="0.18em"))
+
+    if comp:
+        puntos = lineas_significancia(comp)
+        puntos.append(
+            "Los intervalos y los $p$-valores salen de un \\emph{bootstrap pareado "
+            "agrupado por fruta}: las 2.262 imágenes vienen de solo 72 paltas, así "
+            "que remuestrear imágenes daría intervalos artificialmente angostos. "
+            "Se remuestrean frutas, 2.000 réplicas.")
+        salida += frame(
+            "Anexo: pruebas estadísticas",
+            "Diferencias contra ResNet-50, con intervalo de confianza del 95\\,\\%",
+            items(puntos, tam=r"\scriptsize", sep="0.25em"))
+
+    # solo los modelos pre-entrenados: con los seis la tabla no entra en el slide
+    filas_g = []
+    for k in [m for m in modelos if "scratch" not in m]:
+        for g, x in res[k].get("test_por_grupo", {}).items():
+            filas_g.append([ETIQUETA[k], GRUPO.get(g, g), str(int(x["n"])),
+                            pct(x["accuracy"]), num(x["mae"], 3)])
+    if filas_g:
+        salida += frame(
+            "Anexo: desglose por temperatura de almacenamiento",
+            "Sirve para detectar si el modelo se apoya en un atajo",
+            tabla(["Modelo", "Grupo", "n", "Accuracy", "MAE"], filas_g,
+                  spec="llccc", tam=r"\tiny")
+            + "\n" + r"\cierre{Desempeño parejo entre grupos: el modelo no está "
+                     r"usando el atajo \guillemotleft{}verde $\Rightarrow$ "
+                     r"refrigerada\guillemotright{}.}")
+    return salida
 
 
 def lineas_significancia(comp: dict, solo=None) -> list:
@@ -313,29 +451,39 @@ def lineas_significancia(comp: dict, solo=None) -> list:
 
 FRAME_RIESGOS = frame(
     "Riesgos identificados y mitigación", "Concretos de este dataset, no genéricos",
-    tabla(["Riesgo", "Por qué es real acá", "Mitigación"],
-          [["Fuga longitudinal", "6.871 pares de días consecutivos de la misma fruta",
-            "Split por fruta + \\texttt{assert} automático"],
-           ["Domain gap lab.\\ $\\rightarrow$ terreno",
-            "Fondo blanco, fruta centrada, luz difusa controlada",
-            "Declarado en la data card; recolectar fotos de celular"],
-           ["Color $=$ señal, no ruido",
-            "Un \\texttt{ColorJitter} estándar vuelve una clase 2 en una clase 4",
-            "Jitter suave: \\texttt{hue} 0{,}02 en vez de 0{,}1"],
-           ["Sesgo T10 $\\Rightarrow$ clase 1",
-            "T10 aporta 60\\,\\% de las imágenes con 40\\,\\% de las frutas",
-            "Pesos de clase + métricas desglosadas por grupo"],
-           ["Etiquetas subjetivas", "Sin acuerdo inter-evaluador: techo humano desconocido",
-            "QWK y MAE en vez de accuracy; no perseguir 100\\,\\%"],
-           ["Ventaja oculta de pre-entren.",
-            "Los pesos ViT habituales vienen de ImageNet-21k",
-            "DeiT-S: ambos modelos solo ImageNet-1k"]],
-          spec=r">{\raggedright\arraybackslash}p{0.21\textwidth}"
-               r">{\raggedright\arraybackslash}p{0.37\textwidth}"
+    tabla(["Riesgo", "Por qué es real acá", "Qué hicimos"],
+          [["Que la IA haga trampa",
+            "Hay 6.871 pares de fotos casi idénticas de la misma palta",
+            "Repartir paltas, no fotos, con chequeo automático"],
+           ["El choque con la vida real",
+            "Las fotos son de laboratorio: fondo blanco, luz perfecta, una fruta "
+            "centrada. Un packing no se parece a eso",
+            "Lo declaramos como la limitación principal. Hay que salir a sacar "
+            "fotos con celular"],
+           ["Alterar el color arruinaría el aprendizaje",
+            "El color \\emph{es} la respuesta: si lo cambiamos, la etiqueta queda mal",
+            "Alteramos el color lo mínimo; giramos y recortamos sin problema"],
+           ["Una temperatura domina los datos",
+            "El grupo refrigerado aporta el 60\\,\\% de las fotos y casi todas las "
+            "paltas verdes",
+            "Compensamos en el entrenamiento y revisamos el resultado temperatura "
+            "por temperatura"],
+           ["Nadie sabe cuál es el techo",
+            "Las etiquetas las puso una persona mirando; no hay una segunda opinión "
+            "con qué contrastar",
+            "Usamos métricas que perdonan el error de un escalón y no perseguimos "
+            "el 100\\,\\%"],
+           ["Darle ventaja a una de las dos redes",
+            "El ViT que se usa por defecto vino entrenado con 14 millones de fotos, "
+            "no 1,3",
+            "Elegimos la versión del ViT que vio exactamente las mismas fotos que "
+            "la ResNet"]],
+          spec=r">{\raggedright\arraybackslash}p{0.20\textwidth}"
+               r">{\raggedright\arraybackslash}p{0.38\textwidth}"
                r">{\raggedright\arraybackslash}p{0.34\textwidth}",
-          tam=r"\scriptsize")
-    + "\n" + r"\cierre{El domain gap es el riesgo que decide si esto sirve en un packing "
-             r"o solo en un paper.}")
+          tam=r"\tiny")
+    + "\n" + r"\cierre{El choque con la vida real es el riesgo que decide si esto "
+             r"sirve en una planta empacadora o solo en un informe.}")
 
 
 # --------------------------------------------------------------------------- #
@@ -358,25 +506,7 @@ def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
         + "\n" + r"\cierre{Xavier, Rodrigues \& Silva (2024), DOI 10.17632/3xd9n945v8.1. "
                  r"Etiquetado visual experto, sin acuerdo inter-evaluador reportado.}")
 
-    cuerpo += frame(
-        "El riesgo que define el proyecto", "Fuga de datos longitudinal",
-        columnas(
-            items([
-                ("La misma palta fue fotografiada a diario durante hasta 26 días.", True),
-                "Dos fotos consecutivas de la fruta \\#173 son casi idénticas: "
-                "misma piel, mismas manchas, misma forma.",
-                ("Un split aleatorio por imagen pondría el día 5 en train y el "
-                 "día 6 en test.", True),
-                "El modelo reconocería la fruta, no el estado de madurez. "
-                "La métrica sería alta y completamente falsa.",
-                "Hay 6.871 pares de días consecutivos de la misma fruta.",
-                ("Partimos las 478 frutas, no las 14.710 imágenes.", True),
-            ], tam=r"\scriptsize", sep="0.25em"),
-            figura("04_particiones", r"\textwidth", "2.9cm"),
-            "0.48", "0.48")
-        + "\n" + r"\cierre{Estratificado por grupo de almacenamiento, con un "
-                 r"\texttt{assert} en el código que falla si una fruta aparece "
-                 r"en dos particiones.}")
+    cuerpo += FRAME_TRAMPA
 
     cuerpo += frame_redes()
     cuerpo += frame_por_que_entrenan_distinto()
@@ -387,42 +517,7 @@ def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
     cuerpo += frame_baseline("ResNet-50", r, "azul")
     cuerpo += frame_baseline("ViT-S/16", v, "rojo")
 
-    filas = []
-    for nom, d in (("ResNet-50", r), ("ViT-S/16", v)):
-        t = d["test"]
-        filas.append([nom, f"{num(d['params_M'], 1)}\\,M", num(d["gflops"], 1),
-                      num(t["qwk"], 3), pct(t["accuracy"]), num(t["macro_f1"], 3),
-                      num(t["mae"], 3), pct(t["off_by_one"])])
-    mejor = 0 if r["test"]["qwk"] >= v["test"]["qwk"] else 1
-    tcomp = tabla(["Modelo", "Params", "GFLOPs", "QWK", "Accuracy", "Macro-F1",
-                   "MAE", "Acc. $\\pm$1"], filas, spec="lccccccc", tam=r"\scriptsize",
-                  destacar=mejor)
-
-    puntos = lineas_significancia(comp) if comp else []
-    if comp:
-        for _, dd in comp.get("desacuerdo", {}).items():
-            puntos.append(
-                f"Un oráculo que eligiera siempre el modelo correcto llegaría a "
-                f"{pct(dd['oraculo_accuracy'])} de accuracy, frente a "
-                f"{pct(max(r['test']['accuracy'], v['test']['accuracy']))} del mejor "
-                f"modelo individual: hay complementariedad que explotar.")
-            puntos.append(f"Ambos modelos fallan a la vez en solo "
-                          f"{pct(dd['ambos_fallan'])} de las imágenes.")
-            break
-    puntos.append("Las 2.262 imágenes de test vienen de solo 72 frutas: asumir "
-                  "independencia entre imágenes daría intervalos artificialmente angostos, "
-                  "por eso el bootstrap remuestrea \\emph{frutas}.")
-
-    cuerpo += frame(
-        "ResNet-50 frente a ViT-S/16",
-        "Intervalos por bootstrap agrupado por fruta, no por imagen",
-        tcomp + "\n\\vspace{0.4em}\n"
-        + columnas(items(puntos, tam=r"\tiny", sep="0.25em"),
-                   figura("10_matrices_confusion_avance", r"\textwidth", "3.0cm"),
-                   "0.50", "0.46")
-        + "\n" + r"\cierre{La ResNet acierta la clase exacta más seguido; el ViT se "
-                 r"equivoca por menos distancia. Sobre QWK, que pondera el error por "
-                 r"distancia, empatan.}")
+    cuerpo += frame_empate(r, v, comp)
 
     cuerpo += frame(
         "Curvas de entrenamiento", "Misma receta, convergencia distinta",
@@ -441,20 +536,23 @@ def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
         "Qué viene para el entregable final",
         "Lo que falta para noviembre",
         items([
-            ("Ablación sin pre-entrenamiento.", True),
-            "Los mismos dos modelos entrenados desde cero. Es la evidencia empírica "
-            "propia de por qué ResNet y ViT difieren: el transformer no tiene sesgo "
-            "inductivo de localidad y tiene que aprenderlo de los datos.",
-            ("Dos modelos híbridos.", True),
-            "Fusión tardía de los dos backbones ya afinados, y el ViT-Hybrid R26+S/32 "
-            "del paper original de ViT.",
-            ("Interpretabilidad comparada.", True),
-            "Grad-CAM sobre la ResNet y attention rollout sobre el ViT, en los casos "
-            "donde los dos modelos discrepan.",
-            ("Demo funcional en Gradio y decisión explícita de velocidad frente a "
-             "precisión.", True),
-        ], tam=r"\small")
+            ("Desarmar el modelo para ver qué pieza importa.", True),
+            "Reentrenar las dos redes sin ImageNet, solo con las fotos de paltas. "
+            "Debería mostrar que el ViT depende mucho más de haber estudiado antes.",
+            ("Dos formas de juntar ambas redes en una.", True),
+            "Una que las hace opinar por separado y combina las dos respuestas; otra "
+            "que las encadena, con la parte convolucional alimentando a la otra.",
+            ("Ver dónde mira cada red.", True),
+            "Pintar sobre la foto las zonas que cada modelo usó para decidir, "
+            "sobre todo en los casos donde las dos discrepan.",
+            ("Una demo que funcione: subir una foto y ver la respuesta.", True),
+            ("Y una recomendación explícita: cuál llevaríamos a una planta real, "
+             "pesando precisión contra costo.", True),
+        ], tam=r"\scriptsize", sep="0.25em")
         + "\n" + rf"\cierre{{Repositorio: {REPO}}}")
+
+    cuerpo += frames_anexo(["resnet50", "vit_small"],
+                           {"resnet50": r, "vit_small": v}, comp)
 
     return cuerpo
 
@@ -481,18 +579,19 @@ def construir_final(res: dict, comp: dict | None,
         kpis([("Imágenes", "14.710", "verdeosc"), ("Frutas", "478", "azul"),
               ("Train/val/test", "334/72/72", "morado"), ("Licencia", "CC BY 4.0", "rojo")])
         + "\n\\vspace{0.6em}\n" + items([
-            ("Fuga longitudinal: resuelta.", True),
-            "6.871 pares de días consecutivos de la misma fruta. Partimos frutas, no "
-            "imágenes, con un \\texttt{assert} que falla si una fruta aparece en dos "
-            "particiones.",
-            ("Domain gap laboratorio $\\rightarrow$ terreno: no resuelta, declarada.", True),
-            "Fondo blanco uniforme, una sola fruta centrada, iluminación difusa "
-            "controlada, distancia fija. Una foto de celular en una feria está fuera "
-            "de distribución. Es la limitación que decide si esto sirve en un packing "
-            "o solo en un paper.",
-            ("Un lote, una cosecha, un cultivar, etiquetas subjetivas.", True),
-            "478 frutas portuguesas de 2022, solo Hass, etiquetado visual sin acuerdo "
-            "inter-evaluador reportado: no conocemos el techo humano de esta tarea.",
+            ("Que la IA hiciera trampa: resuelto.", True),
+            "Hay 6.871 pares de fotos casi idénticas de la misma palta en días "
+            "seguidos. Repartimos las 478 paltas, no las 14.710 fotos, con un "
+            "chequeo automático que falla si alguna aparece en los dos lados.",
+            ("El choque con la vida real: no resuelto, declarado.", True),
+            "Son fotos de laboratorio: fondo blanco, una sola fruta centrada, luz "
+            "pareja, siempre a la misma distancia. Una foto de celular en una feria "
+            "no se parece en nada. Es la limitación que decide si esto sirve en una "
+            "planta empacadora o solo en un informe.",
+            ("Un solo lote, una sola cosecha, una sola variedad.", True),
+            "478 paltas portuguesas de 2022, todas Hass. Y las etiquetas las puso "
+            "una persona mirando, sin una segunda opinión con qué contrastar: no "
+            "sabemos cuánto acertaría un experto humano en esta misma tarea.",
         ], tam=r"\scriptsize", sep="0.2em")
         + "\n" + r"\cierre{Detalle completo en la data card "
                  r"(\texttt{entregables/final/data\_card.md}).}")
@@ -513,29 +612,41 @@ def construir_final(res: dict, comp: dict | None,
                       num(t["qwk"], 3), pct(t["accuracy"]), num(t["macro_f1"], 3),
                       num(t["mae"], 3), pct(t["off_by_one"]), f"{d['train_minutes']:.0f}"])
     mejor = max(range(len(disponibles)), key=lambda i: res[disponibles[i]]["test"]["qwk"])
+    # Version simplificada: tres columnas que se entienden sin explicacion.
+    # La tabla completa con las seis metricas esta en el anexo.
+    filas_simple = []
+    for k in disponibles:
+        t = res[k]["test"]
+        filas_simple.append([
+            ETIQUETA[k],
+            pct(t["off_by_one"]),
+            f"{num(t['mae'], 2)} escalones",
+            pct(t["accuracy"]),
+        ])
     cuerpo += frame(
-        "Tabla comparativa completa",
-        "Test: 2.262 imágenes de 72 frutas nunca vistas",
-        tabla(["Modelo", "Params", "GFLOPs", "QWK", "Accuracy", "Macro-F1", "MAE",
-               "Acc. $\\pm$1", "min"], filas, spec="lcccccccc", tam=r"\scriptsize",
-              destacar=mejor)
-        + "\n" + r"\cierre{Fila destacada: mejor QWK. El ViT-Hybrid R26 usa pesos de "
-                 r"ImageNet-21k y más parámetros: es cota superior de referencia, "
-                 r"no competidor equiparable.}")
+        "Todos los modelos, lado a lado",
+        "Medido sobre 2.262 fotos de 72 paltas que ningún modelo había visto",
+        # el encabezado largo va en una columna de ancho fijo para que envuelva
+        # solo: un \\ dentro de la celda cerraria la fila
+        tabla(["Modelo", "Acierta o se pasa por un escalón",
+               "Error promedio", "Clase exacta"],
+              filas_simple,
+              spec=r"l >{\centering\arraybackslash}p{0.20\textwidth} "
+                   r">{\centering\arraybackslash}p{0.17\textwidth} c",
+              tam=r"\scriptsize", destacar=mejor)
+        + "\n\\vspace{0.6em}\n"
+        + items([
+            ("Todos los modelos con pre-entrenamiento están sobre el 99\\,\\%.", True),
+            "La diferencia entre ellos es de décimas. Los dos que aparecen abajo son "
+            "los entrenados desde cero, y se nota.",
+            ("El renglón que importa es el del medio.", True),
+            "Menos de medio escalón de error promedio significa, en la práctica, "
+            "medio día de maduración.",
+        ], tam=r"\scriptsize", sep="0.22em")
+        + "\n" + r"\cierre{La tabla completa, con las seis métricas técnicas, está "
+                 r"en el anexo.}")
 
-    puntos = lineas_significancia(comp) if comp else []
-    puntos += [
-        "Todas las matrices son bandeadas: los errores de distancia $\\geq 2$ son casi "
-        "inexistentes. Ningún modelo confunde una palta verde con una sobremadura.",
-        "El cuello de botella son las clases intermedias (2, 3 y 4), donde la frontera "
-        "es un corte continuo y las etiquetas son más subjetivas.",
-    ]
-    cuerpo += frame(
-        "ResNet frente a ViT: la comparación, no solo el número final",
-        "Todas las diferencias contra ResNet-50, bootstrap pareado agrupado por fruta",
-        columnas(figura("10_matrices_confusion_final", r"\textwidth", "5.0cm"),
-                 items(puntos, tam=r"\tiny", sep="0.25em"),
-                 "0.50", "0.46"))
+    cuerpo += frame_empate(r, v, comp)
 
     # --- ablación ---
     rs, vs = res.get("resnet50_scratch"), res.get("vit_small_scratch")
@@ -614,21 +725,23 @@ def construir_final(res: dict, comp: dict | None,
                        "0.52", "0.44"))
 
     cuerpo += frame(
-        "Dónde mira cada arquitectura",
-        "Grad-CAM en la ResNet, attention rollout en el ViT",
+        "\\textquestiondown{}En qué se fijó el modelo para decidir?",
+        "Pintamos sobre la foto las zonas que más pesaron en la respuesta",
         columnas(figura("20_interpretabilidad_desacuerdo", r"\textwidth", "5.4cm"),
                  items([
-                     "No usamos la misma técnica en ambos a propósito: Grad-CAM necesita "
-                     "un mapa de activaciones con estructura espacial, y en un ViT ese "
-                     "mapa es una secuencia de tokens que produce resultados ruidosos.",
-                     "Attention rollout acumula las matrices de atención de todas las "
-                     "capas para estimar cuánto aporta cada parche al token \\texttt{CLS}.",
-                     ("La ResNet se activa sobre texturas locales: manchas, arrugas, "
-                      "zonas oscuras.", True),
-                     ("El ViT reparte la atención sobre regiones más extensas.", True),
-                     "En varios casos de desacuerdo, el Grad-CAM de la ResNet se activa "
-                     "sobre el \\emph{fondo}, fuera de la fruta, y son justamente esos "
-                     "los casos en que se equivoca.",
+                     "Rojo = la zona que más influyó en la decisión; azul = la que "
+                     "casi no se usó.",
+                     "Cada red se abre con una técnica distinta, porque por dentro "
+                     "funcionan distinto. Las dos responden la misma pregunta.",
+                     ("La ResNet se concentra en puntos chicos: una mancha, una "
+                      "arruga, una zona oscura.", True),
+                     ("El ViT reparte la mirada por áreas más grandes de la "
+                      "cáscara.", True),
+                     ("Un hallazgo incómodo y honesto:", True),
+                     "En varios de los casos en que las dos redes discrepan, la "
+                     "ResNet está mirando el \\emph{fondo}, fuera de la fruta. Y son "
+                     "justamente esos los casos en que se equivoca. Sin esta figura "
+                     "no lo habríamos notado.",
                  ], tam=r"\tiny", sep="0.25em"),
                  "0.30", "0.66"))
 
@@ -636,48 +749,50 @@ def construir_final(res: dict, comp: dict | None,
     candidatos = [k for k in disponibles if "scratch" not in k]
     base_gf, base_q = r["gflops"], r["test"]["qwk"]
     ver = {
-        "resnet50": "Referencia. La recomendación operativa.",
-        "vit_small": "Empata en QWK al mismo costo y converge $2\\times$ más rápido.",
-        "hybrid_fusion": "Mejora real pero marginal por $2\\times$ de cómputo.",
-        "hybrid_vit_r26": "Mejor QWK y más barato, pero con ventaja de ImageNet-21k.",
+        "resnet50": "La que recomendamos. Es la referencia.",
+        "vit_small": "Empata, cuesta lo mismo y se entrena en la mitad del tiempo.",
+        "hybrid_fusion": "Mejora poquito y cuesta el doble. No lo vale.",
+        "hybrid_vit_r26": "Mejor y más barato, pero estudió con más fotos: no es "
+                          "comparación limpia.",
     }
     filas = []
     for k in candidatos:
         d = res[k]
-        filas.append([ETIQUETA[k], num(d["test"]["qwk"], 4),
-                      "---" if k == "resnet50" else signo(d["test"]["qwk"] - base_q),
-                      num(d["gflops"], 2), num(d["gflops"] / base_gf, 2) + "$\\times$",
+        filas.append([ETIQUETA[k], pct(d["test"]["off_by_one"]),
+                      num(d["gflops"] / base_gf, 2) + r"$\times$",
                       ver.get(k, "")])
     cuerpo += frame(
-        "Decisión: velocidad frente a precisión",
-        "Qué modelo llevaríamos a una línea de empaque",
-        tabla(["Modelo", "QWK", "$\\Delta$ QWK", "GFLOPs", "Costo rel.", "Veredicto"],
+        "\\textquestiondown{}Cuál llevaríamos a una planta empacadora?",
+        "No gana el más preciso: gana el que rinde mejor por lo que cuesta",
+        tabla(["Modelo", "Acierta o se pasa por uno", "Cuesta", "Veredicto"],
               filas,
-              spec=r"l cccc >{\raggedright\arraybackslash}p{0.34\textwidth}",
+              spec=r"l >{\centering\arraybackslash}p{0.15\textwidth} c "
+                   r">{\raggedright\arraybackslash}p{0.36\textwidth}",
               tam=r"\tiny", destacar=candidatos.index("resnet50"))
-        + "\n\\vspace{0.4em}\n" + items([
-            ("El criterio no es el QWK máximo, es el QWK por unidad de cómputo.", True),
-            "En un packing la inferencia corre sobre miles de frutas por hora, "
-            "probablemente en un equipo sin GPU dedicada.",
-            "Una diferencia de QWK que no es estadísticamente significativa no justifica "
-            "duplicar el cómputo: si los intervalos se solapan, gana el modelo más barato.",
-            "Con accuracy $\\pm$1 clase por sobre el 99\\,\\%, el error residual está "
-            "dentro del ruido de etiquetado humano. Optimizar más el modelo no es donde "
-            "está el retorno; cerrar el domain gap sí.",
-        ], tam=r"\tiny", sep="0.25em"))
+        + "\n\\vspace{0.5em}\n" + items([
+            ("En una planta hay que clasificar miles de paltas por hora.", True),
+            "Probablemente en un computador común, sin tarjeta gráfica potente. "
+            "Ahí el costo de cada foto importa tanto como el acierto.",
+            ("Si dos modelos empatan, gana el más barato.", True),
+            "Duplicar el costo para ganar unas décimas no se justifica.",
+            ("Y ya estamos en el techo de lo exigible.", True),
+            "Con más del 99\\,\\% de aciertos dentro de un escalón, lo que queda de "
+            "error probablemente también lo cometería una persona.",
+        ], tam=r"\scriptsize", sep="0.22em"))
 
     cuerpo += frame(
-        "Demo", "Gradio, casos nuevos del conjunto de test",
+        "Demo", "Subir una foto y ver qué responde el modelo",
         items([
-            ("Selección de modelo, distribución de probabilidad sobre las 5 clases y "
-             "recomendación operativa.", True),
-            "Muestra además el mapa de atención del modelo: la demo no es una caja negra.",
-            "Reporta el índice esperado (promedio ponderado), más informativo que el "
-            "\\texttt{argmax} cuando el modelo duda entre estados adyacentes.",
-            "Avisa explícitamente cuando la confianza es baja y conviene revisión humana.",
-            ("Los ejemplos precargados salen solo del conjunto de test: son frutas que "
-             "ningún modelo vio durante el entrenamiento.", True),
-            "Advierte en pantalla sobre el domain gap.",
+            ("Se elige el modelo, se sube la foto y aparece la respuesta.", True),
+            "Muestra qué tan seguro está de cada uno de los 5 estados, y qué hacer "
+            "con esa palta: dejarla madurar, venderla hoy o descartarla.",
+            ("Muestra también dónde miró para decidir.", True),
+            "No es una caja negra: se ve pintada sobre la foto la zona que usó.",
+            ("Avisa cuando no está seguro.", True),
+            "Si duda entre dos estados vecinos lo dice, en vez de responder con "
+            "falsa confianza. Ahí conviene que mire una persona.",
+            ("Los ejemplos que trae cargados son paltas que ningún modelo vio nunca.", True),
+            "Y advierte en pantalla que fue entrenado con fotos de laboratorio.",
         ], tam=r"\small")
         + "\n" + r"\cierre{\texttt{python app/gradio\_app.py} $\rightarrow$ "
                  r"\texttt{http://localhost:7860}}")
@@ -686,20 +801,24 @@ def construir_final(res: dict, comp: dict | None,
         "Conclusiones y trabajo futuro",
         "Qué aprendimos y qué sigue",
         items([
-            ("Con presupuesto y pre-entrenamiento equiparados, las dos arquitecturas "
-             "resuelven esta tarea a un nivel comparable.", True),
-            "La diferencia relevante no está entre CNN y transformer, sino entre tener o "
-            "no tener pre-entrenamiento: ahí sí se separan, y de forma asimétrica.",
-            ("El techo de esta tarea lo pone el etiquetado, no la arquitectura.", True),
-            "Sin acuerdo inter-evaluador reportado no sabemos cuánto del error residual "
-            "es del modelo y cuánto es ruido de la etiqueta.",
-            ("Trabajo futuro, en orden de retorno esperado:", True),
-            "1) Recolectar fotos de celular en condiciones reales chilenas y medir la "
-            "caída. 2) Pérdida ordinal explícita (CORAL) en vez de entropía cruzada plana. "
-            "3) Predicción de vida útil restante en días, que es la pregunta que de verdad "
-            "importa en la cadena de frío.",
-        ], tam=r"\small")
+            ("Con el mismo tamaño y el mismo estudio previo, las dos redes resuelven "
+             "esto igual de bien.", True),
+            "La pregunta interesante no era cuál gana, sino en qué se diferencian. "
+            "Y la diferencia no está en el techo que alcanzan: está en cuántos datos "
+            "necesitan para llegar.",
+            ("El límite de esta tarea lo pone quien etiquetó las fotos, no la red.", True),
+            "Como nadie revisó esas etiquetas dos veces, no sabemos cuánto del error "
+            "que queda es del modelo y cuánto es desacuerdo entre humanos.",
+            ("Qué haríamos ahora, en orden de importancia:", True),
+            "1) Salir a sacar fotos con celular en un packing chileno y medir cuánto "
+            "cae. 2) Enseñarle explícitamente que las clases están ordenadas, cosa que "
+            "hoy solo se le pide al evaluar. 3) Predecir directamente cuántos días de "
+            "vida le quedan a la palta, que es lo que de verdad necesita la cadena "
+            "de frío.",
+        ], tam=r"\scriptsize", sep="0.28em")
         + "\n" + rf"\cierre{{{REPO}}}")
+
+    cuerpo += frames_anexo(disponibles, res, comp)
 
     return cuerpo
 

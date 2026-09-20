@@ -266,6 +266,18 @@ def validar_tex(tex: str) -> None:
         detalle = ", ".join(f"{c!r} -> usa {cmd}" for c, cmd in encontrados.items())
         raise ValueError(f"Caracteres que no imprimen bien en LaTeX: {detalle}")
 
+    # Un tabulador en el .tex casi siempre significa que en el generador se
+    # escribio "\textbf" en vez de "\\textbf" dentro de una cadena no-raw:
+    # Python lo interpreta como \t y el comando LaTeX se pierde. LaTeX no
+    # protesta --el tabulador es espacio en blanco-- y el error solo se ve en
+    # el PDF, con el nombre del comando impreso a medias.
+    if "\t" in tex:
+        alrededor = [ln.strip()[:70] for ln in tex.split("\n") if "\t" in ln]
+        raise ValueError(
+            "Hay un tabulador en el LaTeX generado. Casi seguro es un comando mal "
+            "escapado (\\t...) en una cadena no-raw de Python. Lineas: "
+            + "; ".join(alrededor[:3]))
+
 
 def documento(preambulo_extra: str, titulo_pdf: str, autor: str, cuerpo: str) -> str:
     validar_tex(cuerpo + titulo_pdf + autor)

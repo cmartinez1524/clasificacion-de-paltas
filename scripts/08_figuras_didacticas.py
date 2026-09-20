@@ -198,11 +198,74 @@ def fig_dependencia_pretraining() -> None:
     save(fig, FIGURES_DIR / "32_dependencia_pretraining.png")
 
 
+def fig_matrices_didactica() -> None:
+    """Las matrices de confusion, pero legibles para alguien que nunca vio una.
+
+    La version tecnica (compare_models.py) muestra las seis matrices sin
+    anotaciones. Esta muestra solo las dos principales y encierra la franja
+    diagonal +/-1 para que se vea de un golpe que los errores graves no existen.
+    """
+    datos = {}
+    for n in ("resnet50", "vit_small"):
+        p = METRICS_DIR / f"{n}_test.json"
+        if not p.exists():
+            print(f"  [aviso] falta {p.name}; omito la figura de matrices")
+            return
+        datos[n] = json.loads(p.read_text(encoding="utf-8"))["test"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(11, 5.0))
+    for ax, (clave, nombre, color) in zip(axes, [("resnet50", "ResNet-50", AZUL),
+                                                 ("vit_small", "ViT-S/16", ROJO)]):
+        cm = np.array(datos[clave]["confusion_matrix"], dtype=float)
+        cmn = cm / cm.sum(1, keepdims=True)
+        ax.imshow(cmn, cmap="Blues", vmin=0, vmax=1)
+        for i in range(5):
+            for j in range(5):
+                if cmn[i, j] > 0.005:
+                    ax.text(j, i, f"{cmn[i, j]*100:.0f}", ha="center", va="center",
+                            fontsize=10, color="white" if cmn[i, j] > 0.55 else "#222")
+
+        # contorno de la franja diagonal +/-1: donde caen los errores leves
+        for i in range(5):
+            for j in range(5):
+                if abs(i - j) <= 1:
+                    ax.add_patch(mpatches.Rectangle(
+                        (j - 0.5, i - 0.5), 1, 1, fill=False,
+                        edgecolor="#1a7f37", lw=2.4, zorder=4))
+        # esquinas: los errores graves
+        for (i, j) in [(0, 4), (4, 0)]:
+            ax.add_patch(mpatches.Rectangle((j - 0.5, i - 0.5), 1, 1, fill=False,
+                                            edgecolor="#b3261e", lw=2.2,
+                                            linestyle="--", zorder=4))
+
+        ax.set_xticks(range(5), range(1, 6))
+        ax.set_yticks(range(5), range(1, 6))
+        ax.set_xlabel("Lo que dijo el modelo")
+        ax.set_ylabel("Lo que la palta era en realidad")
+        pm1 = datos[clave]["off_by_one"]
+        ax.set_title(f"{nombre}\nacierta o se pasa por uno: {100*pm1:.1f} %".replace(".", ","),
+                     color=color, fontsize=12, fontweight="bold")
+        ax.grid(False)
+
+    # leyenda al pie y no sobre las celdas: dentro de la matriz tapaba los numeros
+    fig.text(0.5, 0.045,
+             "marco verde: acertó o se pasó por un solo escalón",
+             ha="center", va="center", fontsize=10.5, color="#1a7f37", fontweight="bold")
+    fig.text(0.5, 0.005,
+             "recuadro rojo punteado: confundir una palta verde con una podrida "
+             "— cero casos en las dos redes",
+             ha="center", va="center", fontsize=10.5, color="#b3261e", fontweight="bold")
+
+    fig.subplots_adjust(wspace=0.28, top=0.86, bottom=0.17)
+    save(fig, FIGURES_DIR / "33_matrices_didactica.png")
+
+
 def main() -> None:
     ensure_dirs()
     set_style()
     fig_como_mira_cada_red()
     fig_dependencia_pretraining()
+    fig_matrices_didactica()
     print("Listo.")
 
 
