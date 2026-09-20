@@ -208,6 +208,14 @@ python scripts/compare_models.py --models resnet50 vit_small --tag avance
 python scripts/04_interpretability.py --mode disagreement
 ```
 
+### Regenerar las presentaciones
+
+```bash
+python scripts/05_deck_avance.py   # .pptx del avance
+python scripts/06_deck_final.py    # .pptx del final
+python scripts/07_deck_latex.py    # ambas en LaTeX (Beamer) + sus figuras
+```
+
 ### Demo
 
 ```bash
@@ -230,8 +238,11 @@ son frutas que ningún modelo vio durante el entrenamiento.
 │   ├── metrics.py           # métricas ordinales (QWK, MAE, off-by-one)
 │   ├── compare.py           # bootstrap agrupado y pareado, tabla de desacuerdo
 │   ├── interpret.py         # Grad-CAM y attention rollout
-│   └── viz.py               # estilo común de figuras
-├── scripts/                 # 00..04 + train.py + compare_models.py
+│   ├── viz.py               # estilo común de figuras
+│   ├── deck.py              # constructor de slides .pptx
+│   ├── beamer.py            # constructor de slides LaTeX (Beamer)
+│   └── console.py           # salida UTF-8 en consolas Windows
+├── scripts/                 # 00..07 + train.py + compare_models.py
 ├── app/gradio_app.py        # demo
 ├── entregables/
 │   ├── avance/              # presentación de avance
@@ -263,10 +274,11 @@ y pesos iniciales, no bit a bit.
 
 | Entregable | Ubicación |
 |---|---|
-| Presentación de avance | [`entregables/avance/`](entregables/avance/) |
+| Guía del proyecto (cómo está hecho) | [`GUIA_DEL_PROYECTO.md`](GUIA_DEL_PROYECTO.md) |
+| Presentación de avance (.pdf, .tex, .pptx) | [`entregables/avance/`](entregables/avance/) |
 | Data card | [`entregables/final/data_card.md`](entregables/final/data_card.md) |
 | Informe técnico | [`entregables/final/informe_tecnico.md`](entregables/final/informe_tecnico.md) |
-| Presentación final | [`entregables/final/`](entregables/final/) |
+| Presentación final (.pdf, .tex, .pptx) | [`entregables/final/`](entregables/final/) |
 | Demo | [`app/gradio_app.py`](app/gradio_app.py) |
 
 ## 9. Cita

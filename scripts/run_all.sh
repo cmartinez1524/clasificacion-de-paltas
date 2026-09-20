@@ -30,5 +30,6 @@ python scripts/compare_models.py \
 python scripts/04_interpretability.py --mode disagreement
 python scripts/05_deck_avance.py
 python scripts/06_deck_final.py
+python scripts/07_deck_latex.py
 
 echo "Listo. Demo:  python app/gradio_app.py"

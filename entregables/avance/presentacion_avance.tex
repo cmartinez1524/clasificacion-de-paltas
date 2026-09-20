@@ -1,0 +1,451 @@
+% ---------------------------------------------------------------------------
+%  GENERADO AUTOMATICAMENTE por scripts/07_deck_latex.py
+%  Las cifras provienen de reports/metrics/*.json. Si reentrenas un modelo,
+%  regenera este archivo en vez de editar los numeros a mano:
+%      python scripts/07_deck_latex.py
+%  (Igual puedes editarlo a mano: es LaTeX normal.)
+% ---------------------------------------------------------------------------
+\documentclass[aspectratio=169,11pt,table]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{textcomp}
+\usepackage{amssymb}
+
+\graphicspath{{figuras/}}
+
+% --- Paleta del proyecto ---------------------------------------------------
+\definecolor{verdeosc}{HTML}{2E6B2F}
+\definecolor{verdecla}{HTML}{8FB339}
+\definecolor{grisTexto}{HTML}{444A52}
+\definecolor{grisSuave}{HTML}{8A9098}
+\definecolor{grisFondo}{HTML}{F6F7F4}
+\definecolor{azul}{HTML}{1F6FB2}
+\definecolor{rojo}{HTML}{D1495B}
+\definecolor{morado}{HTML}{6A4C93}
+
+% --- Tema ------------------------------------------------------------------
+\usetheme{default}
+\usefonttheme{professionalfonts}
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{structure}{fg=verdeosc}
+\setbeamercolor{normal text}{fg=grisTexto}
+\setbeamercolor{frametitle}{fg=verdeosc}
+\setbeamercolor{itemize item}{fg=verdecla}
+\setbeamercolor{itemize subitem}{fg=verdecla}
+\setbeamerfont{frametitle}{size=\Large,series=\bfseries}
+\setbeamerfont{framesubtitle}{size=\scriptsize}
+\setbeamertemplate{itemize item}{\raisebox{0.15ex}{\tiny$\blacksquare$}}
+\setbeamertemplate{itemize subitem}{\raisebox{0.15ex}{\tiny$\square$}}
+
+% Usa \par + \vspace en vez de \\ a proposito: con un subtitulo vacio, un \\
+% despues de un grupo vacio provoca "There's no line here to end".
+\setbeamertemplate{frametitle}{%
+  \vspace*{0.35em}%
+  \begin{beamercolorbox}[wd=\paperwidth,leftskip=0.7cm,rightskip=0.7cm]{frametitle}%
+    \setlength{\parskip}{0pt}\setlength{\parindent}{0pt}%
+    {\usebeamerfont{frametitle}\insertframetitle}\par
+    {\usebeamerfont{framesubtitle}\color{grisSuave}\insertframesubtitle}\par
+    \vspace{0.2em}%
+    {\color{verdecla}\rule{1.7em}{2pt}}%
+  \end{beamercolorbox}%
+}
+
+\setbeamertemplate{footline}{%
+  \hfill{\tiny\color{grisSuave}\insertframenumber\,/\,\inserttotalframenumber}%
+  \hspace{0.7cm}\vspace{0.25cm}%
+}
+
+% --- Atajos ----------------------------------------------------------------
+% Linea de cierre al pie de un slide: el "take-away".
+\newcommand{\cierre}[1]{%
+  \vfill
+  {\color{verdecla}\rule{2.5pt}{0.9em}}\hspace{0.4em}%
+  {\footnotesize\color{grisSuave}#1}%
+}
+% Tarjeta tipo KPI: un numero grande con etiqueta.
+\newcommand{\kpi}[4][verdeosc]{%
+  \begin{minipage}[t]{#2}%
+    \setlength{\fboxsep}{6pt}%
+    \colorbox{grisFondo}{\begin{minipage}[t]{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}%
+      {\tiny\color{grisSuave}\bfseries #3}\\[0.12em]%
+      % \large y no \Large: con cinco tarjetas en una fila, un valor como
+      % "99,2 %" en \Large desborda la caja.
+      {\large\bfseries\color{#1}#4}%
+    \end{minipage}}%
+  \end{minipage}%
+}
+\newcommand{\sig}{\textcolor{verdeosc}{\textbf{significativa}}}
+\newcommand{\nosig}{\textcolor{rojo}{\textbf{NO significativa}}}
+
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{5pt}
+
+% Descomenta para imprimir con notas del orador:
+% \setbeameroption{show notes}
+
+\title{Clasificación de madurez de paltas Hass — Avance}
+\author{Cristóbal Martínez}
+
+\begin{document}
+
+{
+\setbeamercolor{background canvas}{bg=verdeosc}
+\begin{frame}[plain]
+  \vspace{1.4cm}
+  % linespread: a \Huge el interlineado por defecto deja los descendentes de una
+  % linea tocando la siguiente.
+  {\color{white}\Huge\bfseries\linespread{1.15}\selectfont Clasificación del estado de\\madurez de paltas Hass}
+
+  \vspace{0.55cm}
+  {\color{verdecla}\rule{\textwidth}{1.6pt}}
+
+  \vspace{0.55cm}
+  {\color{white!85!verdecla}\large ResNet-50 frente a ViT-S/16 con presupuesto equiparado}
+
+  \vfill
+  {\color{white!70!verdecla}\small Cristóbal Martínez \quad\textbullet\quad Avance, 28 de septiembre de 2026}
+
+  \vspace{0.2em}
+  {\color{white!60!verdecla}\footnotesize 14.710 fotografías, 478 frutas, índice de madurez de 5 niveles}
+  \vspace{0.6cm}
+\end{frame}
+}
+
+\begin{frame}{El problema}{Por qué importa acá y no solo en el paper}
+\begin{columns}[T]
+\begin{column}{0.58\textwidth}
+{\scriptsize
+\setlength{\itemsep}{0.3em}
+\begin{itemize}
+  \item {\bfseries Chile es uno de los mayores exportadores de palta Hass del mundo.}
+  \item La clasificación por madurez se hace hoy a ojo y al tacto, operario por operario, sin criterio homogéneo ni trazabilidad.
+  \item Fruta verde en góndola: el consumidor la descarta. Fruta pasada en tránsito: pérdida total. Los dos errores cuestan.
+  \item {\bfseries La tarea es \emph{ordinal}, no categórica: $1<2<3<4<5$.}
+  \item Confundir un 1 con un 2 es un error de un día. Confundir un 1 con un 5 es mandar fruta podrida a la venta.
+\end{itemize}
+}
+\end{column}
+\begin{column}{0.38\textwidth}
+{\tiny
+\centering
+\begin{tabular}{cll}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Índ. & \color{white}\bfseries Estado & \color{white}\bfseries Decisión \\
+\midrule
+1 & Verde & Dejar madurar \\
+2 & Iniciando & Lista en 2--3 días \\
+3 & Maduro I & Venta inmediata \\
+4 & Maduro II & Último día \\
+5 & Sobremaduro & Fuera de punto \\
+\bottomrule
+\end{tabular}
+}
+\end{column}
+\end{columns}
+\cierre{La métrica tiene que castigar más los errores lejanos. La accuracy plana no lo hace: por eso usamos QWK.}
+\end{frame}
+
+\begin{frame}{Los datos}{Hass Avocado Ripening Photographic Dataset, Mendeley, CC BY 4.0}
+\kpi[verdeosc]{0.224\textwidth}{Imágenes}{14.710}\hfill
+\kpi[azul]{0.224\textwidth}{Frutas}{478}\hfill
+\kpi[morado]{0.224\textwidth}{Clases}{5}\hfill
+\kpi[rojo]{0.224\textwidth}{Grupos}{3}
+\vspace{0.4em}
+\begin{center}
+  \includegraphics[width=0.84\textwidth,height=3.2cm,keepaspectratio]{01-distribucion-clases}
+\end{center}
+\cierre{Xavier, Rodrigues \& Silva (2024), DOI 10.17632/3xd9n945v8.1. Etiquetado visual experto, sin acuerdo inter-evaluador reportado.}
+\end{frame}
+
+\begin{frame}{El riesgo que define el proyecto}{Fuga de datos longitudinal}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+{\scriptsize
+\setlength{\itemsep}{0.25em}
+\begin{itemize}
+  \item {\bfseries La misma palta fue fotografiada a diario durante hasta 26 días.}
+  \item Dos fotos consecutivas de la fruta \#173 son casi idénticas: misma piel, mismas manchas, misma forma.
+  \item {\bfseries Un split aleatorio por imagen pondría el día 5 en train y el día 6 en test.}
+  \item El modelo reconocería la fruta, no el estado de madurez. La métrica sería alta y completamente falsa.
+  \item Hay 6.871 pares de días consecutivos de la misma fruta.
+  \item {\bfseries Partimos las 478 frutas, no las 14.710 imágenes.}
+\end{itemize}
+}
+\end{column}
+\begin{column}{0.48\textwidth}
+\begin{center}
+  \includegraphics[width=\textwidth,height=3.1cm,keepaspectratio]{04-particiones}
+\end{center}
+\end{column}
+\end{columns}
+\cierre{Estratificado por grupo de almacenamiento, con un \texttt{assert} en el código que falla si una fruta aparece en dos particiones.}
+\end{frame}
+
+\begin{frame}{Las redes que comparamos}{Qué es cada una y qué asume}
+\begin{columns}[T]
+\begin{column}{0.47\textwidth}
+{\small\textbf{\color{azul}ResNet-50} \;\textit{(convolucional, 2015)}}
+{\scriptsize
+\setlength{\itemsep}{0.18em}
+\begin{itemize}
+  \item Filtros pequeños que se deslizan por toda la imagen, apilados en 50 capas con conexiones residuales.
+  \item {\bfseries Trae un supuesto incorporado: localidad y equivarianza a la traslación.}
+  \item Una mancha café significa lo mismo esté donde esté sobre la fruta. Eso \emph{no hay que aprenderlo}: está en la arquitectura.
+\end{itemize}
+}
+\vspace{0.3em}
+{\scriptsize\color{grisSuave}\texttt{timm: resnet50.a1\_in1k}}
+\end{column}
+\begin{column}{0.47\textwidth}
+{\small\textbf{\color{rojo}ViT-S/16} \;\textit{(transformer, 2020)}}
+{\scriptsize
+\setlength{\itemsep}{0.18em}
+\begin{itemize}
+  \item Corta la imagen de $224\times224$ en 196 parches de $16\times16$ y los procesa con auto-atención.
+  \item Cada parche mira a todos los demás desde la primera capa; un token \texttt{CLS} resume la imagen.
+  \item {\bfseries No asume nada sobre estructura espacial.}
+  \item Tiene que aprender de los datos lo que la convolución trae gratis.
+\end{itemize}
+}
+\vspace{0.3em}
+{\scriptsize\color{grisSuave}\texttt{timm: deit\_small\_patch16\_224.fb\_in1k}}
+\end{column}
+\end{columns}
+\cierre{Ninguna se escribió desde cero: usamos \texttt{timm}, la biblioteca estándar de modelos de visión pre-entrenados.}
+\end{frame}
+
+\begin{frame}{Diseño de la comparación}{Tres ejes igualados a la vez, no solo los parámetros}
+{\scriptsize
+\centering
+\begin{tabular}{lccc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Eje igualado & \color{white}\bfseries ResNet-50 & \color{white}\bfseries ViT-S/16 (DeiT-S) & \color{white}\bfseries Diferencia \\
+\midrule
+Parámetros & 23{,}52\,M & 21{,}67\,M & 7{,}9\,\% \\
+GFLOPs @ 224\,px & 8{,}17 & 8{,}48 & 3{,}6\,\% \\
+Pre-entrenamiento & ImageNet-1k & ImageNet-1k & ninguna \\
+\bottomrule
+\end{tabular}
+}
+\vspace{0.5em}
+{\scriptsize
+\setlength{\itemsep}{0.25em}
+\begin{itemize}
+  \item {\bfseries El tercer eje es el que casi nadie iguala, y el que más distorsiona.}
+  \item Los pesos ViT-S más usados de \texttt{timm} (\texttt{vit\_small\_patch16\_224.augreg\_in21k\_ft\_in1k}) vienen de \textbf{ImageNet-21k}: catorce veces más datos que los de la ResNet. Con esos pesos la comparación mediría el tamaño del corpus, no la arquitectura.
+  \item Por eso usamos \textbf{DeiT-S}: exactamente la arquitectura ViT-S/16, pero entrenada solo en ImageNet-1k, frente a \texttt{resnet50.a1\_in1k}.
+\end{itemize}
+}
+\cierre{Comparar \guillemotleft{}una ResNet\guillemotright{} contra \guillemotleft{}un ViT\guillemotright{} sin igualar el presupuesto no dice nada: cualquier diferencia se explicaría por el tamaño.}
+\end{frame}
+
+\begin{frame}{La receta de entrenamiento}{Idéntica para ambas redes, salvo lo que tiene que cambiar}
+\begin{columns}[T]
+\begin{column}{0.47\textwidth}
+{\small\textbf{Igual para las dos}}
+{\tiny
+\setlength{\itemsep}{0.15em}
+\begin{itemize}
+  \item AdamW, schedule coseno con warmup
+  \item AMP fp16 (casi duplica la velocidad en la 4070)
+  \item Label smoothing 0{,}05
+  \item Pesos de clase inversos a la frecuencia
+  \item Recorte de gradiente a 1{,}0
+  \item Mismas aumentaciones y mismos datos
+  \item Checkpoint elegido por \textbf{QWK de validación}, no por accuracy
+  \item Early stopping a las 5 épocas sin mejora
+\end{itemize}
+}
+\end{column}
+\begin{column}{0.47\textwidth}
+{\small\textbf{Distinto en el ViT, y por qué}}
+{\tiny
+\setlength{\itemsep}{0.15em}
+\begin{itemize}
+  \item {\bfseries Learning rate $3\times$ menor ($1$e-4 vs $3$e-4).}
+  \item Los transformers divergen con los LR que una ResNet con BatchNorm tolera sin problema.
+  \item {\bfseries Warmup más largo (2 épocas vs 1).}
+  \item Sin warmup, la atención colapsa en las primeras épocas.
+  \item {\bfseries \texttt{drop\_path} $=0{,}1$.}
+  \item \emph{Stochastic depth}, el regularizador estándar de los ViT.
+\end{itemize}
+}
+\end{column}
+\end{columns}
+\vspace{0.3em}
+{\scriptsize\textbf{Aumentaciones de color deliberadamente suaves} (\texttt{hue=0.02} en vez de \texttt{0.1}): acá el color \emph{es} la etiqueta, y un \texttt{ColorJitter} estándar convertiría una clase 2 en una clase 4 sin cambiarle la etiqueta. Las geométricas sí son agresivas: recorte 0{,}65--1{,}0, volteo, rotación $\pm 20^{\circ}$.}
+\cierre{Igualar el learning rate \guillemotleft{}por justicia\guillemotright{} no sería más justo: sería solo peor para el ViT.}
+\end{frame}
+
+{
+\setbeamercolor{background canvas}{bg=grisFondo}
+\begin{frame}[plain]
+  \vfill
+  \hspace{0.6cm}{\color{verdecla}\fontsize{54}{58}\selectfont\bfseries 01}%
+  \hspace{0.5cm}{\color{verdeosc}\Huge\bfseries Resultados preliminares}
+  \vfill
+\end{frame}
+}
+
+\begin{frame}{Baseline ResNet-50}{23{,}52\,M params, 8{,}17 GFLOPs, 10 min, mejor época 11}
+\kpi[azul]{0.176\textwidth}{QWK (principal)}{0{,}936}\hfill
+\kpi[azul]{0.176\textwidth}{Accuracy}{74{,}6\,\%}\hfill
+\kpi[azul]{0.176\textwidth}{Acc. $\pm$1 clase}{99{,}2\,\%}\hfill
+\kpi[azul]{0.176\textwidth}{MAE}{0{,}262}\hfill
+\kpi[azul]{0.176\textwidth}{Macro-F1}{0{,}735}
+\vspace{0.4em}
+\begin{columns}[T]
+\begin{column}{0.46\textwidth}
+{\tiny
+\centering
+\begin{tabular}{lccc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Grupo & \color{white}\bfseries n & \color{white}\bfseries Accuracy & \color{white}\bfseries MAE \\
+\midrule
+T10 (10\,\textdegree C) & 1350 & 75{,}3\,\% & 0{,}259 \\
+T20 (20\,\textdegree C) & 466 & 75{,}1\,\% & 0{,}249 \\
+Tamb & 446 & 71{,}8\,\% & 0{,}285 \\
+\bottomrule
+\end{tabular}
+}
+\end{column}
+\begin{column}{0.50\textwidth}
+{\tiny
+\setlength{\itemsep}{0.25em}
+\begin{itemize}
+  \item Los errores se concentran en clases adyacentes: 99{,}2\,\% cae en la clase correcta o en una vecina.
+  \item MAE de 0{,}26 escalones sobre una escala de 5.
+  \item Desempeño homogéneo entre grupos: el modelo \textbf{no} está explotando el sesgo \guillemotleft{}verde $\Rightarrow$ refrigerada\guillemotright{}.
+\end{itemize}
+}
+\end{column}
+\end{columns}
+\cierre{Test: 2.262 imágenes de 72 frutas que ningún modelo vio.}
+\end{frame}
+
+\begin{frame}{Baseline ViT-S/16}{21{,}67\,M params, 8{,}48 GFLOPs, 5 min, mejor época 4}
+\kpi[rojo]{0.176\textwidth}{QWK (principal)}{0{,}931}\hfill
+\kpi[rojo]{0.176\textwidth}{Accuracy}{72{,}2\,\%}\hfill
+\kpi[rojo]{0.176\textwidth}{Acc. $\pm$1 clase}{99{,}5\,\%}\hfill
+\kpi[rojo]{0.176\textwidth}{MAE}{0{,}282}\hfill
+\kpi[rojo]{0.176\textwidth}{Macro-F1}{0{,}711}
+\vspace{0.4em}
+\begin{columns}[T]
+\begin{column}{0.46\textwidth}
+{\tiny
+\centering
+\begin{tabular}{lccc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Grupo & \color{white}\bfseries n & \color{white}\bfseries Accuracy & \color{white}\bfseries MAE \\
+\midrule
+T10 (10\,\textdegree C) & 1350 & 73{,}9\,\% & 0{,}267 \\
+T20 (20\,\textdegree C) & 466 & 68{,}7\,\% & 0{,}318 \\
+Tamb & 446 & 71{,}1\,\% & 0{,}291 \\
+\bottomrule
+\end{tabular}
+}
+\end{column}
+\begin{column}{0.50\textwidth}
+{\tiny
+\setlength{\itemsep}{0.25em}
+\begin{itemize}
+  \item Los errores se concentran en clases adyacentes: 99{,}5\,\% cae en la clase correcta o en una vecina.
+  \item MAE de 0{,}28 escalones sobre una escala de 5.
+  \item Desempeño homogéneo entre grupos: el modelo \textbf{no} está explotando el sesgo \guillemotleft{}verde $\Rightarrow$ refrigerada\guillemotright{}.
+\end{itemize}
+}
+\end{column}
+\end{columns}
+\cierre{Test: 2.262 imágenes de 72 frutas que ningún modelo vio.}
+\end{frame}
+
+\begin{frame}{ResNet-50 frente a ViT-S/16}{Intervalos por bootstrap agrupado por fruta, no por imagen}
+{\scriptsize
+\centering
+\begin{tabular}{lccccccc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Params & \color{white}\bfseries GFLOPs & \color{white}\bfseries QWK & \color{white}\bfseries Accuracy & \color{white}\bfseries Macro-F1 & \color{white}\bfseries MAE & \color{white}\bfseries Acc. $\pm$1 \\
+\midrule
+\rowcolor{verdecla!22}ResNet-50 & 23{,}5\,M & 8{,}2 & 0{,}936 & 74{,}6\,\% & 0{,}735 & 0{,}262 & 99{,}2\,\% \\
+ViT-S/16 & 21{,}7\,M & 8{,}5 & 0{,}931 & 72{,}2\,\% & 0{,}711 & 0{,}282 & 99{,}5\,\% \\
+\bottomrule
+\end{tabular}
+}
+\vspace{0.4em}
+\begin{columns}[T]
+\begin{column}{0.50\textwidth}
+{\tiny
+\setlength{\itemsep}{0.25em}
+\begin{itemize}
+  \item {\bfseries ViT-S/16: $\Delta$QWK $= $-$0{,}0042$, IC 95\,\% $[$-$0{,}0095, +0{,}0006]$, $p=0{,}095$ $\rightarrow$ \nosig}
+  \item Un oráculo que eligiera siempre el modelo correcto llegaría a 82{,}0\,\% de accuracy, frente a 74{,}6\,\% del mejor modelo individual: hay complementariedad que explotar.
+  \item Ambos modelos fallan a la vez en solo 18{,}0\,\% de las imágenes.
+  \item Las 2.262 imágenes de test vienen de solo 72 frutas: asumir independencia entre imágenes daría intervalos artificialmente angostos, por eso el bootstrap remuestrea \emph{frutas}.
+\end{itemize}
+}
+\end{column}
+\begin{column}{0.46\textwidth}
+\begin{center}
+  \includegraphics[width=\textwidth,height=3.0cm,keepaspectratio]{10-matrices-confusion-avance}
+\end{center}
+\end{column}
+\end{columns}
+\cierre{La ResNet acierta la clase exacta más seguido; el ViT se equivoca por menos distancia. Sobre QWK, que pondera el error por distancia, empatan.}
+\end{frame}
+
+\begin{frame}{Curvas de entrenamiento}{Misma receta, convergencia distinta}
+\begin{center}
+  \includegraphics[width=\textwidth,height=4.3cm,keepaspectratio]{11-curvas-entrenamiento-avance}
+\end{center}
+\vspace{0.3em}
+{\scriptsize
+\setlength{\itemsep}{0.2em}
+\begin{itemize}
+  \item ResNet-50 alcanza su mejor QWK de validación en la época 11; ViT-S/16 en la 4.
+  \item Tiempo de entrenamiento: 10 min frente a 5 min en una RTX 4070 Laptop de 8\,GB. El ViT converge al doble de velocidad.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{Riesgos identificados y mitigación}{Concretos de este dataset, no genéricos}
+{\scriptsize
+\centering
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.21\textwidth}>{\raggedright\arraybackslash}p{0.37\textwidth}>{\raggedright\arraybackslash}p{0.34\textwidth}}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Riesgo & \color{white}\bfseries Por qué es real acá & \color{white}\bfseries Mitigación \\
+\midrule
+Fuga longitudinal & 6.871 pares de días consecutivos de la misma fruta & Split por fruta + \texttt{assert} automático \\
+Domain gap lab.\ $\rightarrow$ terreno & Fondo blanco, fruta centrada, luz difusa controlada & Declarado en la data card; recolectar fotos de celular \\
+Color $=$ señal, no ruido & Un \texttt{ColorJitter} estándar vuelve una clase 2 en una clase 4 & Jitter suave: \texttt{hue} 0{,}02 en vez de 0{,}1 \\
+Sesgo T10 $\Rightarrow$ clase 1 & T10 aporta 60\,\% de las imágenes con 40\,\% de las frutas & Pesos de clase + métricas desglosadas por grupo \\
+Etiquetas subjetivas & Sin acuerdo inter-evaluador: techo humano desconocido & QWK y MAE en vez de accuracy; no perseguir 100\,\% \\
+Ventaja oculta de pre-entren. & Los pesos ViT habituales vienen de ImageNet-21k & DeiT-S: ambos modelos solo ImageNet-1k \\
+\bottomrule
+\end{tabular}
+}
+\cierre{El domain gap es el riesgo que decide si esto sirve en un packing o solo en un paper.}
+\end{frame}
+
+\begin{frame}{Qué viene para el entregable final}{Lo que falta para noviembre}
+{\small
+\setlength{\itemsep}{0.35em}
+\begin{itemize}
+  \item {\bfseries Ablación sin pre-entrenamiento.}
+  \item Los mismos dos modelos entrenados desde cero. Es la evidencia empírica propia de por qué ResNet y ViT difieren: el transformer no tiene sesgo inductivo de localidad y tiene que aprenderlo de los datos.
+  \item {\bfseries Dos modelos híbridos.}
+  \item Fusión tardía de los dos backbones ya afinados, y el ViT-Hybrid R26+S/32 del paper original de ViT.
+  \item {\bfseries Interpretabilidad comparada.}
+  \item Grad-CAM sobre la ResNet y attention rollout sobre el ViT, en los casos donde los dos modelos discrepan.
+  \item {\bfseries Demo funcional en Gradio y decisión explícita de velocidad frente a precisión.}
+\end{itemize}
+}
+\cierre{Repositorio: \texttt{github.com/cmartinez1524/clasificacion-de-paltas}}
+\end{frame}
+
+\end{document}
