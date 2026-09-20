@@ -30,7 +30,7 @@ Proyecto paltas/
 │   ├── Avocado Ripening Dataset/                 ← 14.710 archivos .jpg de 800×800
 │   └── Avocado Ripening Dataset.xlsx             ← planilla con las etiquetas
 │
-├── src/paltas/        ← LA BIBLIOTECA. Toda la lógica vive acá. 12 módulos.
+├── src/paltas/        ← LA BIBLIOTECA. Toda la lógica vive acá. 13 módulos.
 ├── scripts/           ← LOS EJECUTABLES. Se corren desde la terminal, en orden.
 ├── configs/           ← 6 archivos YAML, uno por experimento. Los hiperparámetros.
 ├── app/               ← la demo interactiva (Gradio)
@@ -233,6 +233,7 @@ informe.
 |---|--:|---|---|
 | [`paths.py`](src/paltas/paths.py) | 49 | Todas las rutas del proyecto y los nombres de las clases | Para que nadie escriba `"C:\Users\..."` en el código. Todo se resuelve desde la raíz del repo, así los scripts corren desde cualquier directorio |
 | [`splits.py`](src/paltas/splits.py) | 104 | Partición train/val/test **agrupada por fruta** + pesos de clase | Es el corazón metodológico. Ver sección 7 |
+| [`config.py`](src/paltas/config.py) | 73 | La clase `TrainConfig`: lee un YAML de `configs/` y valida las claves | Un experimento es un archivo, no una lista de banderas en la terminal. Falla si el YAML tiene una clave que no existe, en vez de ignorarla en silencio |
 | [`data.py`](src/paltas/data.py) | 105 | `AvocadoDataset`, aumentaciones, `build_dataloaders()` | Convierte archivos en tensores listos para la GPU |
 | [`models.py`](src/paltas/models.py) | 186 | **Las redes.** Ver sección 3 | |
 | [`engine.py`](src/paltas/engine.py) | 208 | Bucle de entrenamiento y evaluación | Es la misma receta para las 6 corridas, así la comparación es justa |
