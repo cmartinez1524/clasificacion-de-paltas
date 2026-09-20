@@ -30,7 +30,7 @@ Proyecto paltas/
 │   ├── Avocado Ripening Dataset/                 ← 14.710 archivos .jpg de 800×800
 │   └── Avocado Ripening Dataset.xlsx             ← planilla con las etiquetas
 │
-├── src/paltas/        ← LA BIBLIOTECA. Toda la lógica vive acá. 14 módulos.
+├── src/paltas/        ← LA BIBLIOTECA. Toda la lógica vive acá. 12 módulos.
 ├── scripts/           ← LOS EJECUTABLES. Se corren desde la terminal, en orden.
 ├── configs/           ← 6 archivos YAML, uno por experimento. Los hiperparámetros.
 ├── app/               ← la demo interactiva (Gradio)
@@ -42,7 +42,7 @@ Proyecto paltas/
 ├── checkpoints/       ← pesos entrenados .pt (NO está en git, se regeneran)
 │
 ├── entregables/
-│   ├── avance/        ← presentación de avance (.pdf, .tex, .pptx + figuras/)
+│   ├── avance/        ← presentación de avance (.pdf + .tex + figuras/)
 │   └── final/         ← data card, informe técnico, presentación final
 │
 ├── README.md          ← qué se hizo y qué resultó
@@ -241,9 +241,7 @@ informe.
 | [`compare.py`](src/paltas/compare.py) | 135 | Bootstrap agrupado y pareado, tabla de desacuerdo | Responde "¿la diferencia es real o es ruido?" |
 | [`interpret.py`](src/paltas/interpret.py) | 170 | Grad-CAM y attention rollout | Muestra *dónde mira* cada red |
 | [`viz.py`](src/paltas/viz.py) | 47 | Colores y estilo común de figuras | Que todos los gráficos se vean igual |
-| [`deck.py`](src/paltas/deck.py) | 246 | Constructores de slides .pptx | Para no repetir código de layout en cada slide |
 | [`beamer.py`](src/paltas/beamer.py) | 290 | Constructores de slides LaTeX (Beamer) | Lo mismo para las versiones .tex. Valida que no se cuelen caracteres que LaTeX imprime mal |
-| [`slides_comunes.py`](src/paltas/slides_comunes.py) | 70 | Las slides que explican las redes | Viven en un solo lugar para que el avance y la final expliquen lo mismo |
 | [`console.py`](src/paltas/console.py) | 19 | Fuerza UTF-8 en stdout | La consola de Windows es cp1252 y hacía caer los scripts al imprimir `Δ` |
 
 ### Detalle de `engine.py` — cómo se entrena
@@ -361,6 +359,7 @@ difíciles) se cancele.
 | `06_deck_final.py` | Presentación final (.pptx) | `entregables/final/` |
 | `07_deck_latex.py` | Ambas presentaciones en Beamer (.tex + figuras) | `entregables/*/` |
 | `08_figuras_didacticas.py` | Figuras explicativas de las arquitecturas | `reports/figures/3*.png` |
+| `09_mejoras_inferencia.py` | Prueba fusión de caras a/b y TTA sobre los modelos ya entrenados | `reports/metrics/mejoras_inferencia.json` |
 | `run_all.sh` | Corre **todo** lo anterior en orden | ~2 h |
 
 Notas sobre dos de ellos:

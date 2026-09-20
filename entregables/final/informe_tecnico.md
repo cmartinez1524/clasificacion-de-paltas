@@ -285,6 +285,50 @@ ResNet/ViT. La fusión no elimina los casos difíciles, los absorbe: convierte a
 de cada backbone en aciertos compartidos, pero el núcleo duro de imágenes ambiguas sigue ahí. Es
 coherente con la hipótesis de que ese núcleo es ruido de etiquetado y no un déficit de capacidad.
 
+### 4.7 Dos mejoras de inferencia que no requieren reentrenar
+
+Antes de concluir que el techo estaba alcanzado, revisamos si el modelo ya entrenado se
+estaba usando bien. Dos cambios en la evaluación, sin tocar los pesos:
+
+**Fusión de las dos caras.** El dataset fotografía cada palta por ambos lados el mismo día, y
+en test los **1.131 pares a/b están completos (100 %)**. Hasta aquí clasificábamos cada foto
+por separado; promediar las probabilidades de las dos caras produce una predicción por
+fruta-día, que además es la unidad operativamente relevante: en una línea de empaque se
+clasifica una fruta, no una fotografía.
+
+**TTA con volteo horizontal.** Evaluar también la imagen espejada y promediar. El parámetro ya
+existía en el código (`eval_tta_hflip`) y estaba desactivado en las seis configuraciones.
+
+| Modelo | Por foto | + fusión de caras | + fusión y TTA | Δ QWK (fusión) |
+|---|--:|--:|--:|:--:|
+| ResNet-50 | 74,6 % | 76,4 % | 76,7 % | +0,0057 |
+| ViT-S/16 | 72,2 % | 74,3 % | 73,8 % | +0,0058 |
+| Híbrido fusión tardía | 76,8 % | 77,6 % | 78,0 % | +0,0030 |
+| ViT-Hybrid R26 | 76,2 % | 78,9 % | **79,8 %** | +0,0073 |
+
+Tres lecturas:
+
+**La fusión de caras mejora los cuatro modelos**, entre +0,9 y +2,7 puntos de accuracy, a
+costo cero: las dos fotos ya se toman de todos modos. Es la mejora con mejor relación
+beneficio/esfuerzo de todo el proyecto.
+
+**El TTA no es universal.** Ayuda a los tres modelos con componente convolucional
+(+0,2 a +1,2 puntos) pero **empeora al ViT puro** (−0,3). Lo reportamos así en lugar de
+omitirlo: una receta estándar no tiene por qué funcionar en toda arquitectura.
+
+**Cambia la conversación sobre el híbrido.** La ResNet-50 con fusión de caras (76,4 %) alcanza
+prácticamente el mismo nivel que la fusión tardía evaluada foto a foto (76,8 %), sin el doble
+de cómputo por imagen que exige el híbrido. Antes de gastar en una arquitectura más cara
+conviene verificar que se esté explotando la información que ya se tiene.
+
+> **Advertencia metodológica:** las columnas "por foto" y "por fruta-día" se calculan sobre
+> poblaciones distintas (2.262 observaciones contra 1.131) y por lo tanto no son directamente
+> comparables en términos de tamaño muestral. La comparación **entre modelos** dentro de cada
+> columna sí es válida, y es lo que sostiene las conclusiones anteriores. La comparación
+> controlada de la sección 4.2, que es la pregunta del proyecto, se mantiene a nivel de foto.
+
+Reproducible con `python scripts/09_mejoras_inferencia.py`.
+
 ## 5. Discusión: por qué difieren (o no) ResNet y ViT
 
 Sobre la métrica ordinal las dos arquitecturas empatan; sobre la clase exacta la ResNet tiene

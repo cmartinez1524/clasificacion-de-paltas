@@ -1,0 +1,154 @@
+{
+  "resnet50": [
+    {
+      "variante": "por foto",
+      "n": 2262,
+      "accuracy": 0.7458,
+      "qwk": 0.9355,
+      "macro_f1": 0.735,
+      "mae": 0.2617,
+      "off_by_one": 0.9925
+    },
+    {
+      "variante": "por fruta-día",
+      "n": 1131,
+      "accuracy": 0.7639,
+      "qwk": 0.9412,
+      "macro_f1": 0.7539,
+      "mae": 0.2414,
+      "off_by_one": 0.9947
+    },
+    {
+      "variante": "por foto + TTA",
+      "n": 2262,
+      "accuracy": 0.7591,
+      "qwk": 0.939,
+      "macro_f1": 0.7487,
+      "mae": 0.248,
+      "off_by_one": 0.9929
+    },
+    {
+      "variante": "por fruta-día + TTA",
+      "n": 1131,
+      "accuracy": 0.7666,
+      "qwk": 0.942,
+      "macro_f1": 0.756,
+      "mae": 0.2387,
+      "off_by_one": 0.9947
+    }
+  ],
+  "vit_small": [
+    {
+      "variante": "por foto",
+      "n": 2262,
+      "accuracy": 0.7224,
+      "qwk": 0.9313,
+      "macro_f1": 0.7109,
+      "mae": 0.2825,
+      "off_by_one": 0.9951
+    },
+    {
+      "variante": "por fruta-día",
+      "n": 1131,
+      "accuracy": 0.7427,
+      "qwk": 0.9371,
+      "macro_f1": 0.7328,
+      "mae": 0.2608,
+      "off_by_one": 0.9965
+    },
+    {
+      "variante": "por foto + TTA",
+      "n": 2262,
+      "accuracy": 0.7197,
+      "qwk": 0.9311,
+      "macro_f1": 0.7075,
+      "mae": 0.2847,
+      "off_by_one": 0.9956
+    },
+    {
+      "variante": "por fruta-día + TTA",
+      "n": 1131,
+      "accuracy": 0.7383,
+      "qwk": 0.9348,
+      "macro_f1": 0.7269,
+      "mae": 0.267,
+      "off_by_one": 0.9947
+    }
+  ],
+  "hybrid_fusion": [
+    {
+      "variante": "por foto",
+      "n": 2262,
+      "accuracy": 0.7675,
+      "qwk": 0.941,
+      "macro_f1": 0.7595,
+      "mae": 0.2378,
+      "off_by_one": 0.9947
+    },
+    {
+      "variante": "por fruta-día",
+      "n": 1131,
+      "accuracy": 0.7763,
+      "qwk": 0.944,
+      "macro_f1": 0.77,
+      "mae": 0.2281,
+      "off_by_one": 0.9956
+    },
+    {
+      "variante": "por foto + TTA",
+      "n": 2262,
+      "accuracy": 0.7692,
+      "qwk": 0.9428,
+      "macro_f1": 0.7607,
+      "mae": 0.2343,
+      "off_by_one": 0.9965
+    },
+    {
+      "variante": "por fruta-día + TTA",
+      "n": 1131,
+      "accuracy": 0.7798,
+      "qwk": 0.9455,
+      "macro_f1": 0.7724,
+      "mae": 0.2237,
+      "off_by_one": 0.9965
+    }
+  ],
+  "hybrid_vit_r26": [
+    {
+      "variante": "por foto",
+      "n": 2262,
+      "accuracy": 0.7617,
+      "qwk": 0.9411,
+      "macro_f1": 0.7519,
+      "mae": 0.2418,
+      "off_by_one": 0.9965
+    },
+    {
+      "variante": "por fruta-día",
+      "n": 1131,
+      "accuracy": 0.7887,
+      "qwk": 0.9484,
+      "macro_f1": 0.781,
+      "mae": 0.2131,
+      "off_by_one": 0.9982
+    },
+    {
+      "variante": "por foto + TTA",
+      "n": 2262,
+      "accuracy": 0.7737,
+      "qwk": 0.9448,
+      "macro_f1": 0.765,
+      "mae": 0.2286,
+      "off_by_one": 0.9978
+    },
+    {
+      "variante": "por fruta-día + TTA",
+      "n": 1131,
+      "accuracy": 0.7984,
+      "qwk": 0.9509,
+      "macro_f1": 0.7917,
+      "mae": 0.2034,
+      "off_by_one": 0.9982
+    }
+  ]
+}

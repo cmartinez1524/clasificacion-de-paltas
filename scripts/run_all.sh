@@ -28,9 +28,8 @@ python scripts/compare_models.py \
   --models resnet50 vit_small resnet50_scratch vit_small_scratch hybrid_fusion hybrid_vit_r26 \
   --tag final
 python scripts/04_interpretability.py --mode disagreement
+python scripts/09_mejoras_inferencia.py
 python scripts/08_figuras_didacticas.py
-python scripts/05_deck_avance.py
-python scripts/06_deck_final.py
 python scripts/07_deck_latex.py
 
 echo "Listo. Demo:  python app/gradio_app.py"

@@ -137,6 +137,13 @@ oráculo que eligiera siempre el modelo correcto llegaría a 82,0 % frente al 74
 individual. Eso es lo que explotan los híbridos, aunque la ganancia final sea modesta: la fusión
 tardía mejora +0,0055 de QWK (p = 0,001) a cambio de 2× de cómputo.
 
+**Dos mejoras que salieron gratis.** Revisando si el modelo entrenado se estaba usando bien:
+promediar las dos caras de cada palta (el dataset fotografía ambos lados y los 1.131 pares de
+test están completos) mejora **los cuatro modelos**, entre +0,9 y +2,7 puntos de accuracy, sin
+reentrenar ni gastar cómputo extra. El TTA con volteo horizontal ayuda a las convolucionales
+pero empeora levemente al ViT puro. Con ambas, el ViT-Hybrid R26 llega a **79,8 %**.
+Detalle en la sección 4.7 del informe; reproducible con `scripts/09_mejoras_inferencia.py`.
+
 Análisis completo en el [informe técnico](entregables/final/informe_tecnico.md).
 
 ## 5. Reproducir
@@ -211,9 +218,8 @@ python scripts/04_interpretability.py --mode disagreement
 ### Regenerar las presentaciones
 
 ```bash
-python scripts/05_deck_avance.py   # .pptx del avance
-python scripts/06_deck_final.py    # .pptx del final
-python scripts/07_deck_latex.py    # ambas en LaTeX (Beamer) + sus figuras
+python scripts/08_figuras_didacticas.py   # figuras explicativas de las redes
+python scripts/07_deck_latex.py           # ambas presentaciones en LaTeX (Beamer)
 ```
 
 ### Demo
@@ -239,7 +245,6 @@ son frutas que ningún modelo vio durante el entrenamiento.
 │   ├── compare.py           # bootstrap agrupado y pareado, tabla de desacuerdo
 │   ├── interpret.py         # Grad-CAM y attention rollout
 │   ├── viz.py               # estilo común de figuras
-│   ├── deck.py              # constructor de slides .pptx
 │   ├── beamer.py            # constructor de slides LaTeX (Beamer)
 │   └── console.py           # salida UTF-8 en consolas Windows
 ├── scripts/                 # 00..07 + train.py + compare_models.py
@@ -275,10 +280,10 @@ y pesos iniciales, no bit a bit.
 | Entregable | Ubicación |
 |---|---|
 | Guía del proyecto (cómo está hecho) | [`GUIA_DEL_PROYECTO.md`](GUIA_DEL_PROYECTO.md) |
-| Presentación de avance (.pdf, .tex, .pptx) | [`entregables/avance/`](entregables/avance/) |
+| Presentación de avance (.pdf + fuente .tex) | [`entregables/avance/`](entregables/avance/) |
 | Data card | [`entregables/final/data_card.md`](entregables/final/data_card.md) |
 | Informe técnico | [`entregables/final/informe_tecnico.md`](entregables/final/informe_tecnico.md) |
-| Presentación final (.pdf, .tex, .pptx) | [`entregables/final/`](entregables/final/) |
+| Presentación final (.pdf + fuente .tex) | [`entregables/final/`](entregables/final/) |
 | Demo | [`app/gradio_app.py`](app/gradio_app.py) |
 
 ## 9. Cita

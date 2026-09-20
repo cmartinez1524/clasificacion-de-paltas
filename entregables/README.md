@@ -1,15 +1,17 @@
 # Entregables
 
-Cada presentación existe en tres formatos, generados **desde los mismos JSON de métricas**
-(`reports/metrics/`). Ningún número está escrito a mano: si se reentrena un modelo, se
-regeneran y las cifras se actualizan solas.
+Las presentaciones se generan **desde los JSON de métricas** (`reports/metrics/`).
+Ningún número está escrito a mano: si se reentrena un modelo, se regeneran y las cifras se
+actualizan solas.
 
 | Archivo | Qué es |
 |---|---|
 | `presentacion_*.pdf` | **Listo para presentar.** Compilado desde el `.tex` |
-| `presentacion_*.tex` | Fuente LaTeX (Beamer). Editable |
-| `presentacion_*.pptx` | Versión PowerPoint, por si se prefiere editar ahí |
+| `presentacion_*.tex` | Fuente LaTeX (Beamer). Editable, o se sube a Overleaf |
 | `figuras/` | Las imágenes que usa el `.tex`, ya renombradas |
+
+Hubo también una versión `.pptx`, descartada para no mantener dos redacciones en paralelo.
+Sigue en el historial de git si alguna vez hace falta.
 
 ## Cómo compilar el LaTeX
 
@@ -34,9 +36,8 @@ pdflatex presentacion_avance.tex   # dos veces: la segunda fija el total de pág
 ## Cómo regenerarlas
 
 ```bash
-python scripts/07_deck_latex.py    # ambas versiones .tex + sus figuras
-python scripts/05_deck_avance.py   # .pptx del avance
-python scripts/06_deck_final.py    # .pptx del final
+python scripts/08_figuras_didacticas.py   # figuras explicativas
+python scripts/07_deck_latex.py           # ambas presentaciones + sus figuras
 ```
 
 ## Notas sobre el LaTeX

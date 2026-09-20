@@ -372,6 +372,39 @@ def frame_empate(r: dict, v: dict, comp: dict | None) -> str:
                  r"en el anexo.}")
 
 
+def frame_mejoras_gratis() -> str:
+    """Dos mejoras de inferencia que no requieren reentrenar.
+
+    Se calculan en scripts/09_mejoras_inferencia.py; si ese script no corrio,
+    el frame simplemente no se agrega.
+    """
+    datos = cargar_comp("mejoras_inferencia")
+    if not datos:
+        return ""
+
+    def val(modelo: str, variante: str) -> float:
+        return next(f["accuracy"] for f in datos[modelo] if f["variante"] == variante)
+
+    r_base, r_caras = val("resnet50", "por foto"), val("resnet50", "por fruta-día")
+    return frame(
+        "Dos mejoras que salieron gratis",
+        "Sin reentrenar nada, solo cambiando cómo se usa el modelo ya entrenado",
+        figura("34_mejoras_inferencia", r"0.88\textwidth", "3.9cm")
+        + "\n\\vspace{0.3em}\n"
+        + items([
+            ("1. Mirar las dos caras de la palta antes de decidir.", True),
+            "El dataset fotografía cada fruta por ambos lados el mismo día. Hasta ahora "
+            "clasificábamos cada foto por separado; juntar las dos opiniones sube a "
+            f"la ResNet de {pct(r_base)} a {pct(r_caras)}, y mejora a los cuatro "
+            "modelos. En una planta igual se fotografían las dos caras: es gratis.",
+            ("2. Mostrarle también la foto espejada y promediar.", True),
+            "Ayuda a las convolucionales, pero al ViT lo empeora un poco. Lo reportamos "
+            "así: no todas las recetas estándar sirven en todos los modelos.",
+        ], tam=r"\tiny", sep="0.22em")
+        + "\n" + r"\cierre{Antes de comprar más cómputo conviene revisar si se está "
+                 r"usando bien el modelo que ya se tiene.}")
+
+
 def frames_anexo(modelos: list[str], res: dict, comp: dict | None) -> str:
     """Anexo con el detalle que se saco del cuerpo de la presentacion.
 
@@ -744,6 +777,8 @@ def construir_final(res: dict, comp: dict | None,
                      "no lo habríamos notado.",
                  ], tam=r"\tiny", sep="0.25em"),
                  "0.30", "0.66"))
+
+    cuerpo += frame_mejoras_gratis()
 
     # --- velocidad vs precisión ---
     candidatos = [k for k in disponibles if "scratch" not in k]

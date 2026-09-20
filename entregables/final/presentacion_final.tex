@@ -480,6 +480,23 @@ Híbrido: fusión tardía & 99{,}5\,\% & 0{,}24 escalones & 76{,}7\,\% \\
 \end{columns}
 \end{frame}
 
+\begin{frame}{Dos mejoras que salieron gratis}{Sin reentrenar nada, solo cambiando cómo se usa el modelo ya entrenado}
+\begin{center}
+  \includegraphics[width=0.88\textwidth,height=3.9cm,keepaspectratio]{34-mejoras-inferencia}
+\end{center}
+\vspace{0.3em}
+{\tiny
+\setlength{\itemsep}{0.22em}
+\begin{itemize}
+  \item {\bfseries 1. Mirar las dos caras de la palta antes de decidir.}
+  \item El dataset fotografía cada fruta por ambos lados el mismo día. Hasta ahora clasificábamos cada foto por separado; juntar las dos opiniones sube a la ResNet de 74{,}6\,\% a 76{,}4\,\%, y mejora a los cuatro modelos. En una planta igual se fotografían las dos caras: es gratis.
+  \item {\bfseries 2. Mostrarle también la foto espejada y promediar.}
+  \item Ayuda a las convolucionales, pero al ViT lo empeora un poco. Lo reportamos así: no todas las recetas estándar sirven en todos los modelos.
+\end{itemize}
+}
+\cierre{Antes de comprar más cómputo conviene revisar si se está usando bien el modelo que ya se tiene.}
+\end{frame}
+
 \begin{frame}{\textquestiondown{}Cuál llevaríamos a una planta empacadora?}{No gana el más preciso: gana el que rinde mejor por lo que cuesta}
 {\tiny
 \centering
