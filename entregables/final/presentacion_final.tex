@@ -103,7 +103,7 @@
 % \setbeameroption{show notes}
 
 \title{Clasificación de madurez de paltas Hass --- Final}
-\author{Cristóbal Martínez}
+\author{Cristóbal Martínez, Benjamín Espinoza, Felipe Alvarez, Felipe Torres, Felipe Rojo}
 
 \begin{document}
 
@@ -122,7 +122,12 @@
   {\color{white!85!verdecla}\large ResNet-50, ViT-S/16 e híbridos con presupuesto equiparado}
 
   \vfill
-  {\color{white!70!verdecla}\small Cristóbal Martínez \quad\textbullet\quad Entrega final, 23 de noviembre de 2026}
+  % autor y fecha en lineas separadas: con varios autores la linea envuelve y
+  % el separador queda colgando al borde derecho.
+  {\color{white!70!verdecla}\small Cristóbal Martínez, Benjamín Espinoza, Felipe Alvarez, Felipe Torres, Felipe Rojo}
+
+  \vspace{0.15em}
+  {\color{white!70!verdecla}\small Entrega final, 23 de noviembre de 2026}
 
   \vspace{0.2em}
   {\color{white!60!verdecla}\footnotesize 14.710 fotografías, 478 frutas, índice ordinal de 5 niveles}
@@ -130,7 +135,7 @@
 \end{frame}
 }
 
-\begin{frame}{El problema}{Por qué importa acá y no solo en el paper}
+\begin{frame}{El problema}
 \begin{columns}[T]
 \begin{column}{0.58\textwidth}
 {\scriptsize
@@ -232,15 +237,13 @@
 \vspace{0.25em}
 {\tiny\color{grisSuave}\itshape Tiene que deducir de los ejemplos hasta la noción de \guillemotleft{}al lado\guillemotright{}.}}
 \vspace{0.55em}
-{\tiny
-\setlength{\itemsep}{0.2em}
+{\scriptsize
+\setlength{\itemsep}{0.25em}
 \begin{itemize}
   \item {\bfseries El ViT necesita muchísimos más ejemplos.}
   \item La ResNet arranca sabiendo mirar imágenes; el ViT tiene que descubrir primero \emph{cómo} se mira una imagen, y recién después aprender de paltas.
   \item {\bfseries Por eso los dos parten desde ImageNet.}
-  \item Antes de ver una sola palta ya vieron 1,3 millones de fotos de cosas cotidianas. Ahí el ViT compensa: llega con el oficio aprendido.
-  \item {\bfseries Y por eso el ViT es más delicado de entrenar.}
-  \item Entrenar es bajar un cerro a ciegas y el \emph{learning rate} es el tamaño del paso. La ResNet aguanta pasos grandes; el ViT se cae.
+  \item Antes de ver una sola palta ya vieron 1,3 millones de fotos de cosas cotidianas. Ahí el ViT compensa su desventaja y llega con el oficio aprendido.
 \end{itemize}
 }
 \end{frame}
@@ -293,16 +296,14 @@ Fotos que vio antes de empezar & 1,3 millones & 1,3 millones & ninguna \\
 \setlength{\itemsep}{0.25em}
 \begin{itemize}
   \item {\bfseries Si una red es más grande y gana, no aprendimos nada: ganó por grande.}
-  \item Por eso igualamos el tamaño (parámetros), el trabajo que hace por foto (GFLOPs) y --- lo que casi nadie iguala --- \textbf{cuántas fotos vio antes}.
-  \item {\bfseries El tercer punto es el que más distorsiona.}
+  \item Por eso igualamos el tamaño (parámetros), el trabajo que hace por foto (GFLOPs) y cuántas fotos vio antes.
   \item El ViT que usa todo el mundo viene entrenado con 14 millones de fotos; la ResNet, con 1,3 millones. Comparándolos así estaríamos midiendo quién estudió más, no qué arquitectura es mejor.
   \item Usamos una versión del ViT llamada \textbf{DeiT-S}: es exactamente la misma red, pero entrenada con las mismas 1,3 millones de fotos que la ResNet. Ahí sí la comparación es limpia.
 \end{itemize}
 }
-\cierre{Como comparar dos atletas: sirve si entrenaron lo mismo y compiten en la misma categoría de peso.}
 \end{frame}
 
-\begin{frame}{Cómo las entrenamos}{Todo igual para las dos, salvo lo que tiene que cambiar}
+\begin{frame}{Cómo las entrenamos}
 \begin{columns}[T]
 \begin{column}{0.47\textwidth}
 {\small\textbf{Idéntico para ambas}}
@@ -319,20 +320,19 @@ Fotos que vio antes de empezar & 1,3 millones & 1,3 millones & ninguna \\
 \end{column}
 \begin{column}{0.47\textwidth}
 {\small\textbf{Distinto en el ViT}}
-{\scriptsize\itshape Siguiendo con la imagen del cerro:}
 {\scriptsize
 \setlength{\itemsep}{0.16em}
 \begin{itemize}
-  \item {\bfseries Le pedimos pasos 3 veces más cortos.}
-  \item Es el \emph{learning rate}. Con pasos largos el ViT tropieza y deja de aprender.
-  \item {\bfseries Y que empiece a caminar más lento.}
-  \item Es el \emph{warmup}: las primeras vueltas van a media máquina hasta que agarra el ritmo.
+  \item {\bfseries Learning rate 3 veces más pequeño.}
+  \item Es el tamaño del paso. Con pasos largos el ViT tropieza y deja de aprender.
+  \item {\bfseries Y un arranque más lento (\emph{warmup}).}
+  \item Las primeras vueltas van a media máquina, pero a la larga es lo mejor para el ViT.
 \end{itemize}
 }
 \end{column}
 \end{columns}
 \vspace{0.4em}
-{\scriptsize\textbf{Un detalle que suele hacerse mal:} en casi cualquier otra tarea conviene alterar mucho los colores de las fotos de entrenamiento, para que el modelo no dependa del color. Acá el color \emph{es} la respuesta: si alteramos mucho el tono, una palta clase 2 se vuelve idéntica a una clase 4 pero con la etiqueta vieja. Le estaríamos enseñando mal. Por eso el color casi no se toca; girar y recortar la foto, en cambio, sí.}
+{\scriptsize\textbf{Observación:} en casi cualquier otra tarea conviene alterar mucho los colores de las fotos de entrenamiento, para que el modelo no dependa del color. Acá el color \emph{es} la respuesta: si alteramos mucho el tono, una palta clase 2 se vuelve idéntica a una clase 4 pero con la etiqueta vieja. Le estaríamos enseñando mal. Por eso el color casi no se toca; girar y recortar la foto, en cambio, sí.}
 \cierre{Igualar el learning rate \guillemotleft{}por justicia\guillemotright{} no sería más justo: sería solo peor para el ViT.}
 \end{frame}
 
@@ -631,7 +631,6 @@ ViT-Hybrid R26+S/32 & Tamb & 446 & 72{,}0\,\% & 0{,}280 \\
 \bottomrule
 \end{tabular}
 }
-\cierre{Desempeño parejo entre grupos: el modelo no está usando el atajo \guillemotleft{}verde $\Rightarrow$ refrigerada\guillemotright{}.}
 \end{frame}
 
 \end{document}

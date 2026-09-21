@@ -39,8 +39,9 @@ from paltas.paths import FIGURES_DIR, METRICS_DIR, ROOT  # noqa: E402
 
 use_utf8()
 
-AUTOR = "Cristóbal Martínez"
-FECHA_AVANCE = "Avance, 28 de septiembre de 2026"
+AUTOR = ("Cristóbal Martínez, Benjamín Espinoza, Felipe Alvarez, "
+         "Felipe Torres, Felipe Rojo")
+FECHA_AVANCE = "Avance, 21 de septiembre de 2026"
 FECHA_FINAL = "Entrega final, 23 de noviembre de 2026"
 REPO = r"\texttt{github.com/cmartinez1524/clasificacion-de-paltas}"
 
@@ -114,7 +115,7 @@ def frame_problema(fecha_nota: str) -> str:
         "es mandar fruta podrida a la venta.",
     ], tam=r"\scriptsize", sep="0.3em")
     return frame(
-        "El problema", "Por qué importa acá y no solo en el paper",
+        "El problema", "",
         columnas(izq, TABLA_INDICE, "0.58", "0.38")
         + "\n" + r"\cierre{La métrica tiene que castigar más los errores lejanos. "
                  r"La accuracy plana no lo hace: por eso usamos QWK.}",
@@ -178,11 +179,9 @@ def frame_por_que_entrenan_distinto() -> str:
             "primero \\emph{cómo} se mira una imagen, y recién después aprender de paltas.",
             ("Por eso los dos parten desde ImageNet.", True),
             "Antes de ver una sola palta ya vieron 1,3 millones de fotos de cosas "
-            "cotidianas. Ahí el ViT compensa: llega con el oficio aprendido.",
-            ("Y por eso el ViT es más delicado de entrenar.", True),
-            "Entrenar es bajar un cerro a ciegas y el \\emph{learning rate} es el tamaño "
-            "del paso. La ResNet aguanta pasos grandes; el ViT se cae.",
-        ], tam=r"\tiny", sep="0.2em"))
+            "cotidianas. Ahí el ViT compensa su desventaja y llega con el oficio "
+            "aprendido.",
+        ], tam=r"\scriptsize", sep="0.25em"))
 
 
 def frame_hibridos_arquitectura() -> str:
@@ -229,8 +228,7 @@ def frame_comparabilidad(r: dict, v: dict) -> str:
     cuerpo = t + "\n\\vspace{0.5em}\n" + items([
         ("Si una red es más grande y gana, no aprendimos nada: ganó por grande.", True),
         "Por eso igualamos el tamaño (parámetros), el trabajo que hace por foto "
-        "(GFLOPs) y --- lo que casi nadie iguala --- \\textbf{cuántas fotos vio antes}.",
-        ("El tercer punto es el que más distorsiona.", True),
+        "(GFLOPs) y cuántas fotos vio antes.",
         "El ViT que usa todo el mundo viene entrenado con 14 millones de fotos; la "
         "ResNet, con 1,3 millones. Comparándolos así estaríamos midiendo quién estudió "
         "más, no qué arquitectura es mejor.",
@@ -241,12 +239,11 @@ def frame_comparabilidad(r: dict, v: dict) -> str:
     return frame(
         "Cómo hacemos que la comparación sea justa",
         "Igualar tres cosas, no solo el tamaño",
-        cuerpo + "\n" + r"\cierre{Como comparar dos atletas: sirve si entrenaron lo mismo "
-                        r"y compiten en la misma categoría de peso.}")
+        cuerpo)
 
 
 FRAME_RECETA = frame(
-    "Cómo las entrenamos", "Todo igual para las dos, salvo lo que tiene que cambiar",
+    "Cómo las entrenamos", "",
     columnas(
         r"{\small\textbf{Idéntico para ambas}}" + "\n" + items([
             "Las mismas fotos, en el mismo orden",
@@ -256,18 +253,17 @@ FRAME_RECETA = frame(
             "El mismo criterio para cortar el entrenamiento",
         ], tam=r"\scriptsize", sep="0.16em"),
         r"{\small\textbf{Distinto en el ViT}}" + "\n"
-        + r"{\scriptsize\itshape Siguiendo con la imagen del cerro:}" + "\n"
         + items([
-            ("Le pedimos pasos 3 veces más cortos.", True),
-            "Es el \\emph{learning rate}. Con pasos largos el ViT tropieza y "
-            "deja de aprender.",
-            ("Y que empiece a caminar más lento.", True),
-            "Es el \\emph{warmup}: las primeras vueltas van a media máquina "
-            "hasta que agarra el ritmo.",
+            ("Learning rate 3 veces más pequeño.", True),
+            "Es el tamaño del paso. Con pasos largos el ViT tropieza y deja "
+            "de aprender.",
+            ("Y un arranque más lento (\\emph{warmup}).", True),
+            "Las primeras vueltas van a media máquina, pero a la larga es lo "
+            "mejor para el ViT.",
         ], tam=r"\scriptsize", sep="0.16em"),
         "0.47", "0.47")
     + "\n\\vspace{0.4em}\n"
-    + r"{\scriptsize\textbf{Un detalle que suele hacerse mal:} en casi cualquier otra "
+    + r"{\scriptsize\textbf{Observación:} en casi cualquier otra "
       r"tarea conviene alterar mucho los colores de las fotos de entrenamiento, para que "
       r"el modelo no dependa del color. Acá el color \emph{es} la respuesta: si alteramos "
       r"mucho el tono, una palta clase 2 se vuelve idéntica a una clase 4 pero con la "
@@ -279,8 +275,7 @@ FRAME_RECETA = frame(
 
 
 FRAME_TRAMPA = frame(
-    "El riesgo de que la IA haga trampa",
-    "El error que habría inflado todos los resultados",
+    "El riesgo de que la IA haga trampa", "",
     columnas(
         items([
             ("A cada palta le sacaron una foto por día, hasta 26 días seguidos.", True),
@@ -297,7 +292,7 @@ FRAME_TRAMPA = frame(
         ], tam=r"\tiny", sep="0.2em"),
         figura("04_particiones", r"\textwidth", "2.9cm"),
         "0.52", "0.44")
-    + "\n" + r"\cierre{El código tiene un chequeo automático que falla si alguna "
+    + "\n" + r"\cierre{Implementamos un chequeo automático que falla si alguna "
              r"palta llegara a aparecer en los dos lados.}")
 
 
@@ -320,16 +315,13 @@ def frame_baseline(nombre: str, d: dict, color: str) -> str:
                + num(t["qwk"], 3)
                + r" \; \textbullet\; Macro-F1 " + num(t["macro_f1"], 3) + r"}")
     lectura = items([
-        ("Casi nunca se equivoca feo.", True),
+        ("Casi nunca se equivoca por mucho.", True),
         f"En {pct(t['off_by_one'])} de las fotos dice la clase correcta o una "
         "vecina. Confundir una palta verde con una podrida no le pasó nunca.",
         ("Se equivoca por menos de medio escalón.", True),
         f"{num(t['mae'], 2)} en una escala de 5 niveles: del orden de medio día "
         "de maduración.",
-        ("Anda igual de bien en las tres temperaturas.", True),
-        "No está haciendo trampa con el atajo "
-        "\\guillemotleft{}verde $\\Rightarrow$ seguro venía del refrigerador"
-        "\\guillemotright{}.",
+        ("Anda igual de bien en las tres temperaturas de almacenamiento.", True),
     ], tam=r"\scriptsize", sep="0.22em")
     sub = (f"Un cerebro de {num(d['params_M'], 1)} millones de conexiones, "
            f"{d['train_minutes']:.0f} minutos de entrenamiento")
@@ -461,10 +453,7 @@ def frames_anexo(modelos: list[str], res: dict, comp: dict | None) -> str:
             "Anexo: desglose por temperatura de almacenamiento",
             "Sirve para detectar si el modelo se apoya en un atajo",
             tabla(["Modelo", "Grupo", "n", "Accuracy", "MAE"], filas_g,
-                  spec="llccc", tam=r"\tiny")
-            + "\n" + r"\cierre{Desempeño parejo entre grupos: el modelo no está "
-                     r"usando el atajo \guillemotleft{}verde $\Rightarrow$ "
-                     r"refrigerada\guillemotright{}.}")
+                  spec="llccc", tam=r"\tiny"))
     return salida
 
 
@@ -514,9 +503,7 @@ FRAME_RIESGOS = frame(
           spec=r">{\raggedright\arraybackslash}p{0.20\textwidth}"
                r">{\raggedright\arraybackslash}p{0.38\textwidth}"
                r">{\raggedright\arraybackslash}p{0.34\textwidth}",
-          tam=r"\tiny")
-    + "\n" + r"\cierre{El choque con la vida real es el riesgo que decide si esto "
-             r"sirve en una planta empacadora o solo en un informe.}")
+          tam=r"\tiny"))
 
 
 # --------------------------------------------------------------------------- #
@@ -566,8 +553,7 @@ def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
     cuerpo += FRAME_RIESGOS
 
     cuerpo += frame(
-        "Qué viene para el entregable final",
-        "Lo que falta para noviembre",
+        "Qué viene para el entregable final", "",
         items([
             ("Desarmar el modelo para ver qué pieza importa.", True),
             "Reentrenar las dos redes sin ImageNet, solo con las fotos de paltas. "
@@ -581,8 +567,7 @@ def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
             ("Una demo que funcione: subir una foto y ver la respuesta.", True),
             ("Y una recomendación explícita: cuál llevaríamos a una planta real, "
              "pesando precisión contra costo.", True),
-        ], tam=r"\scriptsize", sep="0.25em")
-        + "\n" + rf"\cierre{{Repositorio: {REPO}}}")
+        ], tam=r"\scriptsize", sep="0.25em"))
 
     cuerpo += frames_anexo(["resnet50", "vit_small"],
                            {"resnet50": r, "vit_small": v}, comp)

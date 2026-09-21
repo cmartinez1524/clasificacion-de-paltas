@@ -135,7 +135,12 @@ def portada(titulo: str, subtitulo: str, autor: str, fecha: str, pie: str) -> st
   {{\color{{white!85!verdecla}}\large {subtitulo}}}
 
   \vfill
-  {{\color{{white!70!verdecla}}\small {autor} \quad\textbullet\quad {fecha}}}
+  % autor y fecha en lineas separadas: con varios autores la linea envuelve y
+  % el separador queda colgando al borde derecho.
+  {{\color{{white!70!verdecla}}\small {autor}}}
+
+  \vspace{{0.15em}}
+  {{\color{{white!70!verdecla}}\small {fecha}}}
 
   \vspace{{0.2em}}
   {{\color{{white!60!verdecla}}\footnotesize {pie}}}
@@ -160,12 +165,18 @@ def seccion(numero: str, titulo: str) -> str:
 
 
 def frame(titulo: str, subtitulo: str, cuerpo: str, nota: str = "") -> str:
-    """Un slide de contenido. `cuerpo` es LaTeX crudo."""
+    """Un slide de contenido. `cuerpo` es LaTeX crudo.
+
+    Con `subtitulo` vacio se omite el segundo grupo de llaves en vez de dejarlo
+    vacio: asi el encabezado no reserva una linea en blanco bajo el titulo.
+    """
     n = f"\n\\note{{{nota}}}" if nota else ""
-    return rf"""
-\begin{{frame}}{{{titulo}}}{{{subtitulo}}}
+    encabezado = (rf"\begin{{frame}}{{{titulo}}}{{{subtitulo}}}" if subtitulo
+                  else rf"\begin{{frame}}{{{titulo}}}")
+    return f"""
+{encabezado}
 {cuerpo}
-\end{{frame}}{n}
+\\end{{frame}}{n}
 """
 
 
