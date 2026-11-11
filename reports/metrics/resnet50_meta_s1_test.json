@@ -1,0 +1,155 @@
+{
+  "config": {
+    "name": "resnet50_meta_s1",
+    "model": "resnet50_meta",
+    "pretrained": true,
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 10,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 15,
+    "lr": 0.0003,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 1,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "ResNet-50 + temperatura y dia de almacenamiento"
+  },
+  "params_M": 23.523,
+  "params_entrenables_M": 23.523,
+  "gflops": 8.174,
+  "best_epoch": 3,
+  "train_minutes": 5.39,
+  "seed": 1,
+  "val": {
+    "accuracy": 0.8004464285714286,
+    "balanced_accuracy": 0.7920983576981789,
+    "macro_f1": 0.7928408959558528,
+    "qwk": 0.9511710832462663,
+    "mae": 0.20089285714285715,
+    "off_by_one": 0.9986607142857142,
+    "per_class_f1": [
+      0.9130044843049328,
+      0.7182481751824817,
+      0.7485380116959064,
+      0.750242954324587,
+      0.8341708542713567
+    ],
+    "confusion_matrix": [
+      [
+        509,
+        69,
+        0,
+        0,
+        0
+      ],
+      [
+        28,
+        246,
+        73,
+        1,
+        0
+      ],
+      [
+        0,
+        20,
+        320,
+        52,
+        0
+      ],
+      [
+        0,
+        2,
+        70,
+        386,
+        34
+      ],
+      [
+        0,
+        0,
+        0,
+        98,
+        332
+      ]
+    ]
+  },
+  "test": {
+    "accuracy": 0.7780725022104332,
+    "balanced_accuracy": 0.7661409634098422,
+    "macro_f1": 0.7700235359363375,
+    "qwk": 0.9458575332352588,
+    "mae": 0.22236958443854996,
+    "off_by_one": 0.9995579133510168,
+    "per_class_f1": [
+      0.9002744739249772,
+      0.6750392464678179,
+      0.7197382769901853,
+      0.7231638418079096,
+      0.8319018404907975
+    ],
+    "confusion_matrix": [
+      [
+        492,
+        58,
+        0,
+        0,
+        0
+      ],
+      [
+        51,
+        215,
+        76,
+        0,
+        0
+      ],
+      [
+        0,
+        22,
+        330,
+        80,
+        0
+      ],
+      [
+        0,
+        0,
+        78,
+        384,
+        44
+      ],
+      [
+        0,
+        0,
+        1,
+        92,
+        339
+      ]
+    ]
+  },
+  "test_por_grupo": {
+    "T10": {
+      "n": 1350,
+      "accuracy": 0.797,
+      "mae": 0.2037
+    },
+    "T20": {
+      "n": 466,
+      "accuracy": 0.7446,
+      "mae": 0.2554
+    },
+    "Tam": {
+      "n": 446,
+      "accuracy": 0.7556,
+      "mae": 0.2444
+    }
+  }
+}

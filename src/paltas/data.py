@@ -119,15 +119,20 @@ def build_dataloaders(
         is_train = split == "train"
         ds = AvocadoDataset(sub, images_dir, build_transforms(img_size, train=is_train),
                            with_meta=with_meta)
+        # En Windows cada worker es un proceso con ~2 GB de memoria confirmada.
+        # Con 10 workers persistentes en las tres particiones eran 30 procesos
+        # (~60 GB): val y test usan menos workers, y test (se usa una vez) no
+        # los mantiene vivos.
+        nw = num_workers if is_train else min(num_workers, 4)
         loaders[split] = DataLoader(
             ds,
             batch_size=batch_size,
             shuffle=is_train,
-            num_workers=num_workers,
+            num_workers=nw,
             pin_memory=True,
             drop_last=is_train,
-            persistent_workers=num_workers > 0,
-            prefetch_factor=4 if num_workers > 0 else None,
+            persistent_workers=nw > 0 and split != "test",
+            prefetch_factor=4 if nw > 0 else None,
             generator=torch.Generator().manual_seed(seed) if is_train else None,
         )
     return loaders, frames
