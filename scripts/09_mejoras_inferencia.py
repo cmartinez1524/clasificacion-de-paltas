@@ -10,10 +10,17 @@
    obtiene una prediccion por fruta-dia, que ademas es lo que se haria en una
    planta real.
 
-Ojo con la comparacion: las filas "por fruta-dia" se calculan sobre 1.131
-observaciones y las "por foto" sobre 2.262. No es la misma poblacion, asi que
-no se comparan entre si directamente; lo que interesa es que la de fruta-dia
-es la que refleja el uso operativo.
+Seleccion sin mirar test (correccion tras el feedback del avance): la version
+anterior de este script comparaba las variantes directamente en test, lo que
+convierte a test en un conjunto de seleccion. Ahora cada variante se evalua en
+validacion, se elige UNA por modelo (la de mayor QWK en validacion, que es la
+metrica con la que tambien se eligen los checkpoints) y solo esa se reporta en
+test. Las demas filas de test se guardan por transparencia, marcadas como no
+seleccionadas.
+
+Ojo con la comparacion: las filas "por fruta-dia" se calculan sobre la mitad de
+observaciones que las "por foto" (un par a/b por fruta-dia). No es la misma
+poblacion; lo que interesa es que la de fruta-dia refleja el uso operativo.
 
 Uso:
     python scripts/09_mejoras_inferencia.py
@@ -65,8 +72,8 @@ def probabilidades(model, loader, device, tta: bool) -> np.ndarray:
     """Softmax de cada imagen del loader, en el orden del DataFrame."""
     model.eval()
     salida = []
-    for x, _ in loader:
-        x = x.to(device, non_blocking=True)
+    for batch in loader:
+        x = batch[0].to(device, non_blocking=True)
         with torch.autocast("cuda", dtype=torch.float16, enabled=device.type == "cuda"):
             logits = model(x).float()
             if tta:
@@ -101,7 +108,10 @@ def fila(nombre: str, m: dict, n: int) -> dict:
 
 
 def fig_mejoras(todo: dict) -> None:
-    """Tres barras por modelo: linea base, fusion de caras, y ademas TTA."""
+    """Tres barras por modelo (en test): linea base, fusion de caras y ademas TTA.
+
+    La variante elegida en validacion se marca con un borde negro.
+    """
     import matplotlib.pyplot as plt
 
     from paltas.paths import FIGURES_DIR
@@ -117,10 +127,14 @@ def fig_mejoras(todo: dict) -> None:
     x = np.arange(len(modelos))
     ancho = 0.26
     for k, (clave, etiqueta, color) in enumerate(variantes):
-        vals = [next(f["accuracy"] for f in todo[m] if f["variante"] == clave)
+        vals = [next(f["accuracy"] for f in todo[m]["test"] if f["variante"] == clave)
                 for m in modelos]
         barras = ax.bar(x + (k - 1) * ancho, vals, ancho, label=etiqueta, color=color,
                         edgecolor="white")
+        for b, m in zip(barras, modelos):
+            if todo[m]["elegida"] == clave:
+                b.set_edgecolor("black")
+                b.set_linewidth(1.6)
         for b, val in zip(barras, vals):
             ax.text(b.get_x() + b.get_width() / 2, val + 0.004,
                     f"{100*val:.1f}".replace(".", ","), ha="center", fontsize=8.5)
@@ -131,8 +145,20 @@ def fig_mejoras(todo: dict) -> None:
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{100*v:.0f} %"))
     ax.legend(frameon=False, fontsize=9, ncol=3, loc="upper left")
     ax.grid(axis="x", visible=False)
-    ax.set_title("Dos mejoras que no requieren reentrenar nada", fontsize=12.5)
+    ax.set_title("Dos mejoras sin reentrenar (en test; borde negro = variante elegida "
+                 "en validación)", fontsize=11.5)
     save(fig, FIGURES_DIR / "34_mejoras_inferencia.png")
+
+
+def variantes(model, loader, df, device) -> list[dict]:
+    filas = []
+    for tta in (False, True):
+        probs = probabilidades(model, loader, device, tta)
+        sufijo = " + TTA" if tta else ""
+        filas.append(fila(f"por foto{sufijo}", metricas_por_foto(df, probs), len(df)))
+        m_fd, n_fd = metricas_por_fruta_dia(df, probs)
+        filas.append(fila(f"por fruta-día{sufijo}", m_fd, n_fd))
+    return filas
 
 
 def main() -> None:
@@ -140,7 +166,6 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     images_dir = CACHE_DIR if any(CACHE_DIR.glob("*.jpg")) else IMAGES_DIR
     loaders, frames = build_dataloaders(SPLITS_CSV, images_dir, 224, 64, 8, 42)
-    df_test = frames["test"]
 
     todo = {}
     for clave, arq in ARQUITECTURA.items():
@@ -153,18 +178,18 @@ def main() -> None:
                                          weights_only=False)["model"])
         model.to(device)
 
-        filas = []
-        for tta in (False, True):
-            probs = probabilidades(model, loaders["test"], device, tta)
-            sufijo = " + TTA" if tta else ""
-            filas.append(fila(f"por foto{sufijo}", metricas_por_foto(df_test, probs),
-                              len(df_test)))
-            m_fd, n_fd = metricas_por_fruta_dia(df_test, probs)
-            filas.append(fila(f"por fruta-día{sufijo}", m_fd, n_fd))
+        val = variantes(model, loaders["val"], frames["val"], device)
+        test = variantes(model, loaders["test"], frames["test"], device)
+        elegida = max(val, key=lambda f: f["qwk"])["variante"]
+        for f in test:
+            f["elegida_en_val"] = f["variante"] == elegida
+        todo[clave] = {"val": val, "test": test, "elegida": elegida}
 
-        todo[clave] = filas
-        print(f"\n=== {ETIQUETA[clave]} ===")
-        print(pd.DataFrame(filas).to_string(index=False))
+        print(f"\n=== {ETIQUETA[clave]} ===  elegida en validacion: {elegida}")
+        print("VALIDACION")
+        print(pd.DataFrame(val).to_string(index=False))
+        print("TEST")
+        print(pd.DataFrame(test).to_string(index=False))
         del model
         torch.cuda.empty_cache()
 
@@ -172,19 +197,18 @@ def main() -> None:
     destino.write_text(json.dumps(todo, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nGuardado en {destino}")
 
-    # resumen: cuanto aporta cada mejora sobre la linea base de cada modelo
-    print("\n=== Ganancia respecto de 'por foto' (línea base actual) ===")
+    # resumen: ganancia de la variante elegida en validacion, medida en test
+    print("\n=== Variante elegida en validacion: ganancia en test sobre 'por foto' ===")
     resumen = []
-    for clave, filas in todo.items():
-        base = filas[0]
-        for f in filas[1:]:
-            resumen.append({
-                "modelo": ETIQUETA[clave], "variante": f["variante"],
-                "Δ accuracy": round(f["accuracy"] - base["accuracy"], 4),
-                "Δ QWK": round(f["qwk"] - base["qwk"], 4),
-                "Δ MAE": round(f["mae"] - base["mae"], 4),
-                "Δ ±1": round(f["off_by_one"] - base["off_by_one"], 4),
-            })
+    for clave, r in todo.items():
+        base = r["test"][0]
+        f = next(f for f in r["test"] if f["elegida_en_val"])
+        resumen.append({
+            "modelo": ETIQUETA[clave], "elegida": f["variante"],
+            "Δ accuracy": round(f["accuracy"] - base["accuracy"], 4),
+            "Δ QWK": round(f["qwk"] - base["qwk"], 4),
+            "Δ MAE": round(f["mae"] - base["mae"], 4),
+        })
     print(pd.DataFrame(resumen).to_string(index=False))
 
     fig_mejoras(todo)
