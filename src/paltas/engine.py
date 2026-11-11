@@ -25,6 +25,17 @@ from tqdm import tqdm
 from .metrics import PRIMARY_METRIC, compute_metrics, format_metrics
 
 
+def forward_batch(model: nn.Module, batch, device: torch.device):
+    """Desempaqueta (x, y) o (x, meta, y) y llama al modelo como corresponde."""
+    if len(batch) == 3:
+        x, meta, y = batch
+        x = x.to(device, non_blocking=True)
+        meta = meta.to(device, non_blocking=True)
+        return (lambda inp: model(inp, meta)), x, y
+    x, y = batch
+    return model, x.to(device, non_blocking=True), y
+
+
 def set_seed(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
@@ -43,7 +54,7 @@ def param_groups(model: nn.Module, lr: float, head_lr_mult: float, weight_decay:
     Aplicar weight decay a los parametros de BatchNorm/LayerNorm y a los bias
     degrada el resultado; es el default de todas las recetas modernas.
     """
-    head_keys = ("fc.", "head.", "classifier.", "proj_cnn.", "proj_vit.")
+    head_keys = ("fc.", "head.", "classifier.", "proj_cnn.", "proj_vit.", "meta_enc.")
     grupos = {
         "backbone_decay": {"params": [], "lr": lr, "weight_decay": weight_decay},
         "backbone_nodecay": {"params": [], "lr": lr, "weight_decay": 0.0},
@@ -81,12 +92,12 @@ def evaluate(
 ) -> dict:
     model.eval()
     logits_all, y_all = [], []
-    for x, y in loader:
-        x = x.to(device, non_blocking=True)
+    for batch in loader:
+        f, x, y = forward_batch(model, batch, device)
         with torch.autocast("cuda", dtype=torch.float16, enabled=amp and device.type == "cuda"):
-            out = model(x).float()
+            out = f(x).float()
             if tta_hflip:
-                out = (out + model(torch.flip(x, dims=[3])).float()) / 2
+                out = (out + f(torch.flip(x, dims=[3])).float()) / 2
         logits_all.append(out.cpu())
         y_all.append(y)
 
@@ -108,13 +119,13 @@ def train_one_epoch(model, loader, criterion, optimizer, scheduler, scaler, devi
     perdida_total, n, correctos = 0.0, 0, 0
     barra = tqdm(loader, desc=desc, leave=False, ncols=100)
 
-    for x, y in barra:
-        x = x.to(device, non_blocking=True)
+    for batch in barra:
+        f, x, y = forward_batch(model, batch, device)
         y = y.to(device, non_blocking=True)
 
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast("cuda", dtype=torch.float16, enabled=amp and device.type == "cuda"):
-            out = model(x)
+            out = f(x)
             loss = criterion(out, y)
 
         scaler.scale(loss).backward()

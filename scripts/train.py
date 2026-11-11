@@ -7,7 +7,12 @@ Uso:
 Salidas:
     checkpoints/<name>.pt               mejor checkpoint (por QWK de validacion)
     reports/metrics/<name>_history.json curva de entrenamiento
-    reports/metrics/<name>_test.json    metricas finales en test
+    reports/metrics/<name>_test.json    metricas finales en val y test
+    reports/metrics/<name>_{val,test}_preds.csv  predicciones y probabilidades
+
+Con --eval-only no entrena: carga checkpoints/<name>.pt y regenera las salidas
+de evaluacion (sirve para exportar las predicciones de validacion de modelos ya
+entrenados).
 """
 
 from __future__ import annotations
@@ -50,6 +55,8 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--name", type=str, default=None)
     ap.add_argument("--num-workers", type=int, default=None)
+    ap.add_argument("--eval-only", action="store_true",
+                    help="no entrenar: evaluar el checkpoint existente")
     args = ap.parse_args()
 
     ensure_dirs()
@@ -73,7 +80,8 @@ def main() -> None:
     print("=" * 78)
 
     loaders, frames = build_dataloaders(
-        SPLITS_CSV, images_dir, cfg.img_size, cfg.batch_size, cfg.num_workers, cfg.seed
+        SPLITS_CSV, images_dir, cfg.img_size, cfg.batch_size, cfg.num_workers, cfg.seed,
+        with_meta=cfg.model.endswith("_meta"),
     )
     for s in ("train", "val", "test"):
         print(f"  {s:5s}: {len(frames[s]):6,d} imagenes  "
@@ -82,7 +90,7 @@ def main() -> None:
     extra = {}
     if cfg.model == "hybrid_fusion":
         extra["freeze_backbones"] = cfg.freeze_backbones
-    model = build_model(cfg.model, pretrained=cfg.pretrained,
+    model = build_model(cfg.model, pretrained=cfg.pretrained and not args.eval_only,
                         drop_path_rate=cfg.drop_path_rate, **extra)
 
     if cfg.model == "hybrid_fusion" and (cfg.cnn_ckpt or cfg.vit_ckpt):
@@ -102,13 +110,21 @@ def main() -> None:
     ckpt = CHECKPOINT_DIR / f"{cfg.name}.pt"
     hist = METRICS_DIR / f"{cfg.name}_history.json"
 
-    resumen = fit(model, loaders, cfg, device, w, ckpt, hist)
+    if args.eval_only:
+        previo = json.loads((METRICS_DIR / f"{cfg.name}_test.json").read_text(encoding="utf-8"))
+        resumen = {"best_epoch": previo["best_epoch"], "train_minutes": previo["train_minutes"]}
+        model.to(device)
+    else:
+        resumen = fit(model, loaders, cfg, device, w, ckpt, hist)
 
-    # --- Evaluacion final en test con el mejor checkpoint ---
-    print("\nCargando el mejor checkpoint y evaluando en test...")
+    # --- Evaluacion final con el mejor checkpoint ---
+    print("\nCargando el mejor checkpoint y evaluando en validacion y test...")
     model.load_state_dict(torch.load(ckpt, map_location=device, weights_only=False)["model"])
+    val = evaluate(model, loaders["val"], device, cfg.amp, cfg.eval_tta_hflip,
+                   return_logits=True)
     test = evaluate(model, loaders["test"], device, cfg.amp, cfg.eval_tta_hflip,
                     return_logits=True)
+    print(f"VAL   {format_metrics(val)}")
 
     print(f"TEST  {format_metrics(test)}")
 
@@ -132,6 +148,8 @@ def main() -> None:
         "gflops": round(gflops, 3),
         "best_epoch": resumen["best_epoch"],
         "train_minutes": resumen["train_minutes"],
+        "seed": cfg.seed,
+        "val": {k: v for k, v in val.items() if k not in ("logits", "y_true", "y_pred")},
         "test": {k: v for k, v in test.items() if k not in ("logits", "y_true", "y_pred")},
         "test_por_grupo": por_grupo.to_dict("index"),
     }
@@ -139,14 +157,19 @@ def main() -> None:
         json.dumps(salida, indent=2, ensure_ascii=False), encoding="utf-8"
     )
     # Predicciones crudas: necesarias para las matrices de confusion y los tests
-    # de significancia de compare_models.py.
-    pd.DataFrame({
-        "file_name": frames["test"]["file_name"],
-        "sample_id": frames["test"]["sample_id"],
-        "storage_group": frames["test"]["storage_group"],
-        "y_true": test["y_true"],
-        "y_pred": test["y_pred"],
-    }).to_csv(METRICS_DIR / f"{cfg.name}_test_preds.csv", index=False)
+    # de significancia de compare_models.py. Las probabilidades permiten promediar
+    # caras o semillas; las de validacion, elegir variantes sin mirar test.
+    for split, res in (("val", val), ("test", test)):
+        probs = torch.softmax(torch.from_numpy(res["logits"]), 1).numpy()
+        f = frames[split]
+        out = pd.DataFrame({
+            "file_name": f["file_name"], "sample_id": f["sample_id"],
+            "storage_group": f["storage_group"], "day": f["day"], "side": f["side"],
+            "y_true": res["y_true"], "y_pred": res["y_pred"],
+        })
+        for c in range(probs.shape[1]):
+            out[f"p{c + 1}"] = probs[:, c].round(5)
+        out.to_csv(METRICS_DIR / f"{cfg.name}_{split}_preds.csv", index=False)
 
     print(f"\nGuardado: {METRICS_DIR / (cfg.name + '_test.json')}")
 

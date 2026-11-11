@@ -1,0 +1,27 @@
+# ResNet-50 + metadatos de almacenamiento (temperatura one-hot y dia escalado).
+# Misma receta que resnet50.yaml; la unica diferencia es que la cabeza recibe
+# tambien la informacion que usa la referencia sin imagen.
+name: resnet50_meta
+model: resnet50_meta
+pretrained: true
+
+img_size: 224
+batch_size: 64
+num_workers: 10
+use_cache: true
+use_class_weights: true
+
+epochs: 15
+lr: 0.0003
+head_lr_mult: 10.0
+weight_decay: 0.05
+warmup_epochs: 1.0
+label_smoothing: 0.05
+drop_path_rate: 0.0
+grad_clip: 1.0
+amp: true
+
+seed: 42
+early_stop_patience: 5
+
+notes: "ResNet-50 + temperatura y dia de almacenamiento"

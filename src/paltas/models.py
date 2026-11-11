@@ -122,6 +122,39 @@ class LateFusion(nn.Module):
         return self.head(torch.cat([f, v], dim=1))
 
 
+class ImageMetaModel(nn.Module):
+    """Imagen + metadatos de almacenamiento (temperatura y dia).
+
+    Respuesta a la referencia sin imagen: saber solo la temperatura y el dia ya
+    acierta ~78 % porque la madurez sigue el calendario. Este modelo recibe esa
+    misma informacion junto con la foto; la pregunta es cuanto agrega la imagen
+    por sobre el calendario, sobre todo en las paltas que maduran fuera de ritmo.
+
+    El backbone es el mismo de los baselines (pesos ImageNet-1k). Los metadatos
+    pasan por un MLP pequeno y se concatenan con el vector global de la imagen.
+    """
+
+    uses_meta = True
+
+    def __init__(self, backbone: str, n_meta: int = 4, num_classes: int = NUM_CLASSES,
+                 meta_dim: int = 64, dropout: float = 0.2, pretrained: bool = True,
+                 drop_path_rate: float = 0.0):
+        super().__init__()
+        extra = {"drop_path_rate": drop_path_rate} if drop_path_rate > 0 else {}
+        self.backbone = timm.create_model(backbone, pretrained=pretrained, num_classes=0,
+                                          **extra)
+        d = self.backbone.num_features
+        self.meta_enc = nn.Sequential(nn.Linear(n_meta, meta_dim), nn.GELU(),
+                                      nn.Linear(meta_dim, meta_dim), nn.GELU())
+        self.head = nn.Sequential(nn.Dropout(dropout), nn.Linear(d + meta_dim, num_classes))
+
+    def forward(self, x: torch.Tensor, meta: torch.Tensor | None = None) -> torch.Tensor:
+        if meta is None:
+            # Solo para el contador de FLOPs: el costo de los metadatos es despreciable.
+            meta = torch.zeros(x.size(0), self.meta_enc[0].in_features, device=x.device)
+        return self.head(torch.cat([self.backbone(x), self.meta_enc(meta)], dim=1))
+
+
 def build_model(
     name: str,
     pretrained: bool = True,
@@ -132,6 +165,13 @@ def build_model(
     """Crea un modelo a partir de su nombre corto en el proyecto."""
     if name == "hybrid_fusion":
         return LateFusion(num_classes=num_classes, pretrained=pretrained, **kwargs)
+
+    if name.endswith("_meta"):
+        base = name.removesuffix("_meta")
+        if base not in BACKBONES:
+            raise KeyError(f"Modelo desconocido: {name!r}")
+        return ImageMetaModel(BACKBONES[base][0], num_classes=num_classes,
+                              pretrained=pretrained, drop_path_rate=drop_path_rate)
 
     if name not in BACKBONES:
         raise KeyError(f"Modelo desconocido: {name!r}. Opciones: "
