@@ -346,57 +346,110 @@ Fotos que vio antes de empezar & 1,3 millones & 1,3 millones & ninguna \\
 \end{frame}
 }
 
-\begin{frame}{Todos los modelos, lado a lado}{Medido sobre 2.262 fotos de 72 paltas que ningún modelo había visto}
+\begin{frame}{La vara que hay que superar: el calendario}{Una regla que no mira la foto: solo la temperatura y el día de almacenamiento}
+\caja[grisSuave]{0.465\textwidth}{La regla}{\scriptsize Para cada temperatura y cada día, mirar en las paltas de estudio cuál fue el estado más común, y responder eso. No ve la foto.}\hfill
+\caja[verdeosc]{0.465\textwidth}{Lo que logra}{\scriptsize Acierta la clase exacta en el \textbf{78{,}0\,\%} de las fotos de prueba, QWK 0{,}942. Más que cualquiera de las dos redes mirando solo la foto.}
+\vspace{0.6em}
+{\scriptsize
+\setlength{\itemsep}{0.25em}
+\begin{itemize}
+  \item {\bfseries \textquestiondown{}Por qué funciona tan bien?}
+  \item En este experimento las paltas se cosecharon juntas y se guardaron en condiciones controladas: maduran casi al mismo ritmo. Saber cuántos días lleva guardada una palta ya dice casi todo.
+  \item {\bfseries Entonces, \textquestiondown{}para qué la foto?}
+  \item Para las paltas que no siguen el ritmo del grupo, y para cuando no se sabe la historia de la fruta. Eso es lo que medimos a continuación.
+\end{itemize}
+}
+\cierre{Esta comparación la pidió el profesor en el avance. Toda la sección de resultados se mide contra esta regla.}
+\end{frame}
+
+\begin{frame}{Todos los modelos, lado a lado}{2.262 fotos de 72 paltas que ningún modelo vio; promedio de 3 entrenamientos}
 {\scriptsize
 \centering
-\begin{tabular}{l >{\centering\arraybackslash}p{0.20\textwidth} >{\centering\arraybackslash}p{0.17\textwidth} c}
+\begin{tabular}{lcccc}
 \toprule
-\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Acierta o se pasa por un escalón & \color{white}\bfseries Error promedio & \color{white}\bfseries Clase exacta \\
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Semillas & \color{white}\bfseries Clase exacta & \color{white}\bfseries QWK & \color{white}\bfseries Error promedio \\
 \midrule
-ResNet-50 & 99{,}2\,\% & 0{,}26 escalones & 74{,}6\,\% \\
-ViT-S/16 & 99{,}5\,\% & 0{,}28 escalones & 72{,}2\,\% \\
-ResNet-50 (scratch) & 97{,}7\,\% & 0{,}35 escalones & 67{,}2\,\% \\
-ViT-S/16 (scratch) & 98{,}1\,\% & 0{,}41 escalones & 61{,}2\,\% \\
-Híbrido: fusión tardía & 99{,}5\,\% & 0{,}24 escalones & 76{,}7\,\% \\
-\rowcolor{verdecla!22}ViT-Hybrid R26+S/32 & 99{,}6\,\% & 0{,}24 escalones & 76{,}2\,\% \\
+Solo temperatura y día (sin foto) & 1 & 78{,}0\,\% & 0{,}942 & 0{,}23 \\
+ResNet-50 & 3 & 74{,}8\,$\pm$\,0{,}3\,\% & 0{,}936 & 0{,}26 \\
+ViT-S/16 & 3 & 73{,}1\,$\pm$\,2{,}6\,\% & 0{,}933 & 0{,}28 \\
+\rowcolor{verdecla!22}ResNet-50 + temp. y día & 3 & 79{,}2\,$\pm$\,1{,}3\,\% & 0{,}950 & 0{,}21 \\
+ViT-S/16 + temp. y día & 3 & 78{,}5\,$\pm$\,0{,}7\,\% & 0{,}948 & 0{,}22 \\
 \bottomrule
 \end{tabular}
 }
-\vspace{0.6em}
+\vspace{0.35em}
 {\scriptsize
-\setlength{\itemsep}{0.22em}
+\setlength{\itemsep}{0.12em}
 \begin{itemize}
-  \item {\bfseries Todos los modelos con pre-entrenamiento están sobre el 99\,\%.}
-  \item La diferencia entre ellos es de décimas. Los dos que aparecen abajo son los entrenados desde cero, y se nota.
-  \item {\bfseries El renglón que importa es el del medio.}
-  \item Menos de medio escalón de error promedio significa, en la práctica, medio día de maduración.
+  \item {\bfseries La foto sola queda bajo la regla del calendario.}
+  \item Las dos redes aciertan menos que la regla que no mira la foto.
+  \item {\bfseries La foto más la temperatura y el día queda sobre la regla, pero por poco.}
+  \item Ganan en promedio, pero ninguna semilla por sí sola supera a la regla de forma estadísticamente clara. Lo honesto es decir que empatan con tendencia a favor.
+  \item {\bfseries El $\pm$ es lo que cambia el resultado al repetir el entrenamiento.}
+  \item El ViT varía cerca de 9 veces más que la ResNet entre un entrenamiento y otro.
 \end{itemize}
 }
-\cierre{La tabla completa, con las seis métricas técnicas, está en el anexo.}
+\cierre{Los modelos desde cero y los híbridos se entrenaron una sola vez (2 híbridos); van más adelante y en el anexo.}
 \end{frame}
 
-\begin{frame}{ResNet-50 frente a ViT-S/16}{El resultado central del avance}
+\begin{frame}{ResNet-50 frente a ViT-S/16}{Tres entrenamientos de cada una: cada punto es uno, la raya es el promedio}
 \begin{center}
-  \includegraphics[width=0.86\textwidth,height=3.6cm,keepaspectratio]{33-matrices-didactica}
+  \includegraphics[width=0.92\textwidth,height=3.25cm,keepaspectratio]{35-semillas}
 \end{center}
-\vspace{0.3em}
-{\tiny
-\setlength{\itemsep}{0.2em}
+\vspace{0.2em}
+{\scriptsize
+\setlength{\itemsep}{0.12em}
 \begin{itemize}
-  \item {\bfseries Las dos rinden prácticamente igual.}
-  \item La ResNet acierta la clase exacta un poco más seguido. Pero cuando el ViT se equivoca, se equivoca por menos. Se compensa.
-  \item Hicimos la prueba estadística formal y la diferencia entre ambas no es concluyente: para efectos prácticos, empatan.
-  \item {\bfseries Pero no se equivocan en las mismas fotos.}
-  \item Fallan las dos a la vez en solo 18{,}0\,\% de los casos. Si alguien pudiera elegir siempre cuál de las dos tiene razón, acertaría 82{,}0\,\% en vez de 74{,}6\,\%.
-  \item Eso es lo que van a intentar aprovechar los modelos híbridos.
+  \item {\bfseries En promedio la ResNet acierta un poco más: 74{,}8\,$\pm$\,0{,}3\,\% contra 73{,}1\,$\pm$\,2{,}6\,\%.}
+  \item Gana con claridad en 2 de 3 semillas en clase exacta y en 1 de 3 en QWK. En la otra semilla el ViT queda arriba, sin diferencia clara.
+  \item {\bfseries La diferencia más clara es la estabilidad.}
+  \item La ResNet da casi lo mismo cada vez; el ViT sale entre 71{,}0\,\% y 76{,}0\,\% según la semilla.
 \end{itemize}
 }
-\cierre{Los números completos y las pruebas estadísticas están en el anexo.}
+\cierre{En el avance dijimos \guillemotleft{}ResNet gana en clase exacta\guillemotright{} con un solo entrenamiento. Con tres, la conclusión se matiza.}
+\end{frame}
+
+\begin{frame}{\textquestiondown{}Qué aporta realmente la foto?}{Separando las paltas según si maduran al ritmo de su grupo}
+\begin{center}
+  \includegraphics[width=0.86\textwidth,height=3.5cm,keepaspectratio]{36b-calendario}
+\end{center}
+\vspace{0.2em}
+{\scriptsize
+\setlength{\itemsep}{0.12em}
+\begin{itemize}
+  \item {\bfseries 498 de 2.262 fotos son de paltas que van fuera de ritmo. Ahí la regla del calendario falla siempre; la foto sola acierta cerca de la mitad.}
+  \item Al darle también temperatura y día, la ResNet baja de 52{,}9\,\% a 45{,}5\,\% en esos casos: aprende a confiar en el calendario y mira menos la foto justo donde más se necesitaba.
+\end{itemize}
+}
+\cierre{Lo que gana el modelo combinado lo gana en las paltas normales; en las raras, la foto sola sigue siendo mejor.}
+\end{frame}
+
+\begin{frame}{Por temperatura de almacenamiento}{Corrección del avance: los modelos no rinden igual en las tres}
+\begin{center}
+  \includegraphics[width=0.86\textwidth,height=4.1cm,keepaspectratio]{36a-por-temperatura}
+\end{center}
+\vspace{0.2em}
+{\scriptsize
+\setlength{\itemsep}{0.12em}
+\begin{itemize}
+  \item {\bfseries A temperatura ambiente el calendario es el que más se equivoca.}
+  \item La regla baja a 68{,}6\,\%; la ResNet con foto sola llega a 72{,}8\,\%. Sin refrigeración las paltas maduran más dispares y la foto aporta más.
+  \item {\bfseries En el avance dijimos que andaba igual de bien en las tres. No es así.}
+  \item El ViT baja de 74{,}5\,\% a 10\,\textdegree C a 70{,}0\,\% a 20\,\textdegree C. La ResNet es más pareja.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{Cómo se equivoca}{Fotos reales de la prueba, elegidas al azar entre los errores}
+\begin{center}
+  \includegraphics[width=0.70\textwidth,height=5.0cm,keepaspectratio]{37-ejemplos-errores}
+\end{center}
+\cierre{557 de los 574 errores de la ResNet son de un escalón. Los estados 3, 4 y 5 se ven igual de oscuros: los separa la firmeza, que la foto no muestra. Las manchas claras de daño también confunden.}
 \end{frame}
 
 \begin{frame}{El experimento que lo demuestra}{Reentrenamos las dos redes SIN ImageNet, solo con las fotos de paltas}
 \begin{center}
-  \includegraphics[width=0.84\textwidth,height=3.6cm,keepaspectratio]{32-dependencia-pretraining}
+  \includegraphics[width=0.84\textwidth,height=3.25cm,keepaspectratio]{32-dependencia-pretraining}
 \end{center}
 \vspace{0.3em}
 {\tiny
@@ -405,56 +458,53 @@ Híbrido: fusión tardía & 99{,}5\,\% & 0{,}24 escalones & 76{,}7\,\% \\
   \item {\bfseries El ViT pierde 2{,}1$\times$ más QWK y 1{,}5$\times$ más accuracy que la ResNet.}
   \item Es lo que predice la idea de las \guillemotleft{}reglas de fábrica\guillemotright{}: la ResNet ya sabía mirar imágenes, el ViT tenía que aprenderlo, y 10.208 fotos de paltas no alcanzan para eso.
   \item Las cuatro caídas son estadísticamente sólidas ($p<0{,}0001$), y cada red se compara contra \emph{su propia} versión con ImageNet.
+  \item Limitación: los modelos desde cero se entrenaron una sola vez. La caída es tan grande (7 y 11 puntos) que la variación entre semillas no alcanza a explicarla, pero el cociente exacto es aproximado.
 \end{itemize}
 }
-\cierre{Con ImageNet las dos empatan. Sin ImageNet, no. La diferencia real entre ellas no es el techo, es cuántos datos necesitan para llegar.}
+\cierre{Con ImageNet las dos quedan cerca. Sin ImageNet, no. La diferencia real entre ellas no es el techo, es cuántos datos necesitan para llegar.}
 \end{frame}
 
-\begin{frame}{Y hay una segunda razón}{Esta tarea juega en la cancha de la convolución}
-{\small
+\begin{frame}{Una hipótesis para explicarlo}{Creemos que esta tarea juega en la cancha de la convolución}
+{\footnotesize
 \setlength{\itemsep}{0.3em}
 \begin{itemize}
   \item {\bfseries El estado de madurez se lee en detalles pequeños y locales.}
   \item El color de la cáscara, las manchas, el arrugamiento. Todo eso está repartido por la superficie de la fruta y se ve de cerca.
   \item {\bfseries Justo lo que la ResNet hace bien con su lupa.}
-  \item La gran ventaja del ViT es relacionar zonas lejanas de una imagen. Acá no hay nada lejano que relacionar: todas las paltas tienen la misma forma, están centradas y sobre el mismo fondo.
-  \item {\bfseries Por eso el empate no es casualidad.}
-  \item En un problema donde importara la composición global de la escena, probablemente el ViT sacaría ventaja. En este, su superpoder no suma.
+  \item La gran ventaja del ViT es relacionar zonas lejanas de una imagen. Acá hay poco lejano que relacionar: todas las paltas tienen la misma forma, están centradas y sobre el mismo fondo.
+  \item {\bfseries Es una hipótesis, no un resultado.}
+  \item Es coherente con la ablación y con los mapas de atención, pero no la probamos directamente. La prueba sería tapar o desordenar partes de la foto y ver cuál de las dos redes sufre más: queda como trabajo futuro.
 \end{itemize}
 }
-\cierre{Conclusión honesta: no es que el ViT sea peor, es que este problema no le pide lo que él hace mejor.}
+\cierre{Lo que sí podemos afirmar: con el mismo estudio previo quedan cerca, y sin él la ResNet resiste mucho mejor.}
 \end{frame}
 
 \begin{frame}{Los híbridos}{\textquestiondown{}Suma combinar ambos enfoques?}
-\kpi[morado]{0.47\textwidth}{Híbrido: fusión tardía}{QWK 0{,}941}\hfill
-\kpi[morado]{0.47\textwidth}{ViT-Hybrid R26+S/32}{QWK 0{,}941}
-\vspace{0.3em}
 {\scriptsize
-\setlength{\itemsep}{0.15em}
-\begin{itemize}
-  \item Híbrido: fusión tardía: 46{,}4\,M params, 16{,}7 GFLOPs, acc 76{,}7\,\%
-  \item ViT-Hybrid R26+S/32: 36{,}0\,M params, 6{,}9 GFLOPs, acc 76{,}2\,\%
-\end{itemize}
+\centering
+\begin{tabular}{lccccc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries QWK val. & \color{white}\bfseries Exacta val. & \color{white}\bfseries QWK prueba & \color{white}\bfseries Exacta prueba & \color{white}\bfseries Cuesta \\
+\midrule
+ResNet-50 & 0{,}945 & 78{,}8\,\% & 0{,}936 & 74{,}6\,\% & 1{,}00$\times$ \\
+Híbrido: fusión tardía & 0{,}939 & 77{,}4\,\% & 0{,}941 & 76{,}7\,\% & 2{,}04$\times$ \\
+ViT-Hybrid R26+S/32 & 0{,}943 & 78{,}0\,\% & 0{,}941 & 76{,}2\,\% & 0{,}84$\times$ \\
+\bottomrule
+\end{tabular}
 }
-\vspace{0.3em}
-\begin{columns}[T]
-\begin{column}{0.52\textwidth}
+\vspace{0.5em}
 {\tiny
-\setlength{\itemsep}{0.22em}
+\setlength{\itemsep}{0.2em}
 \begin{itemize}
-  \item En su tabla de desacuerdo, fusión y ResNet fallan \emph{a la vez} en 20{,}6\,\% de las imágenes: más que el 18{,}0\,\% del par ResNet/ViT. La fusión no elimina los casos difíciles, los absorbe.
-  \item {\bfseries La fusión tardía cuesta el doble de cómputo por imagen.}
-  \item Dos backbones completos en el forward. La pregunta no es si mejora, sino si mejora lo suficiente para justificar $2\times$ de latencia.
-  \item Alcanza su mejor checkpoint en la \textbf{época 2} (3{,}5 min) con los backbones congelados: las representaciones ya contenían la información, lo que faltaba era combinarlas.
+  \item {\bfseries En la prueba parecían mejores. En validación, no.}
+  \item Con la semilla 42 ambos superan a la ResNet en la prueba. Pero la decisión se toma en validación, y ahí ninguno le gana a la ResNet en QWK. Elegirlos mirando la prueba habría sido el mismo error que nos señalaron en el avance.
+  \item {\bfseries Además se entrenaron una sola vez.}
+  \item La ResNet sola ya varía $\pm$0{,}3 puntos entre semillas, y el ViT $\pm$2{,}6: una ventaja de un punto con una sola semilla no alcanza para afirmar nada.
+  \item {\bfseries Y la fusión tardía cuesta el doble por foto.}
+  \item El ViT-Hybrid R26 es más barato, pero estudió con 14 millones de fotos en vez de 1,3: no es una comparación limpia.
 \end{itemize}
 }
-\end{column}
-\begin{column}{0.44\textwidth}
-\begin{center}
-  \includegraphics[width=\textwidth,height=2.9cm,keepaspectratio]{13-costo-beneficio-final}
-\end{center}
-\end{column}
-\end{columns}
+\cierre{Conclusión: con esta evidencia, combinar las dos redes no demostró valer la pena. Agregar temperatura y día aportó más.}
 \end{frame}
 
 \begin{frame}{\textquestiondown{}En qué se fijó el modelo para decidir?}{Pintamos sobre la foto las zonas que más pesaron en la respuesta}
@@ -480,34 +530,34 @@ Híbrido: fusión tardía & 99{,}5\,\% & 0{,}24 escalones & 76{,}7\,\% \\
 \end{columns}
 \end{frame}
 
-\begin{frame}{Dos mejoras que salieron gratis}{Sin reentrenar nada, solo cambiando cómo se usa el modelo ya entrenado}
+\begin{frame}{Dos mejoras que salieron gratis}{Sin reentrenar: se eligen en validación y recién después se miden en la prueba}
 \begin{center}
-  \includegraphics[width=0.88\textwidth,height=3.9cm,keepaspectratio]{34-mejoras-inferencia}
+  \includegraphics[width=0.88\textwidth,height=3.6cm,keepaspectratio]{34-mejoras-inferencia}
 \end{center}
 \vspace{0.3em}
 {\tiny
 \setlength{\itemsep}{0.22em}
 \begin{itemize}
   \item {\bfseries 1. Mirar las dos caras de la palta antes de decidir.}
-  \item El dataset fotografía cada fruta por ambos lados el mismo día. Hasta ahora clasificábamos cada foto por separado; juntar las dos opiniones sube a la ResNet de 74{,}6\,\% a 76{,}4\,\%, y mejora a los cuatro modelos. En una planta igual se fotografían las dos caras: es gratis.
+  \item El dataset fotografía cada fruta por ambos lados el mismo día. Juntar las dos opiniones gana en validación en los cuatro modelos, y en la prueba sube a la ResNet de 74{,}6\,\% a 76{,}4\,\%. En una planta igual se fotografían las dos caras: es gratis.
   \item {\bfseries 2. Mostrarle también la foto espejada y promediar.}
-  \item Ayuda a las convolucionales, pero al ViT lo empeora un poco. Lo reportamos así: no todas las recetas estándar sirven en todos los modelos.
+  \item En validación solo le sirvió a ViT-Hybrid R26+S/32. A los demás no los mejora, así que no se les aplica.
 \end{itemize}
 }
-\cierre{Antes de comprar más cómputo conviene revisar si se está usando bien el modelo que ya se tiene.}
+\cierre{Corrección respecto del avance: antes estas variantes se comparaban directo en la prueba. Ahora la prueba se mira una sola vez.}
 \end{frame}
 
-\begin{frame}{\textquestiondown{}Cuál llevaríamos a una planta empacadora?}{No gana el más preciso: gana el que rinde mejor por lo que cuesta}
+\begin{frame}{\textquestiondown{}Cuál llevaríamos a una planta empacadora?}{Depende de qué información se tenga además de la foto}
 {\tiny
 \centering
-\begin{tabular}{l >{\centering\arraybackslash}p{0.15\textwidth} c >{\raggedright\arraybackslash}p{0.36\textwidth}}
+\begin{tabular}{l c c >{\raggedright\arraybackslash}p{0.40\textwidth}}
 \toprule
-\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Acierta o se pasa por uno & \color{white}\bfseries Cuesta & \color{white}\bfseries Veredicto \\
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Clase exacta & \color{white}\bfseries Cuesta & \color{white}\bfseries Veredicto \\
 \midrule
-\rowcolor{verdecla!22}ResNet-50 & 99{,}2\,\% & 1{,}00$\times$ & La que recomendamos. Es la referencia. \\
-ViT-S/16 & 99{,}5\,\% & 1{,}04$\times$ & Empata, cuesta lo mismo y se entrena en la mitad del tiempo. \\
-Híbrido: fusión tardía & 99{,}5\,\% & 2{,}04$\times$ & Mejora poquito y cuesta el doble. No lo vale. \\
-ViT-Hybrid R26+S/32 & 99{,}6\,\% & 0{,}84$\times$ & Mejor y más barato, pero estudió con más fotos: no es comparación limpia. \\
+\rowcolor{verdecla!22}ResNet-50 + temp. y día & 79{,}2\,$\pm$\,1{,}3\,\% & 1,00$\times$ & La que recomendamos si se conoce la historia del lote. \\
+Solo temperatura y día & 78{,}0\,\% & casi 0 & Empata en promedio. Pero falla siempre con las paltas fuera de ritmo. \\
+ResNet-50 & 74{,}8\,$\pm$\,0{,}3\,\% & 1,00$\times$ & La opción si no se sabe cuántos días lleva guardada la fruta. \\
+ViT-S/16 & 73{,}1\,$\pm$\,2{,}6\,\% & 1{,}04$\times$ & Cerca en promedio, pero menos estable entre entrenamientos. \\
 \bottomrule
 \end{tabular}
 }
@@ -515,12 +565,12 @@ ViT-Hybrid R26+S/32 & 99{,}6\,\% & 0{,}84$\times$ & Mejor y más barato, pero es
 {\scriptsize
 \setlength{\itemsep}{0.22em}
 \begin{itemize}
-  \item {\bfseries En una planta hay que clasificar miles de paltas por hora.}
-  \item Probablemente en un computador común, sin tarjeta gráfica potente. Ahí el costo de cada foto importa tanto como el acierto.
-  \item {\bfseries Si dos modelos empatan, gana el más barato.}
-  \item Duplicar el costo para ganar unas décimas no se justifica.
-  \item {\bfseries Y ya estamos en el techo de lo exigible.}
-  \item Con más del 99\,\% de aciertos dentro de un escalón, lo que queda de error probablemente también lo cometería una persona.
+  \item {\bfseries Si la planta registra temperatura y fecha de ingreso, hay que usarlas.}
+  \item Mejoran a las dos redes en las 3 semillas; en QWK la mejora es significativa en todas. No cuesta nada: son dos números más.
+  \item {\bfseries Pero el calendario solo no basta.}
+  \item Una regla de calendario no puede detectar una palta que madura distinto a su lote; la foto sí, en cerca de la mitad de esos casos.
+  \item {\bfseries Entre ResNet y ViT, preferimos la ResNet.}
+  \item No porque sea claramente más precisa, sino porque da lo mismo cada vez que se entrena. En producción eso importa.
 \end{itemize}
 }
 \end{frame}
@@ -544,14 +594,16 @@ ViT-Hybrid R26+S/32 & 99{,}6\,\% & 0{,}84$\times$ & Mejor y más barato, pero es
 
 \begin{frame}{Conclusiones y trabajo futuro}{Qué aprendimos y qué sigue}
 {\scriptsize
-\setlength{\itemsep}{0.28em}
+\setlength{\itemsep}{0.25em}
 \begin{itemize}
-  \item {\bfseries Con el mismo tamaño y el mismo estudio previo, las dos redes resuelven esto igual de bien.}
-  \item La pregunta interesante no era cuál gana, sino en qué se diferencian. Y la diferencia no está en el techo que alcanzan: está en cuántos datos necesitan para llegar.
-  \item {\bfseries El límite de esta tarea lo pone quien etiquetó las fotos, no la red.}
-  \item Como nadie revisó esas etiquetas dos veces, no sabemos cuánto del error que queda es del modelo y cuánto es desacuerdo entre humanos.
-  \item {\bfseries Qué haríamos ahora, en orden de importancia:}
-  \item 1) Salir a sacar fotos con celular en un packing chileno y medir cuánto cae. 2) Enseñarle explícitamente que las clases están ordenadas, cosa que hoy solo se le pide al evaluar. 3) Predecir directamente cuántos días de vida le quedan a la palta, que es lo que de verdad necesita la cadena de frío.
+  \item {\bfseries En este dataset, el calendario explica la mayor parte de la madurez.}
+  \item Una regla con solo temperatura y día acierta el 78\,\%; la foto sola no la supera. Sumar foto, temperatura y día queda arriba en promedio, sin una diferencia estadísticamente clara.
+  \item {\bfseries ResNet y ViT quedan cerca; la ResNet es más estable y depende menos de ImageNet.}
+  \item Con tres entrenamientos, la ventaja de la ResNet en clase exacta aparece en dos de tres. Sin ImageNet, el ViT pierde el doble.
+  \item {\bfseries Lo que corregimos tras el avance:}
+  \item Comparar contra el calendario, repetir cada entrenamiento tres veces, elegir las variantes en validación y no en la prueba, y no usar el 99\,\% de \guillemotleft{}acierta o se pasa por uno\guillemotright{} como titular.
+  \item {\bfseries Qué haríamos ahora:}
+  \item 1) Fotos de celular en un packing chileno, sin historia del lote. 2) Enseñarle que las clases están ordenadas (pérdida ordinal). 3) Tapar partes de la foto para probar la hipótesis local vs. global.
 \end{itemize}
 }
 \cierre{\texttt{github.com/cmartinez1524/clasificacion-de-paltas}}
@@ -567,14 +619,14 @@ ViT-Hybrid R26+S/32 & 99{,}6\,\% & 0{,}84$\times$ & Mejor y más barato, pero es
 \end{frame}
 }
 
-\begin{frame}{Anexo: todas las métricas}{Test: 2.262 imágenes de 72 frutas nunca vistas}
+\begin{frame}{Anexo: todas las métricas}{Test, semilla 42: 2.262 imágenes de 72 frutas nunca vistas}
 {\scriptsize
 \centering
 \begin{tabular}{lcccccccc}
 \toprule
 \rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Params & \color{white}\bfseries GFLOPs & \color{white}\bfseries QWK & \color{white}\bfseries Accuracy & \color{white}\bfseries Macro-F1 & \color{white}\bfseries MAE & \color{white}\bfseries Acc. $\pm$1 & \color{white}\bfseries min \\
 \midrule
-ResNet-50 & 23{,}5\,M & 8{,}2 & 0{,}9356 & 74{,}6\,\% & 0{,}735 & 0{,}262 & 99{,}2\,\% & 10 \\
+ResNet-50 & 23{,}5\,M & 8{,}2 & 0{,}9356 & 74{,}6\,\% & 0{,}735 & 0{,}261 & 99{,}2\,\% & 10 \\
 ViT-S/16 & 21{,}7\,M & 8{,}5 & 0{,}9313 & 72{,}2\,\% & 0{,}711 & 0{,}282 & 99{,}5\,\% & 5 \\
 ResNet-50 (scratch) & 23{,}5\,M & 8{,}2 & 0{,}9152 & 67{,}2\,\% & 0{,}655 & 0{,}352 & 97{,}7\,\% & 18 \\
 ViT-S/16 (scratch) & 21{,}7\,M & 8{,}5 & 0{,}8891 & 61{,}2\,\% & 0{,}579 & 0{,}409 & 98{,}1\,\% & 6 \\
@@ -595,7 +647,7 @@ ViT-Hybrid R26+S/32 & 36{,}0\,M & 6{,}9 & 0{,}9411 & 76{,}2\,\% & 0{,}752 & 0{,}
 }
 \end{frame}
 
-\begin{frame}{Anexo: pruebas estadísticas}{Diferencias contra ResNet-50, con intervalo de confianza del 95\,\%}
+\begin{frame}{Anexo: pruebas estadísticas}{Semilla 42: diferencias contra ResNet-50, con intervalo de confianza del 95\,\%}
 {\scriptsize
 \setlength{\itemsep}{0.25em}
 \begin{itemize}
@@ -609,25 +661,83 @@ ViT-Hybrid R26+S/32 & 36{,}0\,M & 6{,}9 & 0{,}9411 & 76{,}2\,\% & 0{,}752 & 0{,}
 }
 \end{frame}
 
-\begin{frame}{Anexo: desglose por temperatura de almacenamiento}{Sirve para detectar si el modelo se apoya en un atajo}
+\begin{frame}{Anexo: tres semillas}{Media $\pm$ desviación estándar en la prueba (semillas 42, 1 y 2)}
+{\scriptsize
+\centering
+\begin{tabular}{lccccc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Accuracy & \color{white}\bfseries QWK & \color{white}\bfseries Macro-F1 & \color{white}\bfseries MAE & \color{white}\bfseries QWK val. \\
+\midrule
+ResNet-50 & 74{,}8\,$\pm$\,0{,}3\,\% & 0{,}9365 $\pm$ 0{,}0020 & 0{,}740 $\pm$ 0{,}004 & 0{,}258 $\pm$ 0{,}005 & 0{,}9418 \\
+ViT-S/16 & 73{,}1\,$\pm$\,2{,}6\,\% & 0{,}9330 $\pm$ 0{,}0062 & 0{,}719 $\pm$ 0{,}030 & 0{,}276 $\pm$ 0{,}031 & 0{,}9312 \\
+ResNet-50 + temp. y día & 79{,}2\,$\pm$\,1{,}3\,\% & 0{,}9497 $\pm$ 0{,}0034 & 0{,}785 $\pm$ 0{,}014 & 0{,}208 $\pm$ 0{,}013 & 0{,}9523 \\
+ViT-S/16 + temp. y día & 78{,}5\,$\pm$\,0{,}7\,\% & 0{,}9478 $\pm$ 0{,}0017 & 0{,}778 $\pm$ 0{,}007 & 0{,}217 $\pm$ 0{,}008 & 0{,}9501 \\
+Solo temperatura y día & 78{,}0\,\% & 0{,}9420 & 0{,}770 & 0{,}227 & 0{,}9437 \\
+\bottomrule
+\end{tabular}
+}
+\end{frame}
+
+\begin{frame}{Anexo: comparaciones pareadas entre modelos}{Bootstrap pareado agrupado por fruta, 2.000 réplicas, semilla por semilla}
 {\tiny
 \centering
-\begin{tabular}{llccc}
+\begin{tabular}{lccccc}
 \toprule
-\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Grupo & \color{white}\bfseries n & \color{white}\bfseries Accuracy & \color{white}\bfseries MAE \\
+\rowcolor{verdeosc}\color{white}\bfseries Comparación & \color{white}\bfseries Semilla & \color{white}\bfseries $\Delta$QWK & \color{white}\bfseries $p$ & \color{white}\bfseries $\Delta$Acc. & \color{white}\bfseries $p$ \\
 \midrule
-ResNet-50 & T10 (10\,\textdegree C) & 1350 & 75{,}3\,\% & 0{,}259 \\
-ResNet-50 & T20 (20\,\textdegree C) & 466 & 75{,}1\,\% & 0{,}249 \\
-ResNet-50 & Tamb & 446 & 71{,}8\,\% & 0{,}285 \\
-ViT-S/16 & T10 (10\,\textdegree C) & 1350 & 73{,}9\,\% & 0{,}267 \\
-ViT-S/16 & T20 (20\,\textdegree C) & 466 & 68{,}7\,\% & 0{,}318 \\
-ViT-S/16 & Tamb & 446 & 71{,}1\,\% & 0{,}291 \\
-Híbrido: fusión tardía & T10 (10\,\textdegree C) & 1350 & 77{,}7\,\% & 0{,}231 \\
-Híbrido: fusión tardía & T20 (20\,\textdegree C) & 466 & 76{,}2\,\% & 0{,}240 \\
-Híbrido: fusión tardía & Tamb & 446 & 74{,}4\,\% & 0{,}256 \\
-ViT-Hybrid R26+S/32 & T10 (10\,\textdegree C) & 1350 & 77{,}7\,\% & 0{,}227 \\
-ViT-Hybrid R26+S/32 & T20 (20\,\textdegree C) & 466 & 75{,}8\,\% & 0{,}247 \\
-ViT-Hybrid R26+S/32 & Tamb & 446 & 72{,}0\,\% & 0{,}280 \\
+ResNet $-$ ViT & 1 & $-$0{,}0011 & 0{,}700 & $-$0{,}008 & 0{,}433 \\
+ResNet $-$ ViT & 2 & +0{,}0073 & 0{,}029 & +0{,}037 & 0{,}003 \\
+ResNet $-$ ViT & 42 & +0{,}0043 & 0{,}085 & +0{,}024 & 0{,}021 \\
+ResNet+meta $-$ ResNet & 1 & +0{,}0071 & 0{,}022 & +0{,}026 & 0{,}018 \\
+ResNet+meta $-$ ResNet & 2 & +0{,}0171 & 0{,}000 & +0{,}057 & 0{,}000 \\
+ResNet+meta $-$ ResNet & 42 & +0{,}0155 & 0{,}000 & +0{,}050 & 0{,}000 \\
+ViT+meta $-$ ViT & 1 & +0{,}0060 & 0{,}024 & +0{,}017 & 0{,}099 \\
+ViT+meta $-$ ViT & 2 & +0{,}0209 & 0{,}000 & +0{,}082 & 0{,}000 \\
+ViT+meta $-$ ViT & 42 & +0{,}0177 & 0{,}000 & +0{,}065 & 0{,}000 \\
+ResNet+meta $-$ ViT+meta & 1 & +0{,}0000 & 0{,}967 & +0{,}001 & 0{,}925 \\
+ResNet+meta $-$ ViT+meta & 2 & +0{,}0035 & 0{,}174 & +0{,}011 & 0{,}240 \\
+ResNet+meta $-$ ViT+meta & 42 & +0{,}0021 & 0{,}439 & +0{,}009 & 0{,}398 \\
+\bottomrule
+\end{tabular}
+}
+\end{frame}
+
+\begin{frame}{Anexo: cada modelo contra la regla del calendario}{Bootstrap pareado agrupado por fruta, 2.000 réplicas, semilla por semilla}
+{\tiny
+\centering
+\begin{tabular}{lccccc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Comparación & \color{white}\bfseries Semilla & \color{white}\bfseries $\Delta$QWK & \color{white}\bfseries $p$ & \color{white}\bfseries $\Delta$Acc. & \color{white}\bfseries $p$ \\
+\midrule
+ResNet $-$ Calendario & 42 & $-$0{,}0064 & 0{,}363 & $-$0{,}034 & 0{,}057 \\
+ResNet $-$ Calendario & 1 & $-$0{,}0033 & 0{,}612 & $-$0{,}027 & 0{,}145 \\
+ResNet $-$ Calendario & 2 & $-$0{,}0070 & 0{,}328 & $-$0{,}033 & 0{,}079 \\
+ViT $-$ Calendario & 42 & $-$0{,}0107 & 0{,}149 & $-$0{,}057 & 0{,}007 \\
+ViT $-$ Calendario & 1 & $-$0{,}0022 & 0{,}712 & $-$0{,}019 & 0{,}289 \\
+ViT $-$ Calendario & 2 & $-$0{,}0143 & 0{,}106 & $-$0{,}070 & 0{,}004 \\
+ResNet+meta $-$ Calendario & 42 & +0{,}0091 & 0{,}102 & +0{,}016 & 0{,}325 \\
+ResNet+meta $-$ Calendario & 1 & +0{,}0038 & 0{,}517 & $-$0{,}002 & 0{,}936 \\
+ResNet+meta $-$ Calendario & 2 & +0{,}0101 & 0{,}090 & +0{,}023 & 0{,}159 \\
+ViT+meta $-$ Calendario & 42 & +0{,}0070 & 0{,}235 & +0{,}007 & 0{,}689 \\
+ViT+meta $-$ Calendario & 1 & +0{,}0038 & 0{,}608 & $-$0{,}003 & 0{,}904 \\
+ViT+meta $-$ Calendario & 2 & +0{,}0066 & 0{,}310 & +0{,}012 & 0{,}477 \\
+\bottomrule
+\end{tabular}
+}
+\end{frame}
+
+\begin{frame}{Anexo: accuracy por temperatura de almacenamiento}{Media $\pm$ desviación entre semillas}
+{\scriptsize
+\centering
+\begin{tabular}{lccc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries T10 (10\,\textdegree C) & \color{white}\bfseries T20 (20\,\textdegree C) & \color{white}\bfseries Tamb \\
+\midrule
+ResNet & 75{,}6\,$\pm$\,0{,}3\,\% & 74{,}7\,$\pm$\,1{,}4\,\% & 72{,}8\,$\pm$\,1{,}1\,\% \\
+ViT & 74{,}5\,$\pm$\,2{,}5\,\% & 70{,}0\,$\pm$\,2{,}9\,\% & 71{,}9\,$\pm$\,2{,}7\,\% \\
+ResNet+meta & 80{,}2\,$\pm$\,0{,}8\,\% & 77{,}8\,$\pm$\,3{,}0\,\% & 77{,}7\,$\pm$\,2{,}1\,\% \\
+ViT+meta & 80{,}0\,$\pm$\,0{,}7\,\% & 75{,}5\,$\pm$\,1{,}9\,\% & 77{,}3\,$\pm$\,0{,}6\,\% \\
+Calendario & 80{,}9\,\% & 78{,}5\,\% & 68{,}6\,\% \\
 \bottomrule
 \end{tabular}
 }

@@ -5,7 +5,8 @@ imagenes que ese deck usa. Asi se puede arrastrar la carpeta completa a Overleaf
 sin tocar nada.
 
 Uso:
-    python scripts/07_deck_latex.py
+    python scripts/07_deck_latex.py            # solo la presentacion final
+    python scripts/07_deck_latex.py --avance   # regenera tambien la del avance
 """
 
 from __future__ import annotations
@@ -367,37 +368,193 @@ def frame_empate(r: dict, v: dict, comp: dict | None) -> str:
 def frame_mejoras_gratis() -> str:
     """Dos mejoras de inferencia que no requieren reentrenar.
 
-    Se calculan en scripts/09_mejoras_inferencia.py; si ese script no corrio,
-    el frame simplemente no se agrega.
+    Se calculan en scripts/09_mejoras_inferencia.py, que ELIGE la variante de
+    cada modelo en validacion y solo despues la mide en test. Si ese script no
+    corrio, el frame no se agrega.
     """
     datos = cargar_comp("mejoras_inferencia")
-    if not datos:
+    if not datos or "elegida" not in next(iter(datos.values())):
         return ""
 
-    def val(modelo: str, variante: str) -> float:
-        return next(f["accuracy"] for f in datos[modelo] if f["variante"] == variante)
+    def acc(modelo: str, variante: str) -> float:
+        return next(f["accuracy"] for f in datos[modelo]["test"]
+                    if f["variante"] == variante)
 
-    r_base, r_caras = val("resnet50", "por foto"), val("resnet50", "por fruta-día")
+    r_base, r_caras = acc("resnet50", "por foto"), acc("resnet50", "por fruta-día")
+    con_tta = [ETIQUETA[m] for m, d in datos.items() if "TTA" in d["elegida"]]
     return frame(
         "Dos mejoras que salieron gratis",
-        "Sin reentrenar nada, solo cambiando cómo se usa el modelo ya entrenado",
-        figura("34_mejoras_inferencia", r"0.88\textwidth", "3.9cm")
+        "Sin reentrenar: se eligen en validación y recién después se miden en la prueba",
+        figura("34_mejoras_inferencia", r"0.88\textwidth", "3.6cm")
         + "\n\\vspace{0.3em}\n"
         + items([
             ("1. Mirar las dos caras de la palta antes de decidir.", True),
-            "El dataset fotografía cada fruta por ambos lados el mismo día. Hasta ahora "
-            "clasificábamos cada foto por separado; juntar las dos opiniones sube a "
-            f"la ResNet de {pct(r_base)} a {pct(r_caras)}, y mejora a los cuatro "
-            "modelos. En una planta igual se fotografían las dos caras: es gratis.",
+            "El dataset fotografía cada fruta por ambos lados el mismo día. Juntar las "
+            "dos opiniones gana en validación en los cuatro modelos, y en la prueba "
+            f"sube a la ResNet de {pct(r_base)} a {pct(r_caras)}. En una planta igual "
+            "se fotografían las dos caras: es gratis.",
             ("2. Mostrarle también la foto espejada y promediar.", True),
-            "Ayuda a las convolucionales, pero al ViT lo empeora un poco. Lo reportamos "
-            "así: no todas las recetas estándar sirven en todos los modelos.",
+            "En validación solo le sirvió a " + ", ".join(con_tta) + ". A los demás "
+            "no los mejora, así que no se les aplica.",
         ], tam=r"\tiny", sep="0.22em")
-        + "\n" + r"\cierre{Antes de comprar más cómputo conviene revisar si se está "
-                 r"usando bien el modelo que ya se tiene.}")
+        + "\n" + r"\cierre{Corrección respecto del avance: antes estas variantes se "
+                 r"comparaban directo en la prueba. Ahora la prueba se mira una sola vez.}")
 
 
-def frames_anexo(modelos: list[str], res: dict, comp: dict | None) -> str:
+def pm(m: float, sd: float) -> str:
+    """Porcentaje con su desviacion entre semillas: 74,8 +- 0,3 %."""
+    a = f"{100 * m:.1f}".replace(".", "{,}")
+    b = f"{100 * sd:.1f}".replace(".", "{,}")
+    return f"{a}\\,$\\pm$\\,{b}\\,\\%"
+
+
+def fila_semillas(s: dict, nombre: str) -> dict:
+    return next(f for f in s["resumen"] if f["modelo"] == nombre)
+
+
+def comparacion(s: dict, a: str, b: str, metrica: str) -> list[dict]:
+    return sorted((c for c in s["comparaciones"]
+                   if c["a"] == a and c["b"] == b and c["metrica"] == metrica),
+                  key=lambda c: c["semilla"])
+
+
+def frame_referencia(s: dict) -> str:
+    """La observacion central del feedback: el calendario ya predice la madurez."""
+    ref = s["referencia"]["test"]
+    return frame(
+        "La vara que hay que superar: el calendario",
+        "Una regla que no mira la foto: solo la temperatura y el día de almacenamiento",
+        cajas([
+            ("grisSuave", "La regla",
+             r"\scriptsize Para cada temperatura y cada día, mirar en las paltas de "
+             r"estudio cuál fue el estado más común, y responder eso. No ve la foto."),
+            ("verdeosc", "Lo que logra",
+             r"\scriptsize Acierta la clase exacta en el \textbf{" + pct(ref["accuracy"])
+             + r"} de las fotos de prueba, QWK " + num(ref["qwk"], 3)
+             + r". Más que cualquiera de las dos redes mirando solo la foto."),
+        ])
+        + "\n\\vspace{0.6em}\n"
+        + items([
+            ("\\textquestiondown{}Por qué funciona tan bien?", True),
+            "En este experimento las paltas se cosecharon juntas y se guardaron en "
+            "condiciones controladas: maduran casi al mismo ritmo. Saber cuántos días "
+            "lleva guardada una palta ya dice casi todo.",
+            ("Entonces, \\textquestiondown{}para qué la foto?", True),
+            "Para las paltas que no siguen el ritmo del grupo, y para cuando no se sabe "
+            "la historia de la fruta. Eso es lo que medimos a continuación.",
+        ], tam=r"\scriptsize", sep="0.25em")
+        + "\n" + r"\cierre{Esta comparación la pidió el profesor en el avance. "
+                 r"Toda la sección de resultados se mide contra esta regla.}")
+
+
+def frame_tabla_principal(s: dict, res: dict) -> str:
+    ref = s["referencia"]["test"]
+    filas = [["Solo temperatura y día (sin foto)", "1", pct(ref["accuracy"]),
+              num(ref["qwk"], 3), num(ref["mae"], 2)]]
+    for nombre in ("ResNet-50", "ViT-S/16", "ResNet-50 + temp. y día",
+                   "ViT-S/16 + temp. y día"):
+        f = fila_semillas(s, nombre)
+        filas.append([nombre, "3", pm(f["test_accuracy"], f["test_accuracy_sd"]),
+                      num(f["test_qwk"], 3), num(f["test_mae"], 2)])
+    mejor = max(range(len(filas)), key=lambda i: filas[i][3])
+    hib = [k for k in ("hybrid_fusion", "hybrid_vit_r26") if res.get(k)]
+    return frame(
+        "Todos los modelos, lado a lado",
+        "2.262 fotos de 72 paltas que ningún modelo vio; promedio de 3 entrenamientos",
+        tabla(["Modelo", "Semillas", "Clase exacta", "QWK", "Error promedio"], filas,
+              spec="lcccc", tam=r"\scriptsize", destacar=mejor)
+        + "\n\\vspace{0.35em}\n"
+        + items([
+            ("La foto sola queda bajo la regla del calendario.", True),
+            "Las dos redes aciertan menos que la regla que no mira la foto.",
+            ("La foto más la temperatura y el día queda sobre la regla, pero por poco.", True),
+            "Ganan en promedio, pero ninguna semilla por sí sola supera a la regla "
+            "de forma estadísticamente clara. Lo honesto es decir que empatan con "
+            "tendencia a favor.",
+            ("El $\\pm$ es lo que cambia el resultado al repetir el entrenamiento.", True),
+            "El ViT varía cerca de 9 veces más que la ResNet entre un entrenamiento "
+            "y otro.",
+        ], tam=r"\scriptsize", sep="0.12em")
+        + "\n" + r"\cierre{Los modelos desde cero y los híbridos se entrenaron una sola "
+                 r"vez" + (f" ({len(hib)} híbridos)" if hib else "")
+        + r"; van más adelante y en el anexo.}")
+
+
+def frame_empate_semillas(s: dict, comp: dict | None, res: dict) -> str:
+    r = fila_semillas(s, "ResNet-50")
+    v = fila_semillas(s, "ViT-S/16")
+    acc = comparacion(s, "resnet50", "vit_small", "accuracy")
+    qwk = comparacion(s, "resnet50", "vit_small", "qwk")
+    sig_acc = sum(c["significativo"] and c["diff"] > 0 for c in acc)
+    sig_qwk = sum(c["significativo"] and c["diff"] > 0 for c in qwk)
+    vit = [x["accuracy"] for x in s["por_semilla"] if x["modelo"] == "vit_small"]
+    puntos = [
+        (f"En promedio la ResNet acierta un poco más: "
+         f"{pm(r['test_accuracy'], r['test_accuracy_sd'])} contra "
+         f"{pm(v['test_accuracy'], v['test_accuracy_sd'])}.", True),
+        f"Gana con claridad en {sig_acc} de 3 semillas en clase exacta y en {sig_qwk} de 3 "
+        "en QWK. En la otra semilla el ViT queda arriba, sin diferencia clara.",
+        ("La diferencia más clara es la estabilidad.", True),
+        "La ResNet da casi lo mismo cada vez; el ViT sale entre "
+        f"{pct(min(vit))} y {pct(max(vit))} según la semilla.",
+    ]
+    return frame(
+        "ResNet-50 frente a ViT-S/16", "Tres entrenamientos de cada una: cada punto es uno, la raya es el promedio",
+        figura("35_semillas", r"0.92\textwidth", "3.25cm")
+        + "\n\\vspace{0.2em}\n" + items(puntos, tam=r"\scriptsize", sep="0.12em")
+        + "\n" + r"\cierre{En el avance dijimos \guillemotleft{}ResNet gana en clase "
+                 r"exacta\guillemotright{} con un solo entrenamiento. Con tres, la "
+                 r"conclusión se matiza.}")
+
+
+def frame_que_aporta_la_foto(s: dict) -> str:
+    cal = {(c["modelo"], c["subconjunto"]): c for c in s.get("calendario", [])}
+    temp = {(t["modelo"], t["grupo"]): t["mean"] for t in s["por_temperatura"]}
+    n_fuera = cal[("resnet50", "fuera de calendario")]["n"]
+    calendario = frame(
+        "\\textquestiondown{}Qué aporta realmente la foto?",
+        "Separando las paltas según si maduran al ritmo de su grupo",
+        figura("36b_calendario", r"0.86\textwidth", "3.5cm")
+        + "\n\\vspace{0.2em}\n"
+        + items([
+            (f"{n_fuera} de 2.262 fotos son de paltas que van fuera de ritmo. Ahí la regla "
+             "del calendario falla siempre; la foto sola acierta cerca de la mitad.", True),
+            "Al darle también temperatura y día, la ResNet baja de "
+            f"{pct(cal[('resnet50', 'fuera de calendario')]['accuracy'])} a "
+            f"{pct(cal[('resnet50_meta', 'fuera de calendario')]['accuracy'])} en esos casos: "
+            "aprende a confiar en el calendario y mira menos la foto justo donde más se "
+            "necesitaba.",
+        ], tam=r"\scriptsize", sep="0.12em")
+        + "\n" + r"\cierre{Lo que gana el modelo combinado lo gana en las paltas normales; "
+                 r"en las raras, la foto sola sigue siendo mejor.}")
+    temperatura = frame(
+        "Por temperatura de almacenamiento",
+        "Corrección del avance: los modelos no rinden igual en las tres",
+        figura("36a_por_temperatura", r"0.86\textwidth", "4.1cm")
+        + "\n\\vspace{0.2em}\n"
+        + items([
+            ("A temperatura ambiente el calendario es el que más se equivoca.", True),
+            f"La regla baja a {pct(temp[('referencia_metadatos', 'Tam')])}; la ResNet con "
+            f"foto sola llega a {pct(temp[('resnet50', 'Tam')])}. Sin refrigeración las "
+            "paltas maduran más dispares y la foto aporta más.",
+            ("En el avance dijimos que andaba igual de bien en las tres. No es así.", True),
+            f"El ViT baja de {pct(temp[('vit_small', 'T10')])} a 10\\,\\textdegree C a "
+            f"{pct(temp[('vit_small', 'T20')])} a 20\\,\\textdegree C. La ResNet es más pareja.",
+        ], tam=r"\scriptsize", sep="0.12em"))
+    return calendario + temperatura
+
+
+def frame_errores() -> str:
+    return frame(
+        "Cómo se equivoca", "Fotos reales de la prueba, elegidas al azar entre los errores",
+        figura("37_ejemplos_errores", r"0.70\textwidth", "5.0cm")
+        + "\n" + r"\cierre{557 de los 574 errores de la ResNet son de un escalón. Los "
+                 r"estados 3, 4 y 5 se ven igual de oscuros: los separa la firmeza, que la "
+                 r"foto no muestra. Las manchas claras de daño también confunden.}")
+
+
+def frames_anexo(modelos: list[str], res: dict, comp: dict | None,
+                 por_grupo: bool = True) -> str:
     """Anexo con el detalle que se saco del cuerpo de la presentacion.
 
     No se borra: se mueve. La audiencia general no lo necesita, pero si alguien
@@ -415,7 +572,7 @@ def frames_anexo(modelos: list[str], res: dict, comp: dict | None) -> str:
                       num(t["mae"], 3), pct(t["off_by_one"]),
                       f"{d['train_minutes']:.0f}"])
     salida += frame(
-        "Anexo: todas las métricas", "Test: 2.262 imágenes de 72 frutas nunca vistas",
+        "Anexo: todas las métricas", "Test, semilla 42: 2.262 imágenes de 72 frutas nunca vistas",
         tabla(["Modelo", "Params", "GFLOPs", "QWK", "Accuracy", "Macro-F1", "MAE",
                "Acc. $\\pm$1", "min"], filas, spec="lcccccccc", tam=r"\scriptsize")
         + "\n\\vspace{0.5em}\n"
@@ -439,7 +596,7 @@ def frames_anexo(modelos: list[str], res: dict, comp: dict | None) -> str:
             "Se remuestrean frutas, 2.000 réplicas.")
         salida += frame(
             "Anexo: pruebas estadísticas",
-            "Diferencias contra ResNet-50, con intervalo de confianza del 95\\,\\%",
+            "Semilla 42: diferencias contra ResNet-50, con intervalo de confianza del 95\\,\\%",
             items(puntos, tam=r"\scriptsize", sep="0.25em"))
 
     # solo los modelos pre-entrenados: con los seis la tabla no entra en el slide
@@ -448,7 +605,7 @@ def frames_anexo(modelos: list[str], res: dict, comp: dict | None) -> str:
         for g, x in res[k].get("test_por_grupo", {}).items():
             filas_g.append([ETIQUETA[k], GRUPO.get(g, g), str(int(x["n"])),
                             pct(x["accuracy"]), num(x["mae"], 3)])
-    if filas_g:
+    if filas_g and por_grupo:
         salida += frame(
             "Anexo: desglose por temperatura de almacenamiento",
             "Sirve para detectar si el modelo se apoya en un atajo",
@@ -578,8 +735,7 @@ def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
 # --------------------------------------------------------------------------- #
 # Deck final
 # --------------------------------------------------------------------------- #
-def construir_final(res: dict, comp: dict | None,
-                    abl_r: dict | None, abl_v: dict | None) -> str:
+def construir_final(res: dict, comp: dict | None, s: dict) -> str:
     r, v = res["resnet50"], res["vit_small"]
     disponibles = [k for k in ETIQUETA if res.get(k)]
 
@@ -622,49 +778,14 @@ def construir_final(res: dict, comp: dict | None,
 
     cuerpo += seccion("01", "Resultados")
 
-    filas = []
-    for k in disponibles:
-        d = res[k]
-        t = d["test"]
-        filas.append([ETIQUETA[k], f"{num(d['params_M'], 1)}\\,M", num(d["gflops"], 1),
-                      num(t["qwk"], 3), pct(t["accuracy"]), num(t["macro_f1"], 3),
-                      num(t["mae"], 3), pct(t["off_by_one"]), f"{d['train_minutes']:.0f}"])
-    mejor = max(range(len(disponibles)), key=lambda i: res[disponibles[i]]["test"]["qwk"])
-    # Version simplificada: tres columnas que se entienden sin explicacion.
-    # La tabla completa con las seis metricas esta en el anexo.
-    filas_simple = []
-    for k in disponibles:
-        t = res[k]["test"]
-        filas_simple.append([
-            ETIQUETA[k],
-            pct(t["off_by_one"]),
-            f"{num(t['mae'], 2)} escalones",
-            pct(t["accuracy"]),
-        ])
-    cuerpo += frame(
-        "Todos los modelos, lado a lado",
-        "Medido sobre 2.262 fotos de 72 paltas que ningún modelo había visto",
-        # el encabezado largo va en una columna de ancho fijo para que envuelva
-        # solo: un \\ dentro de la celda cerraria la fila
-        tabla(["Modelo", "Acierta o se pasa por un escalón",
-               "Error promedio", "Clase exacta"],
-              filas_simple,
-              spec=r"l >{\centering\arraybackslash}p{0.20\textwidth} "
-                   r">{\centering\arraybackslash}p{0.17\textwidth} c",
-              tam=r"\scriptsize", destacar=mejor)
-        + "\n\\vspace{0.6em}\n"
-        + items([
-            ("Todos los modelos con pre-entrenamiento están sobre el 99\\,\\%.", True),
-            "La diferencia entre ellos es de décimas. Los dos que aparecen abajo son "
-            "los entrenados desde cero, y se nota.",
-            ("El renglón que importa es el del medio.", True),
-            "Menos de medio escalón de error promedio significa, en la práctica, "
-            "medio día de maduración.",
-        ], tam=r"\scriptsize", sep="0.22em")
-        + "\n" + r"\cierre{La tabla completa, con las seis métricas técnicas, está "
-                 r"en el anexo.}")
-
-    cuerpo += frame_empate(r, v, comp)
+    # Cifras principales: clase exacta y QWK, promedio de 3 semillas, siempre
+    # contra la regla del calendario. El "acierta o se pasa por uno" (>99 % en
+    # todos) ya no se usa como titular: no distingue entre modelos.
+    cuerpo += frame_referencia(s)
+    cuerpo += frame_tabla_principal(s, res)
+    cuerpo += frame_empate_semillas(s, comp, res)
+    cuerpo += frame_que_aporta_la_foto(s)
+    cuerpo += frame_errores()
 
     # --- ablación ---
     rs, vs = res.get("resnet50_scratch"), res.get("vit_small_scratch")
@@ -676,7 +797,7 @@ def construir_final(res: dict, comp: dict | None,
         cuerpo += frame(
             "El experimento que lo demuestra",
             "Reentrenamos las dos redes SIN ImageNet, solo con las fotos de paltas",
-            figura("32_dependencia_pretraining", r"0.84\textwidth", "3.6cm")
+            figura("32_dependencia_pretraining", r"0.84\textwidth", "3.25cm")
             + "\n\\vspace{0.3em}\n"
             + items([
                 (f"El ViT pierde {num(d_v / d_r, 1)}$\\times$ más QWK y "
@@ -686,61 +807,69 @@ def construir_final(res: dict, comp: dict | None,
                 "tenía que aprenderlo, y 10.208 fotos de paltas no alcanzan para eso.",
                 "Las cuatro caídas son estadísticamente sólidas ($p<0{,}0001$), y cada "
                 "red se compara contra \\emph{su propia} versión con ImageNet.",
+                "Limitación: los modelos desde cero se entrenaron una sola vez. La "
+                "caída es tan grande (7 y 11 puntos) que la variación entre semillas "
+                "no alcanza a explicarla, pero el cociente exacto es aproximado.",
             ], tam=r"\tiny", sep="0.22em")
-            + "\n" + r"\cierre{Con ImageNet las dos empatan. Sin ImageNet, no. "
+            + "\n" + r"\cierre{Con ImageNet las dos quedan cerca. Sin ImageNet, no. "
                      r"La diferencia real entre ellas no es el techo, es cuántos datos "
                      r"necesitan para llegar.}")
 
         cuerpo += frame(
-            "Y hay una segunda razón",
-            "Esta tarea juega en la cancha de la convolución",
+            "Una hipótesis para explicarlo",
+            "Creemos que esta tarea juega en la cancha de la convolución",
             items([
                 ("El estado de madurez se lee en detalles pequeños y locales.", True),
                 "El color de la cáscara, las manchas, el arrugamiento. Todo eso está "
                 "repartido por la superficie de la fruta y se ve de cerca.",
                 ("Justo lo que la ResNet hace bien con su lupa.", True),
                 "La gran ventaja del ViT es relacionar zonas lejanas de una imagen. Acá "
-                "no hay nada lejano que relacionar: todas las paltas tienen la misma "
+                "hay poco lejano que relacionar: todas las paltas tienen la misma "
                 "forma, están centradas y sobre el mismo fondo.",
-                ("Por eso el empate no es casualidad.", True),
-                "En un problema donde importara la composición global de la escena, "
-                "probablemente el ViT sacaría ventaja. En este, su superpoder no suma.",
-            ], tam=r"\small", sep="0.3em")
-            + "\n" + r"\cierre{Conclusión honesta: no es que el ViT sea peor, es que "
-                     r"este problema no le pide lo que él hace mejor.}")
+                ("Es una hipótesis, no un resultado.", True),
+                "Es coherente con la ablación y con los mapas de atención, pero no la "
+                "probamos directamente. La prueba sería tapar o desordenar partes de la "
+                "foto y ver cuál de las dos redes sufre más: queda como trabajo futuro.",
+            ], tam=r"\footnotesize", sep="0.3em")
+            + "\n" + r"\cierre{Lo que sí podemos afirmar: con el mismo estudio previo "
+                     r"quedan cerca, y sin él la ResNet resiste mucho mejor.}")
 
     # --- híbridos ---
     hib = [k for k in ("hybrid_fusion", "hybrid_vit_r26") if res.get(k)]
     if hib:
-        tarjetas = [(ETIQUETA[k], f"QWK {num(res[k]['test']['qwk'], 3)}", "morado")
-                    for k in hib]
-        det = items([
-            f"{ETIQUETA[k]}: {num(res[k]['params_M'], 1)}\\,M params, "
-            f"{num(res[k]['gflops'], 1)} GFLOPs, acc {pct(res[k]['test']['accuracy'])}"
-            for k in hib], tam=r"\scriptsize", sep="0.15em")
-        pts = []
-        if comp:
-            for kk, dd in comp.get("desacuerdo", {}).items():
-                if kk.startswith("hybrid_fusion"):
-                    pts.append(f"En su tabla de desacuerdo, fusión y ResNet fallan "
-                               f"\\emph{{a la vez}} en {pct(dd['ambos_fallan'])} de las "
-                               f"imágenes: más que el 18{{,}}0\\,\\% del par ResNet/ViT. "
-                               f"La fusión no elimina los casos difíciles, los absorbe.")
-        pts += [
-            ("La fusión tardía cuesta el doble de cómputo por imagen.", True),
-            "Dos backbones completos en el forward. La pregunta no es si mejora, sino si "
-            "mejora lo suficiente para justificar $2\\times$ de latencia.",
-            "Alcanza su mejor checkpoint en la \\textbf{época 2} (3{,}5 min) con los "
-            "backbones congelados: las representaciones ya contenían la información, "
-            "lo que faltaba era combinarlas.",
-        ]
+        # Se juzgan en VALIDACION, que es donde se elige; test se muestra al lado.
+        filas_h = []
+        for k in ["resnet50"] + hib:
+            d = res[k]
+            filas_h.append([ETIQUETA[k], num(d["val"]["qwk"], 3), pct(d["val"]["accuracy"]),
+                            num(d["test"]["qwk"], 3), pct(d["test"]["accuracy"]),
+                            num(d["gflops"] / r["gflops"], 2) + r"$\times$"])
+        r_val = r["val"]["qwk"]
+        ganan_val = [k for k in hib if res[k]["val"]["qwk"] > r_val]
         cuerpo += frame(
             "Los híbridos", "\\textquestiondown{}Suma combinar ambos enfoques?",
-            kpis(tarjetas, ancho=r"0.47\textwidth") + "\n\\vspace{0.3em}\n" + det
-            + "\n\\vspace{0.3em}\n"
-            + columnas(items(pts, tam=r"\tiny", sep="0.22em"),
-                       figura("13_costo_beneficio_final", r"\textwidth", "2.9cm"),
-                       "0.52", "0.44"))
+            tabla(["Modelo", "QWK val.", "Exacta val.", "QWK prueba", "Exacta prueba",
+                   "Cuesta"], filas_h, spec="lccccc", tam=r"\scriptsize")
+            + "\n\\vspace{0.5em}\n"
+            + items([
+                ("En la prueba parecían mejores. En validación, no.", True),
+                "Con la semilla 42 ambos superan a la ResNet en la prueba. Pero la "
+                "decisión se toma en validación, y ahí "
+                + ("ninguno le gana a la ResNet en QWK." if not ganan_val else
+                   "solo " + ", ".join(ETIQUETA[k] for k in ganan_val)
+                   + " le gana, y por poco.")
+                + " Elegirlos mirando la prueba habría sido el mismo error que "
+                  "nos señalaron en el avance.",
+                ("Además se entrenaron una sola vez.", True),
+                "La ResNet sola ya varía $\\pm$0{,}3 puntos entre semillas, y el ViT "
+                "$\\pm$2{,}6: una ventaja de un punto con una sola semilla no alcanza "
+                "para afirmar nada.",
+                ("Y la fusión tardía cuesta el doble por foto.", True),
+                "El ViT-Hybrid R26 es más barato, pero estudió con 14 millones de "
+                "fotos en vez de 1,3: no es una comparación limpia.",
+            ], tam=r"\tiny", sep="0.2em")
+            + "\n" + r"\cierre{Conclusión: con esta evidencia, combinar las dos redes no "
+                     r"demostró valer la pena. Agregar temperatura y día aportó más.}")
 
     cuerpo += frame(
         "\\textquestiondown{}En qué se fijó el modelo para decidir?",
@@ -765,39 +894,38 @@ def construir_final(res: dict, comp: dict | None,
 
     cuerpo += frame_mejoras_gratis()
 
-    # --- velocidad vs precisión ---
-    candidatos = [k for k in disponibles if "scratch" not in k]
-    base_gf, base_q = r["gflops"], r["test"]["qwk"]
-    ver = {
-        "resnet50": "La que recomendamos. Es la referencia.",
-        "vit_small": "Empata, cuesta lo mismo y se entrena en la mitad del tiempo.",
-        "hybrid_fusion": "Mejora poquito y cuesta el doble. No lo vale.",
-        "hybrid_vit_r26": "Mejor y más barato, pero estudió con más fotos: no es "
-                          "comparación limpia.",
-    }
-    filas = []
-    for k in candidatos:
-        d = res[k]
-        filas.append([ETIQUETA[k], pct(d["test"]["off_by_one"]),
-                      num(d["gflops"] / base_gf, 2) + r"$\times$",
-                      ver.get(k, "")])
+    # --- recomendación ---
+    rm = fila_semillas(s, "ResNet-50 + temp. y día")
+    rr = fila_semillas(s, "ResNet-50")
+    vv = fila_semillas(s, "ViT-S/16")
+    ref = s["referencia"]["test"]
+    filas = [
+        ["ResNet-50 + temp. y día", pm(rm["test_accuracy"], rm["test_accuracy_sd"]),
+         "1,00$\\times$", "La que recomendamos si se conoce la historia del lote."],
+        ["Solo temperatura y día", pct(ref["accuracy"]), "casi 0",
+         "Empata en promedio. Pero falla siempre con las paltas fuera de ritmo."],
+        ["ResNet-50", pm(rr["test_accuracy"], rr["test_accuracy_sd"]), "1,00$\\times$",
+         "La opción si no se sabe cuántos días lleva guardada la fruta."],
+        ["ViT-S/16", pm(vv["test_accuracy"], vv["test_accuracy_sd"]),
+         num(v["gflops"] / r["gflops"], 2) + r"$\times$",
+         "Cerca en promedio, pero menos estable entre entrenamientos."],
+    ]
     cuerpo += frame(
         "\\textquestiondown{}Cuál llevaríamos a una planta empacadora?",
-        "No gana el más preciso: gana el que rinde mejor por lo que cuesta",
-        tabla(["Modelo", "Acierta o se pasa por uno", "Cuesta", "Veredicto"],
-              filas,
-              spec=r"l >{\centering\arraybackslash}p{0.15\textwidth} c "
-                   r">{\raggedright\arraybackslash}p{0.36\textwidth}",
-              tam=r"\tiny", destacar=candidatos.index("resnet50"))
+        "Depende de qué información se tenga además de la foto",
+        tabla(["Modelo", "Clase exacta", "Cuesta", "Veredicto"], filas,
+              spec=r"l c c >{\raggedright\arraybackslash}p{0.40\textwidth}",
+              tam=r"\tiny", destacar=0)
         + "\n\\vspace{0.5em}\n" + items([
-            ("En una planta hay que clasificar miles de paltas por hora.", True),
-            "Probablemente en un computador común, sin tarjeta gráfica potente. "
-            "Ahí el costo de cada foto importa tanto como el acierto.",
-            ("Si dos modelos empatan, gana el más barato.", True),
-            "Duplicar el costo para ganar unas décimas no se justifica.",
-            ("Y ya estamos en el techo de lo exigible.", True),
-            "Con más del 99\\,\\% de aciertos dentro de un escalón, lo que queda de "
-            "error probablemente también lo cometería una persona.",
+            ("Si la planta registra temperatura y fecha de ingreso, hay que usarlas.", True),
+            "Mejoran a las dos redes en las 3 semillas; en QWK la mejora es "
+            "significativa en todas. No cuesta nada: son dos números más.",
+            ("Pero el calendario solo no basta.", True),
+            "Una regla de calendario no puede detectar una palta que madura distinto a "
+            "su lote; la foto sí, en cerca de la mitad de esos casos.",
+            ("Entre ResNet y ViT, preferimos la ResNet.", True),
+            "No porque sea claramente más precisa, sino porque da lo mismo cada vez "
+            "que se entrena. En producción eso importa.",
         ], tam=r"\scriptsize", sep="0.22em"))
 
     cuerpo += frame(
@@ -821,26 +949,92 @@ def construir_final(res: dict, comp: dict | None,
         "Conclusiones y trabajo futuro",
         "Qué aprendimos y qué sigue",
         items([
-            ("Con el mismo tamaño y el mismo estudio previo, las dos redes resuelven "
-             "esto igual de bien.", True),
-            "La pregunta interesante no era cuál gana, sino en qué se diferencian. "
-            "Y la diferencia no está en el techo que alcanzan: está en cuántos datos "
-            "necesitan para llegar.",
-            ("El límite de esta tarea lo pone quien etiquetó las fotos, no la red.", True),
-            "Como nadie revisó esas etiquetas dos veces, no sabemos cuánto del error "
-            "que queda es del modelo y cuánto es desacuerdo entre humanos.",
-            ("Qué haríamos ahora, en orden de importancia:", True),
-            "1) Salir a sacar fotos con celular en un packing chileno y medir cuánto "
-            "cae. 2) Enseñarle explícitamente que las clases están ordenadas, cosa que "
-            "hoy solo se le pide al evaluar. 3) Predecir directamente cuántos días de "
-            "vida le quedan a la palta, que es lo que de verdad necesita la cadena "
-            "de frío.",
-        ], tam=r"\scriptsize", sep="0.28em")
+            ("En este dataset, el calendario explica la mayor parte de la madurez.", True),
+            "Una regla con solo temperatura y día acierta el 78\\,\\%; la foto sola no "
+            "la supera. Sumar foto, temperatura y día queda arriba en promedio, sin "
+            "una diferencia estadísticamente clara.",
+            ("ResNet y ViT quedan cerca; la ResNet es más estable y depende menos de "
+             "ImageNet.", True),
+            "Con tres entrenamientos, la ventaja de la ResNet en clase exacta aparece "
+            "en dos de tres. Sin ImageNet, el ViT pierde el doble.",
+            ("Lo que corregimos tras el avance:", True),
+            "Comparar contra el calendario, repetir cada entrenamiento tres veces, "
+            "elegir las variantes en validación y no en la prueba, y no usar el 99\\,\\% "
+            "de \\guillemotleft{}acierta o se pasa por uno\\guillemotright{} como titular.",
+            ("Qué haríamos ahora:", True),
+            "1) Fotos de celular en un packing chileno, sin historia del lote. "
+            "2) Enseñarle que las clases están ordenadas (pérdida ordinal). "
+            "3) Tapar partes de la foto para probar la hipótesis local vs. global.",
+        ], tam=r"\scriptsize", sep="0.25em")
         + "\n" + rf"\cierre{{{REPO}}}")
 
-    cuerpo += frames_anexo(disponibles, res, comp)
+    cuerpo += frames_anexo(disponibles, res, comp, por_grupo=False)
+    cuerpo += frames_anexo_semillas(s)
 
     return cuerpo
+
+
+def frames_anexo_semillas(s: dict) -> str:
+    """Tabla completa por semilla y todas las comparaciones pareadas."""
+    filas = []
+    for f in s["resumen"]:
+        filas.append([f["modelo"], pm(f["test_accuracy"], f["test_accuracy_sd"]),
+                      f"{num(f['test_qwk'], 4)} $\pm$ {num(f['test_qwk_sd'], 4)}",
+                      f"{num(f['test_macro_f1'], 3)} $\pm$ {num(f['test_macro_f1_sd'], 3)}",
+                      f"{num(f['test_mae'], 3)} $\pm$ {num(f['test_mae_sd'], 3)}",
+                      num(f["val_qwk"], 4)])
+    ref = s["referencia"]
+    filas.append(["Solo temperatura y día", pct(ref["test"]["accuracy"]),
+                  num(ref["test"]["qwk"], 4), num(ref["test"]["macro_f1"], 3),
+                  num(ref["test"]["mae"], 3), num(ref["val"]["qwk"], 4)])
+    salida = frame(
+        "Anexo: tres semillas", "Media $\pm$ desviación estándar en la prueba (semillas 42, 1 y 2)",
+        tabla(["Modelo", "Accuracy", "QWK", "Macro-F1", "MAE", "QWK val."], filas,
+              spec="lccccc", tam=r"\scriptsize"))
+
+    nombres = {"resnet50": "ResNet", "vit_small": "ViT", "resnet50_meta": "ResNet+meta",
+               "vit_small_meta": "ViT+meta", "referencia_metadatos": "Calendario"}
+    filas_c = []
+    for c in s["comparaciones"]:
+        if c["metrica"] != "qwk":
+            continue
+        acc = next(x for x in s["comparaciones"] if x["a"] == c["a"] and x["b"] == c["b"]
+                   and x["semilla"] == c["semilla"] and x["metrica"] == "accuracy")
+        filas_c.append([f"{nombres[c['a']]} $-$ {nombres[c['b']]}", str(c["semilla"]),
+                        signo(c["diff"]), num(c["p_value"], 3),
+                        signo(acc["diff"], 3), num(acc["p_value"], 3)])
+    enc = ["Comparación", "Semilla", r"$\Delta$QWK", "$p$", r"$\Delta$Acc.", "$p$"]
+    entre = [f for f in filas_c if "Calendario" not in f[0]]
+    vs_cal = [f for f in filas_c if "Calendario" in f[0]]
+    salida += frame(
+        "Anexo: comparaciones pareadas entre modelos",
+        "Bootstrap pareado agrupado por fruta, 2.000 réplicas, semilla por semilla",
+        tabla(enc, entre, spec="lccccc", tam=r"\tiny"))
+    salida += frame(
+        "Anexo: cada modelo contra la regla del calendario",
+        "Bootstrap pareado agrupado por fruta, 2.000 réplicas, semilla por semilla",
+        tabla(enc, vs_cal, spec="lccccc", tam=r"\tiny"))
+
+    grupos = ["T10", "T20", "Tam"]
+    t = {(x["modelo"], x["grupo"]): x for x in s["por_temperatura"]}
+    filas_t = []
+    for m, nombre in nombres.items():
+        celdas = []
+        for g in grupos:
+            x = t.get((m, g))
+            if x is None:
+                celdas.append("")
+            elif x.get("std") == x.get("std") and x.get("std"):  # no NaN y no cero
+                celdas.append(pm(x["mean"], x["std"]))
+            else:
+                celdas.append(pct(x["mean"]))
+        filas_t.append([nombre] + celdas)
+    salida += frame(
+        "Anexo: accuracy por temperatura de almacenamiento",
+        "Media $\pm$ desviación entre semillas",
+        tabla(["Modelo"] + [GRUPO[g] for g in grupos], filas_t, spec="lccc",
+              tam=r"\scriptsize"))
+    return salida
 
 
 # --------------------------------------------------------------------------- #
@@ -851,13 +1045,16 @@ def main() -> None:
 
     salidas = []
 
+    # El avance ya se presento (21 de septiembre): por defecto no se regenera,
+    # para que el entregable quede tal como se entrego. --avance lo fuerza.
     trabajos = [
-        ("avance", "presentacion_avance.tex", "Avance",
-         construir_avance(res["resnet50"], res["vit_small"], cargar_comp("avance"))),
         ("final", "presentacion_final.tex", "Final",
-         construir_final(res, cargar_comp("final"), cargar_comp("ablacion_resnet"),
-                         cargar_comp("ablacion_vit"))),
+         construir_final(res, cargar_comp("final"), cargar_comp("semillas"))),
     ]
+    if "--avance" in sys.argv:
+        trabajos.insert(0, ("avance", "presentacion_avance.tex", "Avance",
+                            construir_avance(res["resnet50"], res["vit_small"],
+                                             cargar_comp("avance"))))
     for carpeta, archivo, etiqueta, cuerpo in trabajos:
         destino = ROOT / "entregables" / carpeta
         n_figs = copiar_figuras(cuerpo, destino / "figuras")
