@@ -305,3 +305,9 @@ Arquitecturas y pesos:
 > through attention.* ICML.
 >
 > Wightman, R. (2019). *PyTorch Image Models (timm).* https://github.com/huggingface/pytorch-image-models
+
+## 10. Licencia
+
+El código de este repositorio se distribuye bajo licencia MIT (ver `LICENSE`). El
+dataset no es nuestro: pertenece a Xavier, Rodrigues & Silva (2024), se publica bajo
+CC BY 4.0 (DOI 10.17632/3xd9n945v8.1) y no se incluye en el repositorio.
