@@ -1,7 +1,17 @@
 # Clasificación del estado de madurez de paltas Hass: ResNet-50 frente a ViT-S/16 con presupuesto equiparado
 
-**Cristóbal Martínez** · Noviembre de 2026
+**Cristóbal Martínez, Benjamín Espinoza, Felipe Alvarez, Felipe Torres, Felipe Rojo** ·
+Noviembre de 2026
 Repositorio: https://github.com/cmartinez1524/clasificacion-de-paltas
+
+> **Cambios respecto del avance.** A partir de la retroalimentación recibida: (1) todos los
+> modelos se comparan contra una **referencia sin imagen** que predice la madurez solo con la
+> temperatura y el día de almacenamiento; (2) los dos baselines y los modelos nuevos se
+> entrenaron con **tres semillas** y se reporta media ± desviación; (3) las variantes de
+> inferencia y los híbridos se **eligen en validación**, no en test; (4) se agrega un modelo
+> **imagen + temperatura + día**; (5) las cifras principales pasan a ser QWK y accuracy (la
+> accuracy ±1 clase supera el 99 % en todos los modelos y no los distingue); (6) se corrige la
+> afirmación de que el desempeño era homogéneo entre temperaturas.
 
 ---
 
@@ -141,11 +151,11 @@ no porta información de clase.
 
 | Métrica | Rol |
 |---|---|
-| **QWK** (kappa de Cohen cuadrático) | **Principal.** Penaliza el error según el cuadrado de la distancia entre clases y corrige por acuerdo azaroso |
+| **QWK** (kappa de Cohen cuadrático) | **Principal.** Penaliza el error según el cuadrado de la distancia entre clases y corrige por acuerdo azaroso. Con ella se eligen los checkpoints |
+| **Accuracy** | **Principal.** La más fácil de interpretar: fracción de fotos con la clase exacta |
 | MAE | Error medio en "escalones" de madurez |
-| Accuracy ±1 clase | Fracción de predicciones en la clase correcta o adyacente: aproxima la utilidad operativa |
 | Macro-F1 | Control de que las clases minoritarias no queden abandonadas |
-| Accuracy | Incluida por comparabilidad con la literatura |
+| Accuracy ±1 clase | Solo informativa: supera el 99 % en todos los modelos pre-entrenados y no los distingue. En el avance la usamos como cifra destacada, y fue un error de presentación |
 
 Los intervalos de confianza se calculan por **bootstrap agrupado por fruta**. Las 2.262
 imágenes de test provienen de solo 72 paltas (unas 31 fotos por fruta): si una palta tiene una
@@ -162,51 +172,151 @@ dejando la GPU esperando al dataloader. Pre-reescalar el dataset a 256 px una so
 → 125 MB, 17 segundos) eliminó ese cuello de botella. Todo el trabajo corre en una RTX 4070
 Laptop de 8 GB.
 
+### 3.6 Protocolo de evaluación
+
+- **Referencia sin imagen.** Para cada par (grupo de almacenamiento, día) se predice la moda
+  del índice en train; si el par no aparece en train, se usa el día más cercano del mismo
+  grupo. Es el mejor clasificador posible (en accuracy) que solo ve esas dos variables, y se
+  ajusta sin tocar validación ni test (`scripts/10_referencia_metadatos.py`).
+- **Imagen + temperatura + día.** El mismo backbone de cada baseline, con un MLP pequeño que
+  recibe el grupo de almacenamiento (one-hot) y el día escalado; su salida se concatena con
+  el vector global de la imagen antes de la cabeza. La receta de entrenamiento es idéntica a
+  la del baseline correspondiente.
+- **Tres semillas** (42, 1 y 2) para ResNet-50, ViT-S/16 y sus versiones con metadatos. Se
+  reporta media ± desviación estándar en test y la comparación pareada semilla por semilla.
+  Los modelos desde cero y los híbridos tienen una sola semilla y se marcan como tales.
+- **Selección en validación.** Todo lo que se elige —checkpoint, variante de inferencia,
+  híbrido frente a baseline— se decide con QWK de validación. Test se usa una sola vez por
+  decisión.
+
 ## 4. Resultados
 
-### 4.1 Los dos baselines
+Toda la evaluación es sobre las 2.262 imágenes de test, provenientes de 72 frutas que ningún
+modelo vio durante el entrenamiento. Los resultados con tres semillas se reproducen con
+`python scripts/11_resumen_semillas.py`.
 
-Evaluación sobre las 2.262 imágenes de test, provenientes de 72 frutas que ningún modelo vio
-durante el entrenamiento:
+### 4.1 La referencia sin imagen
 
-| Modelo | Params | GFLOPs | QWK | IC 95 % | Accuracy | Macro-F1 | MAE | Acc. ±1 | min |
-|---|--:|--:|--:|:--:|--:|--:|--:|--:|--:|
-| ResNet-50 | 23,5 M | 8,17 | **0,9356** | [0,926, 0,944] | **74,6 %** | **0,735** | **0,262** | 99,25 % | 9,9 |
-| ViT-S/16 | 21,7 M | 8,48 | 0,9313 | [0,922, 0,939] | 72,2 % | 0,711 | 0,283 | **99,51 %** | 5,0 |
+| Modelo | Accuracy | QWK | Macro-F1 | MAE |
+|---|--:|--:|--:|--:|
+| Solo temperatura y día (sin foto) | **78,0 %** | **0,942** | 0,770 | 0,227 |
 
-### 4.2 ¿Es significativa la diferencia?
+En este dataset las 478 paltas se cosecharon juntas y se almacenaron en condiciones
+controladas, así que maduran a un ritmo muy parecido dentro de cada grupo. Saber cuántos días
+lleva guardada una palta y a qué temperatura ya predice su estado en el 78 % de las fotos.
+Esta es la vara contra la que hay que leer todo lo que sigue: un modelo de imagen que no la
+supere no está aportando nada que no diga ya la etiqueta del lote.
 
-Bootstrap pareado agrupado por fruta, 2.000 réplicas, ViT menos ResNet:
+### 4.2 Tres semillas
 
-| Métrica | Δ | IC 95 % | p | Veredicto |
-|---|--:|:--:|--:|---|
-| QWK | −0,0042 | [−0,0095, +0,0006] | 0,095 | **no significativa** |
-| Accuracy | −0,0234 | [−0,0435, −0,0039] | 0,026 | significativa |
-| Macro-F1 | −0,0241 | [−0,0448, −0,0046] | 0,017 | significativa |
+Media ± desviación estándar entre las semillas 42, 1 y 2:
 
-Este es el resultado central del trabajo, y es más matizado que un ganador y un perdedor. **La
-ResNet acierta la clase exacta significativamente más seguido. Pero cuando el ViT se equivoca,
-se equivoca por menos distancia** —su accuracy ±1 clase es superior (99,51 % contra 99,25 %) y
-su MAE mayor se concentra en errores de un solo escalón. Sobre la métrica que pondera el error
-por distancia, que es la que refleja el costo operativo real, **las dos arquitecturas son
-estadísticamente indistinguibles**.
+| Modelo | Accuracy | QWK | Macro-F1 | MAE |
+|---|--:|--:|--:|--:|
+| Solo temperatura y día | 78,0 % | 0,9420 | 0,770 | 0,227 |
+| ResNet-50 | 74,8 ± 0,3 % | 0,9365 ± 0,0020 | 0,740 ± 0,004 | 0,258 ± 0,005 |
+| ViT-S/16 | 73,1 ± 2,6 % | 0,9330 ± 0,0062 | 0,719 ± 0,030 | 0,276 ± 0,031 |
+| ResNet-50 + temp. y día | **79,2 ± 1,3 %** | **0,9497 ± 0,0034** | **0,785 ± 0,014** | **0,208 ± 0,013** |
+| ViT-S/16 + temp. y día | 78,5 ± 0,7 % | 0,9478 ± 0,0017 | 0,778 ± 0,007 | 0,217 ± 0,008 |
 
-Reportar solo accuracy habría producido la conclusión "la ResNet gana". Reportar solo QWK
-habría producido "empatan". Las dos afirmaciones son ciertas y se refieren a cosas distintas.
+Tres lecturas:
 
-### 4.3 Estructura de los errores
+**La imagen sola queda bajo la referencia.** Ambas redes rinden menos que la regla que no mira
+la foto. Para la ResNet la diferencia no es significativa en ninguna semilla (accuracy
+p = 0,06-0,15); para el ViT lo es en accuracy en dos de tres semillas (p = 0,007 y 0,004).
 
-Las matrices de confusión de ambos modelos son **estrictamente bandeadas**: los errores de
-distancia ≥ 2 son casi inexistentes (ResNet: 17 de 2.262 imágenes, un 0,75 %). Ningún modelo confunde una
-palta verde con una sobremadura. El error se concentra en las fronteras 2↔3 y 3↔4, que son
-precisamente donde el corte del índice es más continuo y la etiqueta más subjetiva.
+**Imagen + temperatura + día queda sobre la referencia en promedio, pero no de forma
+concluyente.** El QWK es mayor que el de la referencia en las seis corridas, con diferencias
+de +0,004 a +0,010, pero ninguna es significativa por sí sola (p = 0,09-0,61). En accuracy,
+la semilla 1 de ambos modelos queda incluso unas décimas bajo la referencia. Lo honesto es
+reportarlo como un empate con tendencia a favor.
 
-Por clase, el F1 de la ResNet es 0,897 en la clase 1 (verde, visualmente inequívoca) y cae a
-0,667-0,679 en las clases intermedias. El desempeño es homogéneo entre grupos de almacenamiento
-(75,3 % en T10, 75,1 % en T20, 71,8 % en Tamb), lo que indica que el modelo **no** está
-explotando el sesgo "verde ⇒ refrigerada".
+**Agregar temperatura y día mejora a ambas redes de forma clara.** Respecto de su propia
+versión solo con imagen, la mejora en QWK es significativa en las seis comparaciones
+(p ≤ 0,024), y en accuracy en cinco de seis.
 
-### 4.4 Complementariedad
+### 4.3 ResNet-50 frente a ViT-S/16
+
+Bootstrap pareado agrupado por fruta (2.000 réplicas), ResNet menos ViT, una fila por semilla:
+
+| Semilla | Δ QWK | p | Δ Accuracy | p |
+|--:|--:|--:|--:|--:|
+| 42 | +0,0043 | 0,085 | +2,4 pts | 0,021 |
+| 1 | −0,0011 | 0,700 | −0,8 pts | 0,433 |
+| 2 | +0,0073 | 0,029 | +3,7 pts | 0,003 |
+
+En el avance, con una sola semilla, concluimos que la ResNet acertaba la clase exacta
+significativamente más seguido y que en QWK empataban. Con tres semillas el cuadro es más
+matizado: la ResNet gana en accuracy en dos de tres semillas y en QWK en una de tres, y en la
+semilla 1 el ViT queda arriba sin diferencia significativa.
+
+El hallazgo más robusto no es la media sino la **variabilidad**: la accuracy de la ResNet se
+mueve entre 74,6 % y 75,2 %; la del ViT, entre 71,0 % y 76,0 %. La desviación entre semillas
+del ViT es unas nueve veces la de la ResNet. Con presupuesto y pre-entrenamiento igualados, el
+ViT no es claramente peor en promedio, pero su resultado depende mucho más de la
+inicialización y del orden de los datos. Es coherente con la ablación de la sección 4.7: con
+10.208 imágenes, el ViT trabaja más cerca del límite de lo que sus datos le permiten aprender.
+
+### 4.4 Qué aporta realmente la foto
+
+Para separar lo que aporta la imagen de lo que aporta el calendario, dividimos el test en dos
+grupos: fotos donde la referencia acierta ("en calendario", 1.764) y fotos donde falla ("fuera
+de calendario", 498; paltas que maduran más rápido o más lento que su grupo). En el segundo
+grupo la referencia acierta el 0 % por construcción.
+
+| Modelo | En calendario | Fuera de calendario |
+|---|--:|--:|
+| Solo temperatura y día | 100 % | 0 % |
+| ResNet-50 | 81,0 ± 0,8 % | **52,9 ± 2,4 %** |
+| ViT-S/16 | 78,7 ± 3,0 % | **53,2 ± 1,4 %** |
+| ResNet-50 + temp. y día | **88,8 ± 1,3 %** | 45,5 ± 1,3 % |
+| ViT-S/16 + temp. y día | 86,1 ± 1,1 % | 51,6 ± 0,7 % |
+
+El resultado más interesante del trabajo final está en esta tabla. **La imagen sola acierta
+cerca de la mitad de las paltas que se salen del calendario**, justo donde la regla sin imagen
+no tiene nada que ofrecer. Pero el modelo que recibe ambas cosas **empeora** en esos casos: la
+ResNet con metadatos baja de 52,9 % a 45,5 %. Aprende que el calendario es casi siempre
+correcto, se apoya en él y deja de mirar la foto precisamente cuando más se necesitaba. Lo que
+gana en promedio, lo gana en las paltas normales.
+
+Para un uso real esto importa más que el promedio: el caso de negocio de un clasificador
+visual son justamente las frutas que no se comportan como su lote. Un modelo que combine
+ambas fuentes sin perder esa capacidad —por ejemplo, entrenado con más peso en las paltas
+fuera de calendario, o con los metadatos ocultos al azar durante el entrenamiento— es el
+siguiente paso natural.
+
+**Por temperatura de almacenamiento** (accuracy, media ± desviación entre semillas):
+
+| Modelo | T10 (10 °C) | T20 (20 °C) | Tamb |
+|---|--:|--:|--:|
+| Solo temperatura y día | 80,9 % | 78,5 % | 68,6 % |
+| ResNet-50 | 75,6 ± 0,3 % | 74,7 ± 1,4 % | 72,8 ± 1,1 % |
+| ViT-S/16 | 74,5 ± 2,5 % | 70,0 ± 2,9 % | 71,9 ± 2,7 % |
+| ResNet-50 + temp. y día | 80,2 ± 0,8 % | 77,8 ± 3,0 % | 77,7 ± 2,1 % |
+| ViT-S/16 + temp. y día | 80,0 ± 0,7 % | 75,5 ± 1,9 % | 77,3 ± 0,6 % |
+
+Corrección respecto del avance: allí afirmamos que el desempeño era homogéneo entre
+temperaturas. Lo es para la ResNet (rango de 2,8 puntos), pero **no para el ViT**, que pierde
+4,5 puntos entre T10 y T20. Además, a temperatura ambiente —sin control térmico— la regla del
+calendario cae a 68,6 % y es la única condición donde la imagen sola la supera (ResNet 72,8 %):
+sin refrigeración las paltas maduran de forma más dispar y la foto aporta más.
+
+### 4.5 Estructura de los errores
+
+Las matrices de confusión son **estrictamente bandeadas**: de los 574 errores de la ResNet
+(semilla 42), 557 son de un solo escalón y 17 de dos; ninguno de tres o más. Los modelos con
+metadatos casi eliminan los errores de dos escalones (1 a 5 por corrida). El error se
+concentra en las fronteras 2↔3, 3↔4 y 4↔5.
+
+La figura `37_ejemplos_errores.png` muestra fotos reales de test elegidas al azar entre los
+errores. Dos patrones se repiten. Primero, las paltas en estado 3, 4 y 5 son casi igual de
+oscuras: lo que las separa es la firmeza al tacto, que una fotografía no registra, lo que pone
+un límite físico a cualquier clasificador visual. Segundo, las manchas claras de daño en la
+cáscara (raspaduras, zonas peladas) se confunden con cambios de color.
+
+### 4.6 Complementariedad
+
+Con la semilla 42:
 
 | Caso | n | % |
 |---|--:|--:|
@@ -215,20 +325,15 @@ explotando el sesgo "verde ⇒ refrigerada".
 | Solo ResNet-50 | 220 | 9,7 % |
 | Ambos fallan | 408 | 18,0 % |
 
-Los dos modelos fallan simultáneamente en solo el 18 % de las imágenes. Un oráculo que
-eligiera siempre el modelo correcto alcanzaría **82,0 %** de accuracy, frente al 74,6 % del
-mejor modelo individual: hay 7,4 puntos de complementariedad sobre la mesa. Esto es lo que
-motiva los modelos híbridos de la sección siguiente, y es una evidencia más fuerte que
-simplemente observar que los números finales son parecidos: **los dos modelos no están
-cometiendo los mismos errores**, aunque cometan una cantidad similar.
+Los dos modelos fallan simultáneamente en el 18 % de las imágenes; un oráculo que eligiera
+siempre el modelo correcto alcanzaría 82,0 %. Los modelos no cometen los mismos errores, y
+esa fue la motivación de los híbridos (sección 4.8).
 
-### 4.5 Ablación sin pre-entrenamiento
+### 4.7 Ablación sin pre-entrenamiento
 
 Reentrenamos las dos arquitecturas desde inicialización aleatoria, con 30 épocas en lugar de
-15 y learning rate mayor para compensar la partida en frío:
-
-Cada modelo se compara contra **su propia** versión pre-entrenada, no contra la otra
-arquitectura:
+15 y learning rate mayor para compensar la partida en frío. Cada modelo se compara contra
+**su propia** versión pre-entrenada (semilla 42):
 
 | Modelo | QWK | Δ QWK propio | Accuracy | Δ Acc. | Macro-F1 | Δ F1 |
 |---|--:|:--:|--:|:--:|--:|:--:|
@@ -237,197 +342,127 @@ arquitectura:
 | ViT-S/16 (ImageNet-1k) | 0,9313 | — | 72,2 % | — | 0,711 | — |
 | ViT-S/16 (desde cero) | 0,8891 | **−0,0422** | 61,2 % | **−11,0 pts** | 0,579 | −0,132 |
 
-Las cuatro caídas son significativas (p < 0,0001, bootstrap pareado; IC 95 % de la caída del ViT
-en QWK: [−0,0663, −0,0269], de la ResNet: [−0,0283, −0,0123]). **El ViT pierde 2,1 veces más QWK,
-1,5 veces más accuracy y 1,6 veces más macro-F1 que la ResNet al quitarle el pre-entrenamiento.**
-Este es el resultado que sostiene la discusión de la sección 5: con presupuesto igualado y
-pre-entrenamiento igualado las dos arquitecturas empatan, pero *dependen* del pre-entrenamiento
-de forma muy distinta.
+Las cuatro caídas son significativas (p < 0,0001, bootstrap pareado). **El ViT pierde 2,1
+veces más QWK y 1,5 veces más accuracy que la ResNet al quitarle el pre-entrenamiento.** Los
+modelos desde cero tienen una sola semilla; como la caída (7 y 11 puntos) es varias veces
+mayor que la variación entre semillas medida en los baselines, la dirección del resultado es
+sólida, aunque el cociente exacto es aproximado.
 
-La estructura del fracaso también es distinta. La matriz de confusión del ViT desde cero colapsa
-hacia las clases centrales y altas: predice la clase 4 para el 45 % de las paltas que son clase 3
-y para el 68 % de las que son clase 5. La ResNet desde cero mantiene una matriz bandeada y su
-error se concentra en un sesgo sistemático 4→5. Sin sesgo inductivo ni pre-entrenamiento, el ViT
-no llega a construir una representación ordenada del problema; la ResNet, con el mismo
-presupuesto de datos, sí.
+La estructura del fracaso también es distinta: la matriz del ViT desde cero colapsa hacia las
+clases centrales y altas (predice 4 para el 45 % de las clases 3 y el 68 % de las 5), mientras
+la ResNet desde cero mantiene una matriz bandeada con un sesgo sistemático 4→5.
 
-### 4.6 Modelos híbridos
+### 4.8 Modelos híbridos
 
-| Modelo | Params | GFLOPs | QWK | Δ QWK vs. ResNet | Accuracy | Δ Acc | min |
-|---|--:|--:|--:|:--:|--:|:--:|--:|
-| Fusión tardía | 46,4 M | 16,66 | **0,9410** | +0,0055 (p=0,001) ✓ | **76,8 %** | +2,2 pts (p=0,001) ✓ | 3,5 |
-| ViT-Hybrid R26+S/32 | 36,0 M | 6,88 | **0,9411** | +0,0055 (p=0,031) ✓ | 76,2 % | +1,6 pts (p=0,098) ✗ | 14,9 |
+Una semilla cada uno. Se juzgan en **validación**, que es donde se toma la decisión; test se
+muestra al lado:
 
-Ambos híbridos superan a los dos baselines en QWK de forma estadísticamente significativa, y la
-fusión tardía también en accuracy y macro-F1. Tres lecturas, en orden de importancia:
+| Modelo | Params | GFLOPs | QWK val. | Acc. val. | QWK test | Acc. test |
+|---|--:|--:|--:|--:|--:|--:|
+| ResNet-50 (semilla 42) | 23,5 M | 8,17 | **0,945** | **78,8 %** | 0,936 | 74,6 % |
+| Fusión tardía | 46,4 M | 16,66 | 0,939 | 77,4 % | 0,941 | 76,8 % |
+| ViT-Hybrid R26+S/32 | 36,0 M | 6,88 | 0,943 | 78,0 % | 0,941 | 76,2 % |
 
-**La mejora es real pero pequeña, y cuesta el doble.** La fusión tardía gana +0,0055 de QWK a
-cambio de 16,66 GFLOPs contra 8,17: dos backbones completos en cada forward. Es una mejora
-significativa en el sentido estadístico y marginal en el sentido práctico.
+En la versión anterior de este informe reportamos que ambos híbridos superaban significativamente a la ResNet. Esa
+comparación se hizo en test, y en validación **ninguno de los dos supera a la ResNet-50**. Si
+hubiéramos elegido el modelo final mirando test, habríamos seleccionado un híbrido por una
+ventaja que no se sostiene en los datos donde corresponde decidir. Sumado a que tienen una
+sola semilla —y la ResNet sola varía ±0,3 puntos y el ViT ±2,6—, la conclusión es que
+**combinar las dos redes no demostró valer la pena** en este problema. Agregar temperatura y
+día aportó bastante más, sin costo de cómputo.
 
-**La fusión tardía es asombrosamente barata de entrenar.** Con los backbones congelados solo se
-entrenan las proyecciones y la cabeza (≈1,3 M de parámetros), y alcanza su mejor checkpoint en
-la **época 2**, en 3,5 minutos: menos que cualquier otro modelo del estudio. Confirma que las
-representaciones de ambos baselines ya contenían la información necesaria, y que lo que faltaba
-era combinarlas.
+Dos observaciones que siguen siendo válidas: la fusión tardía con backbones congelados
+converge en la época 2 (3,5 minutos), y el ViT-Hybrid R26 es el modelo más barato en
+inferencia (6,88 GFLOPs) porque el stem convolucional reduce la resolución antes de
+tokenizar. Pero este último viene pre-entrenado en ImageNet-21k y no es un participante
+equiparable de la comparación.
 
-**El ViT-Hybrid R26 no es un competidor equiparable y hay que decirlo.** Tiene 36 M de
-parámetros (1,5× los baselines) y —más importante— los únicos pesos disponibles en `timm` para
-esa arquitectura provienen de **ImageNet-21k**, no de ImageNet-1k. Va incluido como cota
-superior de referencia, no como participante de la comparación controlada. Dicho eso, resulta
-notable que sea el modelo **más barato en inferencia de todo el estudio** (6,88 GFLOPs, un 16 %
-menos que la ResNet-50): el stem convolucional reduce la resolución antes de tokenizar, de modo
-que el transformer opera sobre muchos menos tokens.
+### 4.9 Dos mejoras de inferencia que no requieren reentrenar
 
-Un dato que tempera el entusiasmo por la fusión: su tabla de desacuerdo contra la ResNet muestra
-que **ambos fallan a la vez en el 20,6 % de las imágenes**, más que el 18,0 % del par
-ResNet/ViT. La fusión no elimina los casos difíciles, los absorbe: convierte aciertos exclusivos
-de cada backbone en aciertos compartidos, pero el núcleo duro de imágenes ambiguas sigue ahí. Es
-coherente con la hipótesis de que ese núcleo es ruido de etiquetado y no un déficit de capacidad.
+**Fusión de las dos caras.** Cada palta se fotografía por ambos lados el mismo día (en test,
+los 1.131 pares a/b están completos). Promediar las probabilidades de las dos caras produce
+una predicción por fruta-día, que es la unidad operativa real.
 
-### 4.7 Dos mejoras de inferencia que no requieren reentrenar
+**TTA con volteo horizontal.** Evaluar también la imagen espejada y promediar.
 
-Antes de concluir que el techo estaba alcanzado, revisamos si el modelo ya entrenado se
-estaba usando bien. Dos cambios en la evaluación, sin tocar los pesos:
+En el avance estas variantes se compararon directamente en test. Ahora cada una se evalúa en
+validación, se elige la de mayor QWK por modelo, y solo esa se mide en test
+(`scripts/09_mejoras_inferencia.py`):
 
-**Fusión de las dos caras.** El dataset fotografía cada palta por ambos lados el mismo día, y
-en test los **1.131 pares a/b están completos (100 %)**. Hasta aquí clasificábamos cada foto
-por separado; promediar las probabilidades de las dos caras produce una predicción por
-fruta-día, que además es la unidad operativamente relevante: en una línea de empaque se
-clasifica una fruta, no una fotografía.
+| Modelo | Elegida en validación | Por foto (test) | Variante elegida (test) | Δ QWK |
+|---|---|--:|--:|--:|
+| ResNet-50 | dos caras | 74,6 % | 76,4 % | +0,0057 |
+| ViT-S/16 | dos caras | 72,2 % | 74,3 % | +0,0058 |
+| Fusión tardía | dos caras | 76,8 % | 77,6 % | +0,0030 |
+| ViT-Hybrid R26 | dos caras + TTA | 76,2 % | 79,8 % | +0,0098 |
 
-**TTA con volteo horizontal.** Evaluar también la imagen espejada y promediar. El parámetro ya
-existía en el código (`eval_tta_hflip`) y estaba desactivado en las seis configuraciones.
+La fusión de caras gana en validación en los cuatro modelos y se confirma en test. El TTA solo
+se elige para el ViT-Hybrid R26; en los demás no mejora en validación y no se aplica. La
+columna "variante elegida" se calcula sobre 1.131 fruta-día y no sobre 2.262 fotos, así que no
+es la misma población que "por foto".
 
-| Modelo | Por foto | + fusión de caras | + fusión y TTA | Δ QWK (fusión) |
-|---|--:|--:|--:|:--:|
-| ResNet-50 | 74,6 % | 76,4 % | 76,7 % | +0,0057 |
-| ViT-S/16 | 72,2 % | 74,3 % | 73,8 % | +0,0058 |
-| Híbrido fusión tardía | 76,8 % | 77,6 % | 78,0 % | +0,0030 |
-| ViT-Hybrid R26 | 76,2 % | 78,9 % | **79,8 %** | +0,0073 |
+## 5. Discusión
 
-Tres lecturas:
+**El calendario explica la mayor parte de la madurez en este dataset.** Es la observación más
+importante del trabajo final y la que cambia la lectura de todo lo demás. Una regla de dos
+variables acierta el 78 %; ninguna red mirando solo la foto la supera. Esto no invalida el
+uso de visión por computador, pero lo reubica: el valor de la foto no está en el caso típico,
+sino en las paltas que se apartan de su lote (sección 4.4) y en las situaciones donde no se
+conoce la historia de la fruta, como un punto de venta.
 
-**La fusión de caras mejora los cuatro modelos**, entre +0,9 y +2,7 puntos de accuracy, a
-costo cero: las dos fotos ya se toman de todos modos. Es la mejora con mejor relación
-beneficio/esfuerzo de todo el proyecto.
+**ResNet y ViT quedan cerca, y la ResNet es más estable.** Con presupuesto de parámetros,
+cómputo y pre-entrenamiento igualados, la diferencia media en accuracy es de 1,7 puntos a favor
+de la ResNet, significativa en dos de tres semillas. La diferencia más clara es la varianza
+entre entrenamientos, y la ablación explica por qué: sin ImageNet el ViT pierde el doble que la
+ResNet. El sesgo inductivo convolucional —localidad y equivarianza a la traslación— funciona
+como un sustituto de datos, y el ViT, que no lo tiene, debe heredarlo del pre-entrenamiento.
+Con 10.208 imágenes de 334 frutas, trabaja más cerca de su límite y su resultado depende más
+de la inicialización.
 
-**El TTA no es universal.** Ayuda a los tres modelos con componente convolucional
-(+0,2 a +1,2 puntos) pero **empeora al ViT puro** (−0,3). Lo reportamos así en lugar de
-omitirlo: una receta estándar no tiene por qué funcionar en toda arquitectura.
+**Hipótesis: es una tarea de textura local.** El índice de madurez se lee en el color de la
+cáscara, las manchas y el arrugamiento, señal local y redundante sobre toda la superficie; las
+paltas tienen la misma forma y están centradas sobre el mismo fondo, así que hay poco contexto
+global que aprovechar. Es coherente con la ablación y con los mapas de interpretabilidad (la
+ResNet se concentra en puntos; el ViT reparte la atención), pero **no la probamos
+directamente**. La prueba sería ocluir o desordenar bloques de la imagen y medir cuál de las
+dos redes se degrada más.
 
-**Cambia la conversación sobre el híbrido.** La ResNet-50 con fusión de caras (76,4 %) alcanza
-prácticamente el mismo nivel que la fusión tardía evaluada foto a foto (76,8 %), sin el doble
-de cómputo por imagen que exige el híbrido. Antes de gastar en una arquitectura más cara
-conviene verificar que se esté explotando la información que ya se tiene.
+**El límite físico de la foto.** Los estados 3 a 5 difieren sobre todo en firmeza, que no se
+ve. Sumado a etiquetas sin acuerdo inter-evaluador reportado, parte del error residual no es
+atribuible al modelo. Por eso no perseguimos el 100 %.
 
-> **Advertencia metodológica:** las columnas "por foto" y "por fruta-día" se calculan sobre
-> poblaciones distintas (2.262 observaciones contra 1.131) y por lo tanto no son directamente
-> comparables en términos de tamaño muestral. La comparación **entre modelos** dentro de cada
-> columna sí es válida, y es lo que sostiene las conclusiones anteriores. La comparación
-> controlada de la sección 4.2, que es la pregunta del proyecto, se mantiene a nivel de foto.
+**Interpretabilidad.** Aplicamos Grad-CAM a la ResNet y attention rollout al ViT. En varios
+casos donde ambos discrepan, el Grad-CAM de la ResNet se activa sobre el fondo, fuera de la
+fruta, y esos son precisamente casos en que se equivoca. Es una observación cualitativa sobre
+pocos ejemplos, no una medición.
 
-Reproducible con `python scripts/09_mejoras_inferencia.py`.
+### 5.1 Recomendación
 
-## 5. Discusión: por qué difieren (o no) ResNet y ViT
+| Escenario | Modelo recomendado | Accuracy test | Motivo |
+|---|---|--:|---|
+| Se conoce la temperatura y la fecha de ingreso del lote | ResNet-50 + temp. y día | 79,2 ± 1,3 % | Mejor promedio; mismo costo que la ResNet |
+| No se conoce la historia de la fruta | ResNet-50 | 74,8 ± 0,3 % | Más estable que el ViT, mismo costo |
+| Interesa detectar paltas que maduran distinto a su lote | ResNet-50 (solo imagen) | 52,9 % en esos casos | El modelo con metadatos pierde 7 puntos ahí |
 
-Sobre la métrica ordinal las dos arquitecturas empatan; sobre la clase exacta la ResNet tiene
-una ventaja pequeña pero estadísticamente sólida. Hay tres razones que explican por qué la
-brecha es tan estrecha, y por qué apunta en esa dirección.
-
-**1. El sesgo inductivo convolucional es gratis y aquí es el correcto.** La convolución asume
-localidad y equivarianza a la traslación: una mancha café significa lo mismo esté donde esté
-sobre la fruta. La ResNet trae ese supuesto incorporado en la arquitectura y no necesita
-aprenderlo. El ViT, con auto-atención global desde la primera capa, no asume nada sobre
-estructura espacial y debe inferirlo de los datos —o heredarlo del pre-entrenamiento. Con
-10.208 imágenes de 334 frutas, el pre-entrenamiento es lo que lo salva.
-
-La ablación de la sección 4.5 lo muestra directamente y es la evidencia más fuerte del trabajo:
-**al quitar ImageNet, el ViT pierde 2,1 veces más QWK y 1,5 veces más accuracy que la ResNet**
-(−0,0422 contra −0,0203 de QWK; −11,0 contra −7,4 puntos de accuracy). Con presupuesto igualado
-y pre-entrenamiento igualado las dos arquitecturas empatan; sin pre-entrenamiento, no. La
-diferencia relevante entre CNN y transformer en este problema no está en el techo que alcanzan,
-sino en **cuánto dependen de datos externos para llegar a él**. Y eso es exactamente lo que
-predice la teoría: el sesgo inductivo es un sustituto de datos, y el ViT, que no lo tiene, debe
-comprarlo con ImageNet.
-
-**2. Esta es una tarea de textura local, no de forma global.** El índice de madurez se lee en
-el color de la cáscara, en las manchas y en el arrugamiento superficial. Toda la señal
-discriminante es local y está distribuida de manera redundante por la superficie de la fruta.
-El campo receptivo global del transformer —su ventaja característica en tareas donde importa la
-relación entre partes distantes de la imagen— aquí aporta poco, porque no hay relaciones de
-largo alcance que capturar: todas las paltas tienen la misma forma y están centradas sobre el
-mismo fondo.
-
-**3. El techo lo pone el etiquetado, no la arquitectura.** Con accuracy ±1 clase por sobre el
-99 % en ambos modelos y matrices de confusión estrictamente bandeadas, el error residual está
-casi íntegramente en fronteras adyacentes. Sin acuerdo inter-evaluador reportado, no podemos
-distinguir cuánto de ese error es del modelo y cuánto es desacuerdo humano sobre dónde termina
-un "maduro etapa 1" y empieza un "maduro etapa 2". Dos arquitecturas que se acercan al mismo
-techo se van a parecer entre sí, sin importar cuán distintas sean por dentro.
-
-La interpretabilidad respalda esta lectura desde otro ángulo. Aplicamos Grad-CAM a la ResNet y
-attention rollout al ViT —técnicas distintas a propósito, porque Grad-CAM sobre una secuencia
-de tokens produce mapas notoriamente ruidosos. En los casos donde ambos modelos discrepan
-aparece un patrón revelador: **el Grad-CAM de la ResNet se activa a veces sobre el fondo, fuera
-de la fruta, y son justamente esos los casos en que se equivoca.** El ViT reparte la atención
-sobre regiones más extensas de la cáscara. Es coherente con el punto 2: la ResNet explota
-texturas locales con mucha eficacia, pero cuando la evidencia local es ambigua no tiene un
-mecanismo para integrar el contexto global, y su activación se dispersa.
-
-**Una observación práctica sobre el costo.** El ViT alcanzó su mejor checkpoint en la época 4
-(5,0 minutos) contra la época 11 de la ResNet (9,9 minutos): convergió al doble de velocidad.
-Si el criterio fuera "mejor QWK por minuto de entrenamiento", la conclusión se invertiría. Y
-dado que la diferencia de QWK no es estadísticamente significativa, la decisión de qué modelo
-llevar a una línea de empaque debería tomarse por costo de inferencia y no por métrica: cuando
-los intervalos se solapan, gana el modelo más barato.
-
-### 5.1 Decisión: velocidad frente a precisión
-
-Poniendo los cinco modelos comparables sobre la misma mesa, con el costo de inferencia como
-segunda dimensión:
-
-| Modelo | QWK | GFLOPs | Costo relativo | ¿Justifica el costo? |
-|---|--:|--:|--:|---|
-| ViT-S/16 | 0,9313 | 8,48 | 1,04× | Empata con la ResNet en QWK, cuesta lo mismo, converge al doble de velocidad |
-| **ResNet-50** | 0,9356 | 8,17 | 1,00× | **Referencia** |
-| Fusión tardía | 0,9410 | 16,66 | 2,04× | +0,6 % de QWK por 2× de cómputo |
-| ViT-Hybrid R26 | 0,9411 | 6,88 | 0,84× | El mejor QWK al menor costo, pero con ventaja de ImageNet-21k |
-
-En una línea de empaque la inferencia corre sobre miles de frutas por hora, probablemente en un
-equipo sin GPU dedicada. Bajo esa restricción, **la fusión tardía no se justifica**: duplicar el
-cómputo para ganar seis milésimas de QWK es un mal negocio cuando el error residual ya está
-dominado por el ruido de etiquetado. La recomendación operativa es **ResNet-50**, con el
-ViT-Hybrid R26 como candidato a evaluar seriamente si se confirma que su ventaja sobrevive al
-control de pre-entrenamiento —porque si lo hace, es más preciso *y* un 16 % más barato.
-
-Vale la pena decirlo explícitamente: con accuracy ±1 clase por sobre el 99 % en todos los
-modelos pre-entrenados, el retorno de seguir optimizando la arquitectura es marginal. El retorno
-está en cerrar el domain gap.
+La fusión tardía no se justifica: no supera a la ResNet en validación y cuesta el doble. En
+todos los casos conviene clasificar con las dos caras de la fruta, que en validación mejora a
+todos los modelos y no cuesta nada.
 
 ## 6. Trabajo futuro
 
 En orden de retorno esperado:
 
-1. **Cerrar el domain gap.** Recolectar fotografías de celular de paltas chilenas en
-   condiciones reales (feria, supermercado, packing) y medir cuánto cae el modelo. Es, de
-   lejos, el trabajo con mayor impacto: no sirve de nada optimizar dos puntos de QWK en un
-   dominio que no es el de despliegue.
-
-2. **Pérdida ordinal explícita.** Entrenamos con entropía cruzada plana, que ignora el orden de
-   las clases y luego lo evaluamos con QWK. Una formulación tipo CORAL o una regresión con
-   umbrales aprendidos alinearía el objetivo de entrenamiento con la métrica de evaluación.
-
-3. **Predicción de vida útil restante en días.** El dataset trae marcas de tiempo y permite
-   calcular, para cada fotografía, cuántos días faltan para que esa fruta llegue al fin de su
-   vida útil. Esa es la pregunta que de verdad importa en la cadena de frío, y es una
-   regresión, no una clasificación.
-
-4. **Cuantificar el ruido de etiquetado.** Un re-etiquetado parcial por varios evaluadores
-   permitiría estimar el techo humano y saber cuánto margen real queda.
-
-5. **Agregación por fruta.** En operación se dispone de las dos caras de cada palta; combinar
-   ambas predicciones debería reducir el error sin costo de entrenamiento adicional.
+1. **Fotos fuera del laboratorio.** Recolectar fotografías de celular de paltas chilenas en
+   condiciones reales y sin historia conocida. Es el escenario donde la imagen tiene que
+   funcionar sola, y el que decide si esto sirve fuera de un informe.
+2. **Combinar metadatos sin perder la foto.** Entrenar el modelo con metadatos ocultándolos
+   al azar o dando más peso a las paltas fuera de calendario, para que no deje de mirar la
+   imagen donde más aporta.
+3. **Pérdida ordinal explícita** (CORAL o umbrales aprendidos), para alinear el objetivo de
+   entrenamiento con la naturaleza ordenada de las clases.
+4. **Probar la hipótesis local vs. global** con oclusión y desorden de bloques.
+5. **Más semillas para los híbridos y los modelos desde cero**, que hoy tienen una sola.
+6. **Cuantificar el ruido de etiquetado** con un re-etiquetado parcial por varios evaluadores.
 
 ## Referencias
 

@@ -28,7 +28,13 @@ python scripts/compare_models.py \
   --models resnet50 vit_small resnet50_scratch vit_small_scratch hybrid_fusion hybrid_vit_r26 \
   --tag final
 python scripts/04_interpretability.py --mode disagreement
+
+echo "== Entrega final: referencia sin imagen, metadatos y tres semillas =="
+python scripts/10_referencia_metadatos.py
+bash scripts/run_semillas.sh
+python scripts/11_resumen_semillas.py
 python scripts/09_mejoras_inferencia.py
+python scripts/12_ejemplos_errores.py
 python scripts/08_figuras_didacticas.py
 python scripts/07_deck_latex.py
 

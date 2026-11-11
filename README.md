@@ -86,11 +86,11 @@ sería más justo, solo peor para el ViT.
 
 | Métrica | Por qué |
 |---|---|
-| **QWK** (kappa cuadrático) | **Métrica principal.** Penaliza el error según el cuadrado de la distancia entre clases y corrige por acuerdo azaroso |
+| **QWK** (kappa cuadrático) | **Principal.** Penaliza el error según el cuadrado de la distancia entre clases y corrige por acuerdo azaroso |
+| **Accuracy** | **Principal.** La más fácil de interpretar: clase exacta |
 | MAE | Error medio en "escalones" de madurez, directamente interpretable |
-| Accuracy ±1 | Fracción de predicciones en la clase correcta o adyacente: aproxima la utilidad operativa |
 | Macro-F1 | Controla que las clases minoritarias no queden abandonadas |
-| Accuracy | Incluida por comparabilidad con la literatura, pero es la menos informativa aquí |
+| Accuracy ±1 | Solo informativa: supera el 99 % en todos los modelos y no los distingue |
 
 Los intervalos de confianza se calculan con **bootstrap agrupado por fruta**: las 2.262
 imágenes de test vienen de solo 72 paltas, así que asumir independencia entre imágenes daría
@@ -99,50 +99,44 @@ intervalos artificialmente angostos. Las comparaciones entre modelos usan bootst
 
 ## 4. Resultados
 
-Test: 2.262 imágenes de 72 frutas que ningún modelo vio durante el entrenamiento.
+Test: 2.262 imágenes de 72 frutas que ningún modelo vio durante el entrenamiento. Los dos
+baselines y los modelos con metadatos se entrenaron con **tres semillas** (42, 1 y 2): se
+reporta media ± desviación estándar.
 
-| Modelo | Params | GFLOPs | QWK | Accuracy | Macro-F1 | MAE | Acc. ±1 | min |
-|---|--:|--:|--:|--:|--:|--:|--:|--:|
-| ResNet-50 | 23,5 M | 8,17 | 0,9356 | 74,6 % | 0,735 | 0,262 | 99,25 % | 9,9 |
-| ViT-S/16 | 21,7 M | 8,48 | 0,9313 | 72,2 % | 0,711 | 0,283 | 99,51 % | 5,0 |
-| ResNet-50 *(desde cero)* | 23,5 M | 8,17 | 0,9152 | 67,2 % | 0,655 | 0,352 | 97,66 % | 17,6 |
-| ViT-S/16 *(desde cero)* | 21,7 M | 8,48 | 0,8891 | 61,2 % | 0,579 | 0,409 | 98,10 % | 6,0 |
-| Híbrido · fusión tardía | 46,4 M | 16,66 | **0,9410** | **76,8 %** | **0,760** | **0,238** | 99,47 % | 3,5 |
-| ViT-Hybrid R26+S/32 † | 36,0 M | 6,88 | **0,9411** | 76,2 % | 0,752 | 0,242 | **99,65 %** | 14,9 |
+| Modelo | Semillas | Accuracy | QWK | Macro-F1 | MAE |
+|---|:-:|--:|--:|--:|--:|
+| Solo temperatura y día (sin foto) | — | 78,0 % | 0,942 | 0,770 | 0,227 |
+| ResNet-50 | 3 | 74,8 ± 0,3 % | 0,937 ± 0,002 | 0,740 | 0,258 |
+| ViT-S/16 | 3 | 73,1 ± 2,6 % | 0,933 ± 0,006 | 0,719 | 0,276 |
+| ResNet-50 + temperatura y día | 3 | **79,2 ± 1,3 %** | **0,950 ± 0,003** | **0,785** | **0,208** |
+| ViT-S/16 + temperatura y día | 3 | 78,5 ± 0,7 % | 0,948 ± 0,002 | 0,778 | 0,217 |
+| ResNet-50 *(desde cero)* | 1 | 67,2 % | 0,915 | 0,655 | 0,352 |
+| ViT-S/16 *(desde cero)* | 1 | 61,2 % | 0,889 | 0,579 | 0,409 |
+| Híbrido · fusión tardía | 1 | 76,8 % | 0,941 | 0,760 | 0,238 |
+| ViT-Hybrid R26+S/32 † | 1 | 76,2 % | 0,941 | 0,752 | 0,242 |
 
-† Usa pesos de ImageNet-21k y 1,5× los parámetros: es cota superior de referencia, no un
-competidor equiparable.
+† Usa pesos de ImageNet-21k y 1,5× los parámetros: no es un competidor equiparable.
 
-**El resultado principal, y es matizado.** Bootstrap pareado agrupado por fruta (2.000 réplicas),
-ViT menos ResNet:
+**El calendario ya predice casi todo.** Una regla sin imagen —la madurez más común para cada
+temperatura y día de almacenamiento en train— acierta el 78,0 %. Ninguna red mirando solo la
+foto la supera. Sumar la foto a la temperatura y el día queda arriba en promedio, pero ninguna
+semilla por sí sola supera a la regla de forma significativa: es un empate con tendencia a favor.
 
-| Métrica | Δ | IC 95 % | p | |
-|---|--:|:--:|--:|---|
-| QWK | −0,0042 | [−0,0095, +0,0006] | 0,095 | **no significativa** |
-| Accuracy | −0,0234 | [−0,0435, −0,0039] | 0,026 | significativa |
-| Macro-F1 | −0,0241 | [−0,0448, −0,0046] | 0,017 | significativa |
+**Dónde aporta la foto.** En las 498 fotos de paltas que maduran fuera del ritmo de su grupo,
+la regla falla siempre; la foto sola acierta ~53 %. El modelo con metadatos baja ahí a 45,5 %:
+aprende a confiar en el calendario y deja de mirar la imagen justo donde más aporta.
 
-La ResNet acierta la clase exacta significativamente más seguido, pero cuando el ViT se equivoca
-lo hace por menos distancia. Sobre la métrica que pondera el error por distancia —la que refleja
-el costo operativo real— **las dos arquitecturas son estadísticamente indistinguibles**.
-Reportar solo accuracy habría dado "gana la ResNet"; reportar solo QWK habría dado "empatan".
+**ResNet frente a ViT.** En promedio la ResNet acierta 1,7 puntos más, con diferencia
+significativa en dos de tres semillas en accuracy y en una de tres en QWK. Lo más robusto es la
+estabilidad: la ResNet varía ±0,3 puntos entre entrenamientos y el ViT ±2,6. Sin
+pre-entrenamiento, el ViT pierde 2,1× más QWK y 1,5× más accuracy que la ResNet.
 
-**Dónde sí difieren: la dependencia del pre-entrenamiento.** Al entrenar desde cero, el ViT
-pierde 2,1× más QWK y 1,5× más accuracy que la ResNet (−0,0422 contra −0,0203; −11,0 contra
-−7,4 puntos). El sesgo inductivo convolucional es un sustituto de datos, y el ViT, que no lo
-tiene, debe comprarlo con ImageNet.
+**Híbridos.** En test parecían mejores que la ResNet, pero en validación —donde corresponde
+decidir— ninguno la supera, y tienen una sola semilla. No demostraron valer la pena.
 
-**Complementariedad.** ResNet y ViT fallan simultáneamente en solo el 18 % de las imágenes; un
-oráculo que eligiera siempre el modelo correcto llegaría a 82,0 % frente al 74,6 % del mejor
-individual. Eso es lo que explotan los híbridos, aunque la ganancia final sea modesta: la fusión
-tardía mejora +0,0055 de QWK (p = 0,001) a cambio de 2× de cómputo.
-
-**Dos mejoras que salieron gratis.** Revisando si el modelo entrenado se estaba usando bien:
-promediar las dos caras de cada palta (el dataset fotografía ambos lados y los 1.131 pares de
-test están completos) mejora **los cuatro modelos**, entre +0,9 y +2,7 puntos de accuracy, sin
-reentrenar ni gastar cómputo extra. El TTA con volteo horizontal ayuda a las convolucionales
-pero empeora levemente al ViT puro. Con ambas, el ViT-Hybrid R26 llega a **79,8 %**.
-Detalle en la sección 4.7 del informe; reproducible con `scripts/09_mejoras_inferencia.py`.
+**Mejoras de inferencia, elegidas en validación.** Promediar las dos caras de cada palta gana
+en validación en los cuatro modelos y en test sube a la ResNet de 74,6 % a 76,4 %. El TTA con
+volteo solo se elige para el ViT-Hybrid R26.
 
 Análisis completo en el [informe técnico](entregables/final/informe_tecnico.md).
 
@@ -206,20 +200,31 @@ python scripts/train.py --config configs/hybrid_vit_r26.yaml
 ```
 
 Cada corrida escribe `checkpoints/<name>.pt`, `reports/metrics/<name>_history.json`,
-`<name>_test.json` y `<name>_test_preds.csv`.
+`<name>_test.json` y `<name>_{val,test}_preds.csv` (predicciones y probabilidades).
+
+```bash
+# Entrega final: modelos con temperatura y día, y semillas 1 y 2 (~90 min en una RTX 4070)
+bash scripts/run_semillas.sh
+```
 
 ### Comparar y analizar
 
 ```bash
+python scripts/10_referencia_metadatos.py   # regla sin imagen (temperatura y día)
+python scripts/11_resumen_semillas.py       # tres semillas, por temperatura y calendario
+python scripts/09_mejoras_inferencia.py     # dos caras y TTA, elegidas en validación
+python scripts/12_ejemplos_errores.py       # fotos de errores
 python scripts/compare_models.py --models resnet50 vit_small --tag avance
 python scripts/04_interpretability.py --mode disagreement
+python -m pytest -q                         # tests (sin GPU)
 ```
 
 ### Regenerar las presentaciones
 
 ```bash
 python scripts/08_figuras_didacticas.py   # figuras explicativas de las redes
-python scripts/07_deck_latex.py           # ambas presentaciones en LaTeX (Beamer)
+python scripts/07_deck_latex.py           # presentación final en LaTeX (Beamer)
+python scripts/07_deck_latex.py --avance  # también la del avance (ya entregada)
 ```
 
 ### Demo
@@ -247,7 +252,8 @@ son frutas que ningún modelo vio durante el entrenamiento.
 │   ├── viz.py               # estilo común de figuras
 │   ├── beamer.py            # constructor de slides LaTeX (Beamer)
 │   └── console.py           # salida UTF-8 en consolas Windows
-├── scripts/                 # 00..07 + train.py + compare_models.py
+├── scripts/                 # 00..12 + train.py + compare_models.py + run_*.sh
+├── tests/                   # pytest: particion sin fuga, metricas, modelos
 ├── app/gradio_app.py        # demo
 ├── entregables/
 │   ├── avance/              # presentación de avance

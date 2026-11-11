@@ -355,12 +355,14 @@ difíciles) se cancele.
 | **`train.py --config ...`** | **Entrena un modelo** | `checkpoints/*.pt`, `reports/metrics/*` |
 | `compare_models.py --models ...` | Tabla comparativa, tests estadísticos, figuras | `reports/metrics/<tag>.json` |
 | `04_interpretability.py` | Grad-CAM + attention rollout | `reports/figures/20_*.png` |
-| `05_deck_avance.py` | Presentación de avance (.pptx) | `entregables/avance/` |
-| `06_deck_final.py` | Presentación final (.pptx) | `entregables/final/` |
-| `07_deck_latex.py` | Ambas presentaciones en Beamer (.tex + figuras) | `entregables/*/` |
+| `07_deck_latex.py` | Presentación final en Beamer (`--avance` regenera también la del avance) | `entregables/*/` |
 | `08_figuras_didacticas.py` | Figuras explicativas de las arquitecturas | `reports/figures/3*.png` |
-| `09_mejoras_inferencia.py` | Prueba fusión de caras a/b y TTA sobre los modelos ya entrenados | `reports/metrics/mejoras_inferencia.json` |
-| `run_all.sh` | Corre **todo** lo anterior en orden | ~2 h |
+| `09_mejoras_inferencia.py` | Fusión de caras a/b y TTA, **elegidas en validación** | `reports/metrics/mejoras_inferencia.json` |
+| `10_referencia_metadatos.py` | Regla sin imagen: madurez más común por temperatura y día | `reports/metrics/referencia_metadatos*` |
+| `11_resumen_semillas.py` | Tres semillas, comparaciones pareadas, temperatura y calendario | `reports/metrics/semillas.json`, figuras 35-36 |
+| `12_ejemplos_errores.py` | Fotos reales de errores | `reports/figures/37_*.png` |
+| `run_semillas.sh` | Modelos con temperatura y día + semillas 1 y 2 | ~90 min |
+| `run_all.sh` | Corre **todo** lo anterior en orden | ~3,5 h |
 
 Notas sobre dos de ellos:
 
@@ -453,22 +455,32 @@ Para una prueba rápida sin esperar: `python scripts/train.py --config configs/r
 
 ## 13. Preguntas que les pueden hacer en la presentación
 
-**"¿Por qué la accuracy es solo 74 %? Parece baja."**
-Porque son 5 clases ordinales con etiquetas subjetivas. La métrica relevante es que el
-**99,25 % de las predicciones cae en la clase correcta o en una vecina** y el MAE es 0,26
-escalones. Las matrices de confusión son estrictamente bandeadas: ningún modelo confunde una
-palta verde con una sobremadura. Además, el dataset no reporta acuerdo inter-evaluador, así que
-no sabemos cuál es el techo humano.
+**"¿Por qué la accuracy es solo 75 %? Parece baja."**
+Porque son 5 clases ordinales con etiquetas subjetivas, y los estados 3, 4 y 5 se distinguen
+sobre todo por la firmeza, que una foto no muestra. Casi todos los errores son de un escalón
+(557 de 574 en la ResNet) y ninguno de tres o más. Ojo: **no usar el 99 % de "acierta o se pasa
+por uno" como respuesta**; el profesor lo objetó en el avance porque todos los modelos lo
+superan y no los distingue.
+
+**"¿Y si solo uso la fecha y la temperatura, sin foto?"**
+Esa regla acierta el 78 %, más que cualquier red mirando solo la foto (ResNet 74,8 %). Es la
+observación central de la entrega final. La foto aporta en las paltas que maduran fuera de
+ritmo (la regla falla siempre ahí; la foto acierta ~53 %) y cuando no se conoce la historia de
+la fruta. Foto + temperatura + día llega a 79,2 %, empatando con tendencia a favor.
+
+**"¿Cuántas veces entrenaron cada modelo?"**
+Tres (semillas 42, 1 y 2) para ResNet-50, ViT-S/16 y sus versiones con metadatos. Los modelos
+desde cero y los híbridos, una sola vez, y lo decimos.
 
 **"¿Por qué no usaron un modelo más grande?"**
 Porque la pregunta del proyecto es la comparación controlada entre arquitecturas, no maximizar
 la métrica. Un modelo más grande contamina la comparación.
 
 **"¿El ViT perdió, entonces?"**
-Depende de la métrica, y ambas lecturas son correctas. Gana la ResNet en accuracy y macro-F1
-(p = 0,026 y p = 0,017). En **QWK empatan** (p = 0,095): el ViT acierta la clase exacta menos
-seguido, pero cuando se equivoca lo hace por menos distancia. Donde sí difieren de verdad es en
-la dependencia del pre-entrenamiento: sin ImageNet, el ViT pierde **2,1× más QWK** que la ResNet.
+No claramente. Con tres semillas, la ResNet acierta 74,8 ± 0,3 % y el ViT 73,1 ± 2,6 %; la
+ResNet gana con significancia en dos de tres semillas en accuracy y en una de tres en QWK. Lo
+más robusto es que **la ResNet es mucho más estable** entre entrenamientos, y que sin ImageNet
+el ViT pierde **2,1× más QWK** que la ResNet.
 
 **"¿Esto funciona con una foto de mi celular?"**
 No, y está documentado como la limitación principal. Todas las fotos de entrenamiento tienen
@@ -476,7 +488,7 @@ fondo blanco uniforme, una sola fruta centrada e iluminación controlada. Es el 
 cerrarlo es el trabajo futuro con mayor retorno.
 
 **"¿Por qué los híbridos no mejoran más, si son más grandes?"**
-Porque el error residual está dominado por casos genuinamente ambiguos. La fusión tardía gana
-+0,0055 de QWK (significativo) a cambio de 2× de cómputo, y en su tabla de desacuerdo *ambos
-fallan a la vez* en el 20,6 % de las imágenes —más que el 18,0 % del par ResNet/ViT—. No elimina
-los casos difíciles, los absorbe.
+En test parecían mejorar un poco, pero en validación —que es donde corresponde decidir—
+ninguno supera a la ResNet-50, y se entrenaron una sola vez. Elegirlos mirando test habría
+sido justo el error que el profesor señaló en el avance. Además, la fusión tardía cuesta el
+doble de cómputo.
