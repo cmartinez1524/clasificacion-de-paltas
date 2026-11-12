@@ -139,13 +139,13 @@
 \begin{columns}[T]
 \begin{column}{0.58\textwidth}
 {\scriptsize
-\setlength{\itemsep}{0.3em}
+\setlength{\itemsep}{0.28em}
 \begin{itemize}
   \item {\bfseries Chile es uno de los mayores exportadores de palta Hass del mundo.}
   \item La clasificación por madurez se hace hoy a ojo y al tacto, operario por operario, sin criterio homogéneo ni trazabilidad.
-  \item Fruta verde en góndola: el consumidor la descarta. Fruta pasada en tránsito: pérdida total. Los dos errores cuestan.
-  \item {\bfseries La tarea es \emph{ordinal}, no categórica: $1<2<3<4<5$.}
-  \item Confundir un 1 con un 2 es un error de un día. Confundir un 1 con un 5 es mandar fruta podrida a la venta.
+  \item {\bfseries La tarea es \emph{ordinal} y asimétrica: $1<2<3<4<5$.}
+  \item La palta es climatérica (libera etileno). Clasificar una fruta madura como inmadura ($\hat{y} < y$) mete fruta madura al lote verde y echa a perder las demás.
+  \item Clasificar una verde como madura ($\hat{y} > y$) solo adelanta su salida: es un error mucho menos costoso.
 \end{itemize}
 }
 \end{column}
@@ -166,24 +166,118 @@
 }
 \end{column}
 \end{columns}
-\cierre{La métrica tiene que castigar más los errores lejanos. La accuracy plana no lo hace: por eso usamos QWK.}
+\cierre{Medimos distancia (QWK) y dirección del error: MAE Asimétrico con castigo $2\times$ al falso inmaduro.}
 \end{frame}
 
-\begin{frame}{Datos y limitaciones}{Hass Avocado Ripening Photographic Dataset, Mendeley, CC BY 4.0}
+\begin{frame}{Los datos en imágenes: 5 etapas de madurez}{Hass Avocado Ripening Photographic Dataset (Mendeley, CC BY 4.0)}
+\begin{columns}[T]
+\begin{column}{0.43\textwidth}
+\begin{center}
+  \includegraphics[width=\textwidth,height=5.35cm,keepaspectratio]{03-ejemplos-por-clase}
+\end{center}
+\end{column}
+\begin{column}{0.53\textwidth}
+{\tiny
+\centering
+\begin{tabular}{cll}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Índ. & \color{white}\bfseries Estado & \color{white}\bfseries Decisión \\
+\midrule
+1 & Verde & Dejar madurar \\
+2 & Iniciando & Lista en 2--3 días \\
+3 & Maduro I & Venta inmediata \\
+4 & Maduro II & Último día \\
+5 & Sobremaduro & Fuera de punto \\
+\bottomrule
+\end{tabular}
+}
+\vspace{0.35em}
+{\tiny
+\setlength{\itemsep}{0.16em}
+\begin{itemize}
+  \item {\bfseries 14.710 fotos JPEG de 800$\times$800 px de 478 paltas Hass.}
+  \item Adquiridas 3 días tras la cosecha (abril 2022, Portugal) y fotografiadas \textbf{a diario por ambas caras} (\texttt{a} y \texttt{b}) durante hasta 26 días.
+  \item \textbf{Captura estandarizada:} fondo blanco uniforme, luz difusa fija y una sola fruta centrada por foto.
+  \item \textbf{Integridad verificada:} descartamos 12 filas de la planilla sin imagen; 0 discrepancias entre Excel y archivo.
+  \item \textbf{Etiquetado visual experto:} sin penetrómetro ni doble evaluador (fronteras como 3$\leftrightarrow$4 son continuas).
+\end{itemize}
+}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Diseño experimental: 3 temperaturas y evolución temporal}{Cómo se distribuyen las clases y cómo madura cada grupo}
 \kpi[verdeosc]{0.224\textwidth}{Imágenes}{14.710}\hfill
 \kpi[azul]{0.224\textwidth}{Frutas}{478}\hfill
-\kpi[morado]{0.224\textwidth}{Train/val/test}{334/72/72}\hfill
-\kpi[rojo]{0.224\textwidth}{Licencia}{CC BY 4.0}
-\vspace{0.6em}
-{\scriptsize
+\kpi[morado]{0.224\textwidth}{Caras / día}{2 (a y b)}\hfill
+\kpi[rojo]{0.224\textwidth}{Duración máx.}{26 días}
+\vspace{0.35em}
+\begin{columns}[T]
+\begin{column}{0.51\textwidth}
+\begin{center}
+  \includegraphics[width=\textwidth,height=2.9cm,keepaspectratio]{01-distribucion-clases}
+\end{center}
+\vspace{0.15em}
+{\tiny
+\setlength{\itemsep}{0.12em}
+\begin{itemize}
+  \item \textbf{T10 (10\,\textdegree C):} 192 frutas, 8.866 fotos (60\,\% del total; pasan muchos días verdes).
+  \item \textbf{T20 (20\,\textdegree C) y Tamb:} 143 frutas y \textasciitilde 2.920 fotos cada uno.
+\end{itemize}
+}
+\end{column}
+\begin{column}{0.46\textwidth}
+\begin{center}
+  \includegraphics[width=\textwidth,height=2.9cm,keepaspectratio]{02-curvas-maduracion}
+\end{center}
+\vspace{0.15em}
+{\tiny
+\setlength{\itemsep}{0.12em}
+\begin{itemize}
+  \item A 20\,\textdegree C o ambiente maduran en ~10 días; a 10\,\textdegree C tardan más de 3 semanas.
+  \item Desbalance moderado ($1{,}6\times$) compensado con pesos de clase en la pérdida.
+\end{itemize}
+}
+\end{column}
+\end{columns}
+\cierre{Dos paltas del mismo día a distinta temperatura tienen madurez opuesta, y dentro de cada grupo hay frutas fuera de ritmo.}
+\end{frame}
+
+\begin{frame}{El riesgo de que la IA haga trampa}
+\begin{columns}[T]
+\begin{column}{0.52\textwidth}
+{\tiny
 \setlength{\itemsep}{0.2em}
 \begin{itemize}
-  \item {\bfseries Que la IA hiciera trampa: resuelto.}
-  \item Hay 6.871 pares de fotos casi idénticas de la misma palta en días seguidos. Repartimos las 478 paltas, no las 14.710 fotos, con un chequeo automático que falla si alguna aparece en los dos lados.
-  \item {\bfseries El choque con la vida real: no resuelto, declarado.}
-  \item Son fotos de laboratorio: fondo blanco, una sola fruta centrada, luz pareja, siempre a la misma distancia. Una foto de celular en una feria no se parece en nada. Es la limitación que decide si esto sirve en una planta empacadora o solo en un informe.
+  \item {\bfseries A cada palta le sacaron una foto por día, hasta 26 días seguidos.}
+  \item La foto del día 5 y la del día 6 de la misma palta son casi idénticas: misma piel, mismas manchas, misma forma.
+  \item {\bfseries Si repartimos las fotos al azar, la trampa es inevitable.}
+  \item El día 5 queda en el material de estudio y el día 6 en la prueba. El modelo \emph{reconoce esa palta} en vez de juzgar su madurez, como un alumno que vio las respuestas antes del examen.
+  \item El resultado saldría altísimo y sería completamente falso.
+  \item {\bfseries Por eso repartimos las 478 paltas, no las 14.710 fotos.}
+  \item Todas las fotos de una misma palta van juntas: o están en el estudio, o están en la prueba. Nunca en las dos.
+\end{itemize}
+}
+\end{column}
+\begin{column}{0.44\textwidth}
+\begin{center}
+  \includegraphics[width=\textwidth,height=2.9cm,keepaspectratio]{04-particiones}
+\end{center}
+\end{column}
+\end{columns}
+\cierre{Implementamos un chequeo automático que falla si alguna palta llegara a aparecer en los dos lados.}
+\end{frame}
+
+\begin{frame}{Limitaciones conocidas de los datos}{Lo que declaramos antes de pensar en llevar esto a una planta}
+{\scriptsize
+\setlength{\itemsep}{0.28em}
+\begin{itemize}
+  \item {\bfseries El choque con la vida real (domain gap): no resuelto, declarado.}
+  \item Fondo blanco, luz perfecta y una sola fruta centrada. Una foto de celular en una feria o packing ---con sombras, cajones y varias paltas--- está fuera de la distribución de entrenamiento.
   \item {\bfseries Un solo lote, una sola cosecha, una sola variedad.}
-  \item 478 paltas portuguesas de 2022, todas Hass. Y las etiquetas las puso una persona mirando, sin una segunda opinión con qué contrastar: no sabemos cuánto acertaría un experto humano en esta misma tarea.
+  \item 478 paltas portuguesas de 2022, todas Hass. No cubre Fuerte ni Edranol ni posibles variaciones de pigmentación en fruta chilena.
+  \item {\bfseries Solo apariencia externa y sin doble evaluador.}
+  \item Las etiquetas las puso una persona mirando la cáscara; defectos internos de pulpa no se ven y no conocemos el techo humano.
 \end{itemize}
 }
 \cierre{Detalle completo en la data card (\texttt{entregables/final/data\_card.md}).}
@@ -362,34 +456,36 @@ Fotos que vio antes de empezar & 1,3 millones & 1,3 millones & ninguna \\
 \cierre{Esta comparación la pidió el profesor en el avance. Toda la sección de resultados se mide contra esta regla.}
 \end{frame}
 
-\begin{frame}{Todos los modelos, lado a lado}{2.262 fotos de 72 paltas que ningún modelo vio; promedio de 3 entrenamientos}
-{\scriptsize
+\begin{frame}{Todos los modelos, lado a lado}{2.262 fotos de 72 paltas que ningún modelo vio; incluye entrenamiento asimétrico}
+{\tiny
 \centering
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Semillas & \color{white}\bfseries Clase exacta & \color{white}\bfseries QWK & \color{white}\bfseries Error promedio \\
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Sem. & \color{white}\bfseries Clase exacta & \color{white}\bfseries QWK & \color{white}\bfseries MAE & \color{white}\bfseries MAE Asim. \\
 \midrule
-Solo temperatura y día (sin foto) & 1 & 78{,}0\,\% & 0{,}942 & 0{,}23 \\
-ResNet-50 & 3 & 74{,}8\,$\pm$\,0{,}3\,\% & 0{,}936 & 0{,}26 \\
-ViT-S/16 & 3 & 73{,}1\,$\pm$\,2{,}6\,\% & 0{,}933 & 0{,}28 \\
-\rowcolor{verdecla!22}ResNet-50 + temp. y día & 3 & 79{,}2\,$\pm$\,1{,}3\,\% & 0{,}950 & 0{,}21 \\
-ViT-S/16 + temp. y día & 3 & 78{,}5\,$\pm$\,0{,}7\,\% & 0{,}948 & 0{,}22 \\
+Solo temperatura y día (sin foto) & 1 & 78{,}0\,\% & 0{,}942 & 0{,}23 & 0{,}365 \\
+ResNet-50 & 3 & 74{,}8\,$\pm$\,0{,}3\,\% & 0{,}936 & 0{,}26 & 0{,}390 \\
+ViT-S/16 & 3 & 73{,}1\,$\pm$\,2{,}6\,\% & 0{,}933 & 0{,}28 & 0{,}429 \\
+\rowcolor{verdecla!22}ResNet-50 + temp. y día & 3 & 79{,}2\,$\pm$\,1{,}3\,\% & 0{,}950 & 0{,}21 & 0{,}302 \\
+ViT-S/16 + temp. y día & 3 & 78{,}5\,$\pm$\,0{,}7\,\% & 0{,}948 & 0{,}22 & 0{,}337 \\
+ResNet-50 (asim.) & 1 & 72{,}2\,\% & 0{,}930 & 0{,}29 & 0{,}353 \\
+ViT-S/16 (asim.) & 1 & 74{,}8\,\% & 0{,}938 & 0{,}26 & 0{,}356 \\
 \bottomrule
 \end{tabular}
 }
-\vspace{0.35em}
-{\scriptsize
+\vspace{0.3em}
+{\tiny
 \setlength{\itemsep}{0.12em}
 \begin{itemize}
-  \item {\bfseries La foto sola queda bajo la regla del calendario.}
-  \item Las dos redes aciertan menos que la regla que no mira la foto.
-  \item {\bfseries La foto más la temperatura y el día queda sobre la regla, pero por poco.}
-  \item Ganan en promedio, pero ninguna semilla por sí sola supera a la regla de forma estadísticamente clara. Lo honesto es decir que empatan con tendencia a favor.
+  \item {\bfseries La foto sola queda bajo la regla del calendario en promedio global.}
+  \item Pero en las paltas que maduran fuera de ritmo, la regla del calendario falla siempre.
+  \item {\bfseries El entrenamiento asimétrico logra el menor MAE Asimétrico sin metadatos.}
+  \item \textbf{ResNet-50 (asim.)} baja el MAE Asimétrico a 0,353 (reduciendo los falsos inmaduros a 6,5\,\%) y \textbf{ViT-S/16 (asim.)} alcanza 74,8\,\% de exactitud y QWK 0,938.
   \item {\bfseries El $\pm$ es lo que cambia el resultado al repetir el entrenamiento.}
   \item El ViT varía cerca de 9 veces más que la ResNet entre un entrenamiento y otro.
 \end{itemize}
 }
-\cierre{Los modelos desde cero y los híbridos se entrenaron una sola vez (2 híbridos); van más adelante y en el anexo.}
+\cierre{Los modelos desde cero y los híbridos (2 híbridos) van más adelante y en el anexo.}
 \end{frame}
 
 \begin{frame}{ResNet-50 frente a ViT-S/16}{Tres entrenamientos de cada una: cada punto es uno, la raya es el promedio}
@@ -407,6 +503,25 @@ ViT-S/16 + temp. y día & 3 & 78{,}5\,$\pm$\,0{,}7\,\% & 0{,}948 & 0{,}22 \\
 \end{itemize}
 }
 \cierre{En el avance dijimos \guillemotleft{}ResNet gana en clase exacta\guillemotright{} con un solo entrenamiento. Con tres, la conclusión se matiza.}
+\end{frame}
+
+\begin{frame}{Asimetría del error y entrenamiento sensible al costo}{Castigar el doble subestimar la madurez (falso inmaduro) frente a sobreestimarla}
+\begin{center}
+  \includegraphics[width=0.90\textwidth,height=3.35cm,keepaspectratio]{14-asimetria-errores}
+\end{center}
+\vspace{0.2em}
+{\tiny
+\setlength{\itemsep}{0.14em}
+\begin{itemize}
+  \item {\bfseries Por qué penalizar más el falso inmaduro ($2\times$ si $\hat{y} < y$).}
+  \item Infiltrar una palta madura en un lote verde acelera la maduración del resto por etileno. La pérdida estándar (\texttt{CrossEntropy}) no distingue dirección ni distancia entre etapas.
+  \item {\bfseries Cómo actualizamos los pesos durante el aprendizaje:}
+  \item Sumamos a la entropía cruzada el \textbf{costo ordinal esperado asimétrico} (\texttt{AsymmetricOrdinalLoss}) y evaluamos con regla de riesgo mínimo de Bayes.
+  \item {\bfseries Resultado real tras entrenar en GPU (Tesla T4):}
+  \item \textbf{ResNet-50 (asim.)} reduce los falsos inmaduros casi a la mitad (12{,}6\,\% $\rightarrow$ \textbf{6{,}5\,\%}) y baja el MAE Asimétrico de 0{,}390 a \textbf{0{,}353} ($p=0{,}006$). \textbf{ViT-S/16 (asim.)} baja el falso inmaduro de 14{,}5\,\% a \textbf{9{,}8\,\%} (MAE Asim. \textbf{0{,}356}, $p=0{,}030$) y además sube QWK (0{,}931 $\rightarrow$ \textbf{0{,}938}) y Accuracy (72{,}2\,\% $\rightarrow$ \textbf{74{,}8\,\%}).
+\end{itemize}
+}
+\cierre{Entrenar con castigo asimétrico reduce significativamente el riesgo de etileno en ambas arquitecturas ($p \le 0{,}030$).}
 \end{frame}
 
 \begin{frame}{\textquestiondown{}Qué aporta realmente la foto?}{Separando las paltas según si maduran al ritmo de su grupo}
@@ -504,7 +619,7 @@ ViT-Hybrid R26+S/32 & 0{,}943 & 78{,}0\,\% & 0{,}941 & 76{,}2\,\% & 0{,}84$\time
   \item El ViT-Hybrid R26 es más barato, pero estudió con 14 millones de fotos en vez de 1,3: no es una comparación limpia.
 \end{itemize}
 }
-\cierre{Conclusión: con esta evidencia, combinar las dos redes no demostró valer la pena. Agregar temperatura y día aportó más.}
+\cierre{Conclusión: con esta evidencia, combinar las dos redes no demostró valer la pena. Agregar temperatura y día o pérdida asimétrica aportó más.}
 \end{frame}
 
 \begin{frame}{\textquestiondown{}En qué se fijó el modelo para decidir?}{Pintamos sobre la foto las zonas que más pesaron en la respuesta}
@@ -547,7 +662,7 @@ ViT-Hybrid R26+S/32 & 0{,}943 & 78{,}0\,\% & 0{,}941 & 76{,}2\,\% & 0{,}84$\time
 \cierre{Corrección respecto del avance: antes estas variantes se comparaban directo en la prueba. Ahora la prueba se mira una sola vez.}
 \end{frame}
 
-\begin{frame}{\textquestiondown{}Cuál llevaríamos a una planta empacadora?}{Depende de qué información se tenga además de la foto}
+\begin{frame}{\textquestiondown{}Cuál llevaríamos a una planta empacadora?}{Depende de qué información se tenga y del costo de infiltrar fruta madura}
 {\tiny
 \centering
 \begin{tabular}{l c c >{\raggedright\arraybackslash}p{0.40\textwidth}}
@@ -556,19 +671,21 @@ ViT-Hybrid R26+S/32 & 0{,}943 & 78{,}0\,\% & 0{,}941 & 76{,}2\,\% & 0{,}84$\time
 \midrule
 \rowcolor{verdecla!22}ResNet-50 + temp. y día & 79{,}2\,$\pm$\,1{,}3\,\% & 1,00$\times$ & La que recomendamos si se conoce la historia del lote. \\
 Solo temperatura y día & 78{,}0\,\% & casi 0 & Empata en promedio. Pero falla siempre con las paltas fuera de ritmo. \\
-ResNet-50 & 74{,}8\,$\pm$\,0{,}3\,\% & 1,00$\times$ & La opción si no se sabe cuántos días lleva guardada la fruta. \\
+ResNet-50 & 74{,}8\,$\pm$\,0{,}3\,\% & 1,00$\times$ & La opción estándar si no se sabe cuántos días lleva guardada la fruta. \\
 ViT-S/16 & 73{,}1\,$\pm$\,2{,}6\,\% & 1{,}04$\times$ & Cerca en promedio, pero menos estable entre entrenamientos. \\
+ResNet-50 (asim.) & 72{,}2\,\% & 1,00$\times$ & Menor riesgo de etileno sin metadatos (MAE Asim. 0{,}353, subest. 6{,}5\,\%). \\
+ViT-S/16 (asim.) & 74{,}8\,\% & 1{,}04$\times$ & Mejor QWK solo imagen (0{,}938) y baja subestimación a 9{,}8\,\%. \\
 \bottomrule
 \end{tabular}
 }
-\vspace{0.5em}
-{\scriptsize
-\setlength{\itemsep}{0.22em}
+\vspace{0.35em}
+{\tiny
+\setlength{\itemsep}{0.18em}
 \begin{itemize}
   \item {\bfseries Si la planta registra temperatura y fecha de ingreso, hay que usarlas.}
   \item Mejoran a las dos redes en las 3 semillas; en QWK la mejora es significativa en todas. No cuesta nada: son dos números más.
-  \item {\bfseries Pero el calendario solo no basta.}
-  \item Una regla de calendario no puede detectar una palta que madura distinto a su lote; la foto sí, en cerca de la mitad de esos casos.
+  \item {\bfseries Si solo hay foto y preocupa el contagio por etileno, usar pérdida asimétrica.}
+  \item Entrenar con \texttt{AsymmetricOrdinalLoss} corta los falsos inmaduros de 12,6\,\% a 6,5\,\% en ResNet-50 y sube el ViT-S/16 a 74,8\,\% de exactitud.
   \item {\bfseries Entre ResNet y ViT, preferimos la ResNet.}
   \item No porque sea claramente más precisa, sino porque da lo mismo cada vez que se entrena. En producción eso importa.
 \end{itemize}
@@ -594,16 +711,16 @@ ViT-S/16 & 73{,}1\,$\pm$\,2{,}6\,\% & 1{,}04$\times$ & Cerca en promedio, pero m
 
 \begin{frame}{Conclusiones y trabajo futuro}{Qué aprendimos y qué sigue}
 {\scriptsize
-\setlength{\itemsep}{0.25em}
+\setlength{\itemsep}{0.22em}
 \begin{itemize}
   \item {\bfseries En este dataset, el calendario explica la mayor parte de la madurez.}
-  \item Una regla con solo temperatura y día acierta el 78\,\%; la foto sola no la supera. Sumar foto, temperatura y día queda arriba en promedio, sin una diferencia estadísticamente clara.
+  \item Una regla con solo temperatura y día acierta el 78\,\%; la foto aporta donde el calendario falla siempre: en las 498 fotos de paltas fuera de ritmo.
   \item {\bfseries ResNet y ViT quedan cerca; la ResNet es más estable y depende menos de ImageNet.}
   \item Con tres entrenamientos, la ventaja de la ResNet en clase exacta aparece en dos de tres. Sin ImageNet, el ViT pierde el doble.
-  \item {\bfseries Lo que corregimos tras el avance:}
-  \item Comparar contra el calendario, repetir cada entrenamiento tres veces, elegir las variantes en validación y no en la prueba, y no usar el 99\,\% de \guillemotleft{}acierta o se pasa por uno\guillemotright{} como titular.
+  \item {\bfseries Penalización ordinal asimétrica implementada y validada.}
+  \item Incorpóramos \texttt{AsymmetricOrdinalLoss} ($2\times$ al falso inmaduro): reduce la subestimación de 12,6\,\% a 6,5\,\% en ResNet-50 ($p=0{,}006$) y mejora el ViT-S/16 a QWK 0,938 ($p=0{,}030$).
   \item {\bfseries Qué haríamos ahora:}
-  \item 1) Fotos de celular en un packing chileno, sin historia del lote. 2) Enseñarle que las clases están ordenadas (pérdida ordinal). 3) Tapar partes de la foto para probar la hipótesis local vs. global.
+  \item 1) Fotos de celular en un packing chileno, sin historia del lote (o reemplazo de fondos). 2) Combinar \texttt{AsymmetricOrdinalLoss} con el modelo de metadatos y 3 semillas. 3) Tapar partes de la foto para probar la hipótesis local vs. global.
 \end{itemize}
 }
 \cierre{\texttt{github.com/cmartinez1524/clasificacion-de-paltas}}
@@ -620,27 +737,31 @@ ViT-S/16 & 73{,}1\,$\pm$\,2{,}6\,\% & 1{,}04$\times$ & Cerca en promedio, pero m
 }
 
 \begin{frame}{Anexo: todas las métricas}{Test, semilla 42: 2.262 imágenes de 72 frutas nunca vistas}
-{\scriptsize
+{\tiny
 \centering
-\begin{tabular}{lcccccccc}
+\begin{tabular}{lcccccccccc}
 \toprule
-\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Params & \color{white}\bfseries GFLOPs & \color{white}\bfseries QWK & \color{white}\bfseries Accuracy & \color{white}\bfseries Macro-F1 & \color{white}\bfseries MAE & \color{white}\bfseries Acc. $\pm$1 & \color{white}\bfseries min \\
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Params & \color{white}\bfseries GFLOPs & \color{white}\bfseries QWK & \color{white}\bfseries Accuracy & \color{white}\bfseries Macro-F1 & \color{white}\bfseries MAE & \color{white}\bfseries MAE Asim. & \color{white}\bfseries Subest. & \color{white}\bfseries Acc. $\pm$1 & \color{white}\bfseries min \\
 \midrule
-ResNet-50 & 23{,}5\,M & 8{,}2 & 0{,}9356 & 74{,}6\,\% & 0{,}735 & 0{,}261 & 99{,}2\,\% & 10 \\
-ViT-S/16 & 21{,}7\,M & 8{,}5 & 0{,}9313 & 72{,}2\,\% & 0{,}711 & 0{,}282 & 99{,}5\,\% & 5 \\
-ResNet-50 (scratch) & 23{,}5\,M & 8{,}2 & 0{,}9152 & 67{,}2\,\% & 0{,}655 & 0{,}352 & 97{,}7\,\% & 18 \\
-ViT-S/16 (scratch) & 21{,}7\,M & 8{,}5 & 0{,}8891 & 61{,}2\,\% & 0{,}579 & 0{,}409 & 98{,}1\,\% & 6 \\
-Híbrido: fusión tardía & 46{,}4\,M & 16{,}7 & 0{,}9410 & 76{,}7\,\% & 0{,}760 & 0{,}238 & 99{,}5\,\% & 4 \\
-ViT-Hybrid R26+S/32 & 36{,}0\,M & 6{,}9 & 0{,}9411 & 76{,}2\,\% & 0{,}752 & 0{,}242 & 99{,}6\,\% & 15 \\
+ResNet-50 & 23{,}5\,M & 8{,}2 & 0{,}9356 & 74{,}6\,\% & 0{,}735 & 0{,}261 & 0{,}390 & 12{,}6\,\% & 99{,}2\,\% & 10 \\
+ViT-S/16 & 21{,}7\,M & 8{,}5 & 0{,}9313 & 72{,}2\,\% & 0{,}711 & 0{,}282 & 0{,}429 & 14{,}5\,\% & 99{,}5\,\% & 5 \\
+ResNet-50 (asim.) & 23{,}5\,M & 8{,}2 & 0{,}9296 & 72{,}2\,\% & 0{,}717 & 0{,}286 & 0{,}353 & 6{,}5\,\% & 99{,}1\,\% & 23 \\
+ViT-S/16 (asim.) & 21{,}7\,M & 8{,}5 & 0{,}9379 & 74{,}8\,\% & 0{,}740 & 0{,}257 & 0{,}356 & 9{,}8\,\% & 99{,}5\,\% & 17 \\
+ResNet-50 + temp. y día & 23{,}5\,M & 8{,}2 & 0{,}9511 & 79{,}6\,\% & 0{,}789 & 0{,}205 & 0{,}302 & 9{,}8\,\% & 100{,}0\,\% & 10 \\
+ViT-S/16 + temp. y día & 21{,}7\,M & 8{,}5 & 0{,}9490 & 78{,}7\,\% & 0{,}778 & 0{,}214 & 0{,}337 & 12{,}2\,\% & 99{,}9\,\% & 6 \\
+ResNet-50 (scratch) & 23{,}5\,M & 8{,}2 & 0{,}9152 & 67{,}2\,\% & 0{,}655 & 0{,}352 & 0{,}452 & 9{,}6\,\% & 97{,}7\,\% & 18 \\
+ViT-S/16 (scratch) & 21{,}7\,M & 8{,}5 & 0{,}8891 & 61{,}2\,\% & 0{,}579 & 0{,}409 & 0{,}658 & 23{,}5\,\% & 98{,}1\,\% & 6 \\
+Híbrido: fusión tardía & 46{,}4\,M & 16{,}7 & 0{,}9410 & 76{,}7\,\% & 0{,}760 & 0{,}238 & 0{,}373 & 13{,}3\,\% & 99{,}5\,\% & 4 \\
+ViT-Hybrid R26+S/32 & 36{,}0\,M & 6{,}9 & 0{,}9411 & 76{,}2\,\% & 0{,}752 & 0{,}242 & 0{,}385 & 14{,}2\,\% & 99{,}6\,\% & 15 \\
 \bottomrule
 \end{tabular}
 }
-\vspace{0.5em}
+\vspace{0.4em}
 {\tiny
-\setlength{\itemsep}{0.18em}
+\setlength{\itemsep}{0.14em}
 \begin{itemize}
   \item \textbf{QWK}: kappa de Cohen con pesos cuadráticos. Penaliza el error según el cuadrado de la distancia entre clases y corrige por acuerdo azaroso. Es la métrica con la que elegimos el mejor modelo.
-  \item \textbf{MAE}: error medio en escalones del índice de madurez.
+  \item \textbf{MAE Asim.}: error ponderado que castiga $2\times$ clasificar una palta madura como inmadura ($\hat{y} < y$, columna \textbf{Subest.}) frente a $1\times$ por sobreestimar ($\hat{y} > y$).
   \item \textbf{Acc. $\pm$1}: fracción de predicciones en la clase correcta o una adyacente.
   \item \textbf{Macro-F1}: F1 promediado por clase; controla que las clases minoritarias no queden abandonadas.
 \end{itemize}
@@ -648,14 +769,18 @@ ViT-Hybrid R26+S/32 & 36{,}0\,M & 6{,}9 & 0{,}9411 & 76{,}2\,\% & 0{,}752 & 0{,}
 \end{frame}
 
 \begin{frame}{Anexo: pruebas estadísticas}{Semilla 42: diferencias contra ResNet-50, con intervalo de confianza del 95\,\%}
-{\scriptsize
-\setlength{\itemsep}{0.25em}
+{\tiny
+\setlength{\itemsep}{0.18em}
 \begin{itemize}
-  \item {\bfseries ViT-S/16: $\Delta$QWK $= $-$0{,}0042$, IC 95\,\% $[$-$0{,}0095, +0{,}0006]$, $p=0{,}095$ $\rightarrow$ \nosig}
-  \item {\bfseries ResNet-50 (scratch): $\Delta$QWK $= $-$0{,}0203$, IC 95\,\% $[$-$0{,}0283, $-$0{,}0123]$, $p=0{,}000$ $\rightarrow$ \sig}
-  \item {\bfseries ViT-S/16 (scratch): $\Delta$QWK $= $-$0{,}0465$, IC 95\,\% $[$-$0{,}0692, $-$0{,}0316]$, $p=0{,}000$ $\rightarrow$ \sig}
-  \item {\bfseries Híbrido: fusión tardía: $\Delta$QWK $= +0{,}0055$, IC 95\,\% $[+0{,}0021, +0{,}0087]$, $p=0{,}001$ $\rightarrow$ \sig}
-  \item {\bfseries ViT-Hybrid R26+S/32: $\Delta$QWK $= +0{,}0055$, IC 95\,\% $[+0{,}0005, +0{,}0104]$, $p=0{,}031$ $\rightarrow$ \sig}
+  \item {\bfseries ViT-S/16: $\Delta$QWK $= $-$0{,}0043$, IC 95\,\% $[$-$0{,}0094, +0{,}0001]$, $p=0{,}060$ $\rightarrow$ \nosig \;|\; $\Delta$MAE Asim. $= +0{,}0393$ ($p=0{,}004$, \sig)}
+  \item {\bfseries ResNet-50 (asim.): $\Delta$QWK $= $-$0{,}0060$, IC 95\,\% $[$-$0{,}0118, $-$0{,}0011]$, $p=0{,}032$ $\rightarrow$ \sig \;|\; $\Delta$MAE Asim. $= $-$0{,}0367$ ($p=0{,}004$, \sig)}
+  \item {\bfseries ViT-S/16 (asim.): $\Delta$QWK $= +0{,}0022$, IC 95\,\% $[$-$0{,}0038, +0{,}0079]$, $p=0{,}500$ $\rightarrow$ \nosig \;|\; $\Delta$MAE Asim. $= $-$0{,}0336$ ($p=0{,}032$, \sig)}
+  \item {\bfseries ResNet-50 + temp. y día: $\Delta$QWK $= +0{,}0155$, IC 95\,\% $[+0{,}0089, +0{,}0231]$, $p=0{,}000$ $\rightarrow$ \sig \;|\; $\Delta$MAE Asim. $= $-$0{,}0875$ ($p=0{,}000$, \sig)}
+  \item {\bfseries ViT-S/16 + temp. y día: $\Delta$QWK $= +0{,}0134$, IC 95\,\% $[+0{,}0071, +0{,}0200]$, $p=0{,}000$ $\rightarrow$ \sig \;|\; $\Delta$MAE Asim. $= $-$0{,}0526$ ($p=0{,}000$, \sig)}
+  \item {\bfseries ResNet-50 (scratch): $\Delta$QWK $= $-$0{,}0204$, IC 95\,\% $[$-$0{,}0280, $-$0{,}0124]$, $p=0{,}000$ $\rightarrow$ \sig \;|\; $\Delta$MAE Asim. $= +0{,}0623$ ($p=0{,}012$, \sig)}
+  \item {\bfseries ViT-S/16 (scratch): $\Delta$QWK $= $-$0{,}0466$, IC 95\,\% $[$-$0{,}0689, $-$0{,}0317]$, $p=0{,}000$ $\rightarrow$ \sig \;|\; $\Delta$MAE Asim. $= +0{,}2683$ ($p=0{,}000$, \sig)}
+  \item {\bfseries Híbrido: fusión tardía: $\Delta$QWK $= +0{,}0054$, IC 95\,\% $[+0{,}0022, +0{,}0085]$, $p=0{,}000$ $\rightarrow$ \sig \;|\; $\Delta$MAE Asim. $= $-$0{,}0172$ ($p=0{,}072$, \nosig)}
+  \item {\bfseries ViT-Hybrid R26+S/32: $\Delta$QWK $= +0{,}0054$, IC 95\,\% $[+0{,}0009, +0{,}0104]$, $p=0{,}028$ $\rightarrow$ \sig \;|\; $\Delta$MAE Asim. $= $-$0{,}0049$ ($p=0{,}756$, \nosig)}
   \item Los intervalos y los $p$-valores salen de un \emph{bootstrap pareado agrupado por fruta}: las 2.262 imágenes vienen de solo 72 paltas, así que remuestrear imágenes daría intervalos artificialmente angostos. Se remuestrean frutas, 2.000 réplicas.
 \end{itemize}
 }

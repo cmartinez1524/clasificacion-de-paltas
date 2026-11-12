@@ -22,7 +22,73 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from .metrics import PRIMARY_METRIC, compute_metrics, format_metrics
+from .metrics import (
+    PRIMARY_METRIC,
+    bayes_min_risk_predict,
+    compute_metrics,
+    cost_matrix,
+    format_metrics,
+)
+
+LOWER_IS_BETTER = ("asymmetric_mae", "mae", "underestimation_rate")
+
+
+def is_better_metric(val: float, best: float, metric_name: str) -> bool:
+    """Compara una metrica de validacion contra el mejor registro segun su direccion."""
+    if metric_name in LOWER_IS_BETTER:
+        return val < best
+    return val > best
+
+
+class AsymmetricOrdinalLoss(nn.Module):
+    """CrossEntropy + costo ordinal esperado asimetrico diferenciable.
+
+    Penaliza mas fuerte la probabilidad asignada a etapas anteriores (y_pred < y_true)
+    que a posteriores, respetando ademas la distancia ordinal entre clases.
+    """
+
+    def __init__(
+        self,
+        num_classes: int = 5,
+        class_weights: torch.Tensor | None = None,
+        label_smoothing: float = 0.0,
+        asymmetric_weight: float = 0.0,
+        underripe_penalty: float = 2.0,
+        overripe_penalty: float = 1.0,
+    ) -> None:
+        super().__init__()
+        self.asymmetric_weight = float(asymmetric_weight)
+        self.ce = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=label_smoothing)
+        costs = cost_matrix(
+            num_classes=num_classes,
+            underripe_penalty=underripe_penalty,
+            overripe_penalty=overripe_penalty,
+        )
+        self.register_buffer("cost_mat", torch.tensor(costs, dtype=torch.float32))
+
+    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        loss = self.ce(logits, targets)
+        if self.asymmetric_weight > 0.0:
+            probs = torch.softmax(logits.float(), dim=1)
+            row_costs = self.cost_mat[targets]
+            expected_cost = (probs * row_costs).sum(dim=1).mean()
+            loss = loss + self.asymmetric_weight * expected_cost
+        return loss
+
+
+def build_criterion(cfg, class_weights: np.ndarray | None, device: torch.device) -> nn.Module:
+    """Construye la funcion de perdida desde la configuracion del experimento."""
+    w = None
+    if class_weights is not None and cfg.use_class_weights:
+        w = torch.tensor(class_weights, dtype=torch.float32, device=device)
+    return AsymmetricOrdinalLoss(
+        num_classes=5,
+        class_weights=w,
+        label_smoothing=cfg.label_smoothing,
+        asymmetric_weight=getattr(cfg, "asymmetric_loss_weight", 0.0),
+        underripe_penalty=getattr(cfg, "underripe_penalty", 2.0),
+        overripe_penalty=getattr(cfg, "overripe_penalty", 1.0),
+    ).to(device)
 
 
 def forward_batch(model: nn.Module, batch, device: torch.device):
@@ -89,6 +155,9 @@ def evaluate(
     amp: bool = True,
     tta_hflip: bool = False,
     return_logits: bool = False,
+    predict_mode: str = "argmax",
+    underripe_penalty: float = 2.0,
+    overripe_penalty: float = 1.0,
 ) -> dict:
     model.eval()
     logits_all, y_all = [], []
@@ -103,9 +172,23 @@ def evaluate(
 
     logits = torch.cat(logits_all)
     y_true = torch.cat(y_all).numpy()
-    y_pred = logits.argmax(1).numpy()
+    if predict_mode == "bayes":
+        probs = torch.softmax(logits, dim=1).numpy()
+        cmat = cost_matrix(
+            num_classes=logits.shape[1],
+            underripe_penalty=underripe_penalty,
+            overripe_penalty=overripe_penalty,
+        )
+        y_pred = bayes_min_risk_predict(probs, cmat)
+    else:
+        y_pred = logits.argmax(1).numpy()
 
-    m = compute_metrics(y_true, y_pred)
+    m = compute_metrics(
+        y_true,
+        y_pred,
+        underripe_penalty=underripe_penalty,
+        overripe_penalty=overripe_penalty,
+    )
     if return_logits:
         m["logits"] = logits.numpy()
         m["y_true"] = y_true
@@ -155,13 +238,9 @@ def fit(
     ckpt_path: Path,
     history_path: Path,
 ) -> dict:
-    """Entrena, selecciona el mejor checkpoint por QWK de validacion y lo guarda."""
+    """Entrena, selecciona el mejor checkpoint segun validacion y lo guarda."""
     model.to(device)
-
-    w = None
-    if class_weights is not None and cfg.use_class_weights:
-        w = torch.tensor(class_weights, dtype=torch.float32, device=device)
-    criterion = nn.CrossEntropyLoss(weight=w, label_smoothing=cfg.label_smoothing)
+    criterion = build_criterion(cfg, class_weights, device)
 
     optimizer = torch.optim.AdamW(
         param_groups(model, cfg.lr, cfg.head_lr_mult, cfg.weight_decay), lr=cfg.lr
@@ -174,7 +253,13 @@ def fit(
     )
     scaler = torch.amp.GradScaler("cuda", enabled=cfg.amp and device.type == "cuda")
 
-    historia, mejor, mejor_epoca, sin_mejora = [], -np.inf, -1, 0
+    selection_metric = getattr(cfg, "selection_metric", PRIMARY_METRIC) or PRIMARY_METRIC
+    predict_mode = getattr(cfg, "predict_mode", "argmax")
+    underripe_penalty = getattr(cfg, "underripe_penalty", 2.0)
+    overripe_penalty = getattr(cfg, "overripe_penalty", 1.0)
+
+    mejor_init = np.inf if selection_metric in LOWER_IS_BETTER else -np.inf
+    historia, mejor, mejor_epoca, sin_mejora = [], mejor_init, -1, 0
     t0 = time.time()
 
     for ep in range(1, cfg.epochs + 1):
@@ -182,7 +267,16 @@ def fit(
         tr = train_one_epoch(model, loaders["train"], criterion, optimizer, scheduler,
                              scaler, device, cfg.amp, cfg.grad_clip,
                              desc=f"{cfg.name} ep{ep}/{cfg.epochs}")
-        va = evaluate(model, loaders["val"], device, cfg.amp, cfg.eval_tta_hflip)
+        va = evaluate(
+            model,
+            loaders["val"],
+            device,
+            cfg.amp,
+            cfg.eval_tta_hflip,
+            predict_mode=predict_mode,
+            underripe_penalty=underripe_penalty,
+            overripe_penalty=overripe_penalty,
+        )
         dt = time.time() - t_ep
 
         historia.append({
@@ -191,8 +285,8 @@ def fit(
             **{k: v for k, v in va.items() if isinstance(v, float)},
         })
         marca = ""
-        if va[PRIMARY_METRIC] > mejor:
-            mejor, mejor_epoca, sin_mejora = va[PRIMARY_METRIC], ep, 0
+        if is_better_metric(va[selection_metric], mejor, selection_metric):
+            mejor, mejor_epoca, sin_mejora = va[selection_metric], ep, 0
             ckpt_path.parent.mkdir(parents=True, exist_ok=True)
             torch.save({"model": model.state_dict(), "epoch": ep,
                         "val_metrics": {k: v for k, v in va.items() if isinstance(v, float)},
@@ -209,11 +303,11 @@ def fit(
         history_path.write_text(json.dumps(historia, indent=2), encoding="utf-8")
 
         if sin_mejora >= cfg.early_stop_patience:
-            print(f"Early stopping: {sin_mejora} epocas sin mejorar {PRIMARY_METRIC}.")
+            print(f"Early stopping: {sin_mejora} epocas sin mejorar {selection_metric}.")
             break
 
-    print(f"\nMejor epoca: {mejor_epoca}  ({PRIMARY_METRIC} val = {mejor:.4f})")
+    print(f"\nMejor epoca: {mejor_epoca}  ({selection_metric} val = {mejor:.4f})")
     print(f"Tiempo total: {(time.time() - t0) / 60:.1f} min")
     return {"history": historia, "best_epoch": mejor_epoca,
-            f"best_val_{PRIMARY_METRIC}": float(mejor),
+            f"best_val_{selection_metric}": float(mejor),
             "train_minutes": round((time.time() - t0) / 60, 2)}

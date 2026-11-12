@@ -1,0 +1,31 @@
+# ViT-S/16 (DeiT-S) con aprendizaje y decision asimetrica (2x castigo a falso inmaduro).
+name: vit_small_asimetrico
+model: vit_small
+pretrained: true
+
+img_size: 224
+batch_size: 64
+num_workers: 10
+use_cache: true
+use_class_weights: true
+
+epochs: 15
+lr: 0.0001
+head_lr_mult: 10.0
+weight_decay: 0.05
+warmup_epochs: 2.0
+label_smoothing: 0.05
+drop_path_rate: 0.1
+grad_clip: 1.0
+amp: true
+
+seed: 42
+early_stop_patience: 5
+
+asymmetric_loss_weight: 0.5
+underripe_penalty: 2.0
+overripe_penalty: 1.0
+primary_metric: asymmetric_mae
+use_bayes_risk_eval: true
+
+notes: "ViT-S/16 con perdida ordinal asimetrica (2x falso inmaduro) y decision Bayesiana"

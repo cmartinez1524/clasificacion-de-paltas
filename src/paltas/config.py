@@ -38,6 +38,13 @@ class TrainConfig:
     early_stop_patience: int = 5
     eval_tta_hflip: bool = False
 
+    # --- aprendizaje y evaluacion asimetrica ---
+    asymmetric_loss_weight: float = 0.0
+    underripe_penalty: float = 2.0
+    overripe_penalty: float = 1.0
+    primary_metric: str = "qwk"
+    use_bayes_risk_eval: bool = False
+
     # --- solo para hybrid_fusion ---
     freeze_backbones: bool = False
     cnn_ckpt: str | None = None
@@ -55,6 +62,11 @@ class TrainConfig:
         if desconocidos:
             raise KeyError(f"Claves desconocidas en {path.name}: {sorted(desconocidos)}")
         cfg = cls(**raw)
+        if cfg.primary_metric not in ("qwk", "asymmetric_mae"):
+            raise ValueError(
+                f"primary_metric invalida en {path.name}: {cfg.primary_metric!r} "
+                "(usa 'qwk' o 'asymmetric_mae')"
+            )
         cfg._source = str(path)
         if cfg.name == "exp":
             cfg.name = path.stem

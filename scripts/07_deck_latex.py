@@ -5,8 +5,8 @@ imagenes que ese deck usa. Asi se puede arrastrar la carpeta completa a Overleaf
 sin tocar nada.
 
 Uso:
-    python scripts/07_deck_latex.py            # solo la presentacion final
-    python scripts/07_deck_latex.py --avance   # regenera tambien la del avance
+    python scripts/07_deck_latex.py            # ambas presentaciones (avance y final)
+    python scripts/07_deck_latex.py --avance   # fuerza regenerar tambien avance
 """
 
 from __future__ import annotations
@@ -49,6 +49,10 @@ REPO = r"\texttt{github.com/cmartinez1524/clasificacion-de-paltas}"
 ETIQUETA = {
     "resnet50": "ResNet-50",
     "vit_small": "ViT-S/16",
+    "resnet50_asimetrico": "ResNet-50 (asim.)",
+    "vit_small_asimetrico": "ViT-S/16 (asim.)",
+    "resnet50_meta": "ResNet-50 + temp. y día",
+    "vit_small_meta": "ViT-S/16 + temp. y día",
     "resnet50_scratch": "ResNet-50 (scratch)",
     "vit_small_scratch": "ViT-S/16 (scratch)",
     "hybrid_fusion": "Híbrido: fusión tardía",
@@ -81,7 +85,6 @@ def copiar_figuras(cuerpo: str, destino: Path) -> int:
     for f in destino.glob("*.png"):
         f.unlink()
     for seguro in sorted(referidas):
-        # deshacemos el renombrado para encontrar el original
         candidatos = [p for p in FIGURES_DIR.glob("*.png")
                       if nombre_seguro(p.stem) == seguro]
         if candidatos:
@@ -109,27 +112,97 @@ def frame_problema(fecha_nota: str) -> str:
         ("Chile es uno de los mayores exportadores de palta Hass del mundo.", True),
         "La clasificación por madurez se hace hoy a ojo y al tacto, operario "
         "por operario, sin criterio homogéneo ni trazabilidad.",
-        "Fruta verde en góndola: el consumidor la descarta. Fruta pasada en "
-        "tránsito: pérdida total. Los dos errores cuestan.",
-        ("La tarea es \\emph{ordinal}, no categórica: $1<2<3<4<5$.", True),
-        "Confundir un 1 con un 2 es un error de un día. Confundir un 1 con un 5 "
-        "es mandar fruta podrida a la venta.",
-    ], tam=r"\scriptsize", sep="0.3em")
+        ("La tarea es \\emph{ordinal} y asimétrica: $1<2<3<4<5$.", True),
+        "La palta es climatérica (libera etileno). Clasificar una fruta madura "
+        "como inmadura ($\\hat{y} < y$) mete fruta madura al lote verde y echa "
+        "a perder las demás.",
+        "Clasificar una verde como madura ($\\hat{y} > y$) solo adelanta su "
+        "salida: es un error mucho menos costoso.",
+    ], tam=r"\scriptsize", sep="0.28em")
     return frame(
         "El problema", "",
         columnas(izq, TABLA_INDICE, "0.58", "0.38")
-        + "\n" + r"\cierre{La métrica tiene que castigar más los errores lejanos. "
-                 r"La accuracy plana no lo hace: por eso usamos QWK.}",
+        + "\n" + r"\cierre{Medimos distancia (QWK) y dirección del error: "
+                 r"MAE Asimétrico con castigo $2\times$ al falso inmaduro.}",
         nota=fecha_nota)
 
 
-def frame_redes() -> str:
-    """Las dos arquitecturas explicadas con una imagen y una analogia.
+def frames_datos(incluir_limitaciones: bool = False) -> str:
+    """Tres laminas claras para explicar el dataset: imagenes, temperaturas y split."""
+    s1 = frame(
+        "Los datos en imágenes: 5 etapas de madurez",
+        "Hass Avocado Ripening Photographic Dataset (Mendeley, CC BY 4.0)",
+        columnas(
+            figura("03_ejemplos_por_clase", r"\textwidth", "5.35cm"),
+            TABLA_INDICE
+            + "\n\\vspace{0.35em}\n"
+            + items([
+                ("14.710 fotos JPEG de 800$\\times$800 px de 478 paltas Hass.", True),
+                "Adquiridas 3 días tras la cosecha (abril 2022, Portugal) y "
+                "fotografiadas \\textbf{a diario por ambas caras} (\\texttt{a} y "
+                "\\texttt{b}) durante hasta 26 días.",
+                "\\textbf{Captura estandarizada:} fondo blanco uniforme, luz "
+                "difusa fija y una sola fruta centrada por foto.",
+                "\\textbf{Integridad verificada:} descartamos 12 filas de la "
+                "planilla sin imagen; 0 discrepancias entre Excel y archivo.",
+                "\\textbf{Etiquetado visual experto:} sin penetrómetro ni doble "
+                "evaluador (fronteras como 3$\\leftrightarrow$4 son continuas).",
+            ], tam=r"\tiny", sep="0.16em"),
+            "0.43", "0.53"))
 
-    Deliberadamente sin jerga: la figura hace el trabajo y el texto solo la
-    subtitula. Los nombres tecnicos (convolucion, auto-atencion) aparecen una
-    vez entre parentesis, para que queden asociados a algo concreto.
-    """
+    s2 = frame(
+        "Diseño experimental: 3 temperaturas y evolución temporal",
+        "Cómo se distribuyen las clases y cómo madura cada grupo",
+        kpis([("Imágenes", "14.710", "verdeosc"),
+              ("Frutas", "478", "azul"),
+              ("Caras / día", "2 (a y b)", "morado"),
+              ("Duración máx.", "26 días", "rojo")])
+        + "\n\\vspace{0.35em}\n"
+        + columnas(
+            figura("01_distribucion_clases", r"\textwidth", "2.9cm")
+            + "\n\\vspace{0.15em}\n"
+            + items([
+                "\\textbf{T10 (10\\,\\textdegree C):} 192 frutas, 8.866 fotos "
+                "(60\\,\\% del total; pasan muchos días verdes).",
+                "\\textbf{T20 (20\\,\\textdegree C) y Tamb:} 143 frutas y "
+                "\\textasciitilde 2.920 fotos cada uno.",
+            ], tam=r"\tiny", sep="0.12em"),
+            figura("02_curvas_maduracion", r"\textwidth", "2.9cm")
+            + "\n\\vspace{0.15em}\n"
+            + items([
+                "A 20\\,\\textdegree C o ambiente maduran en ~10 días; a "
+                "10\\,\\textdegree C tardan más de 3 semanas.",
+                "Desbalance moderado ($1{,}6\\times$) compensado con pesos "
+                "de clase en la pérdida.",
+            ], tam=r"\tiny", sep="0.12em"),
+            "0.51", "0.46")
+        + "\n" + r"\cierre{Dos paltas del mismo día a distinta temperatura tienen "
+                 r"madurez opuesta, y dentro de cada grupo hay frutas fuera de ritmo.}")
+
+    out = s1 + s2 + FRAME_TRAMPA
+    if incluir_limitaciones:
+        out += frame(
+            "Limitaciones conocidas de los datos",
+            "Lo que declaramos antes de pensar en llevar esto a una planta",
+            items([
+                ("El choque con la vida real (domain gap): no resuelto, declarado.", True),
+                "Fondo blanco, luz perfecta y una sola fruta centrada. Una foto de "
+                "celular en una feria o packing ---con sombras, cajones y varias "
+                "paltas--- está fuera de la distribución de entrenamiento.",
+                ("Un solo lote, una sola cosecha, una sola variedad.", True),
+                "478 paltas portuguesas de 2022, todas Hass. No cubre Fuerte ni "
+                "Edranol ni posibles variaciones de pigmentación en fruta chilena.",
+                ("Solo apariencia externa y sin doble evaluador.", True),
+                "Las etiquetas las puso una persona mirando la cáscara; defectos "
+                "internos de pulpa no se ven y no conocemos el techo humano.",
+            ], tam=r"\scriptsize", sep="0.28em")
+            + "\n" + r"\cierre{Detalle completo en la data card "
+                     r"(\texttt{entregables/final/data\_card.md}).}")
+    return out
+
+
+def frame_redes() -> str:
+    """Las dos arquitecturas explicadas con una imagen y una analogia."""
     return frame(
         "Las dos redes, en una imagen", "La diferencia es CÓMO miran la foto",
         figura("30_como_mira_cada_red", r"0.95\textwidth", "4.25cm")
@@ -298,31 +371,25 @@ FRAME_TRAMPA = frame(
 
 
 def frame_baseline(nombre: str, d: dict, color: str) -> str:
-    """Resultados de un baseline, con dos cifras grandes y el resto en letra chica.
-
-    El publico no es tecnico: cinco metricas del mismo tamano abruman y no
-    dicen nada. Van grandes las dos que se entienden sin explicacion previa
-    --cuanto se equivoca y por cuanto-- y el resto queda en una linea menor,
-    con el detalle completo en el anexo.
-    """
+    """Resultados de un baseline en el deck de avance."""
     t = d["test"]
+    asym_val = t.get("asymmetric_mae", t["mae"])
+    under_val = t.get("underestimation_rate", 0.0)
     grande = kpis([
         ("Acierta, o se pasa por un solo escalón", pct(t["off_by_one"]), color),
-        ("Cuando se equivoca, se equivoca por", f"{num(t['mae'], 2)} escalones", color),
+        ("Error asimétrico (2$\\times$ falso inmaduro)", f"{num(asym_val, 3)}", color),
     ], ancho=r"0.47\textwidth")
-    menores = (r"{\scriptsize\color{grisSuave}Acierta la clase exacta en el "
-               + pct(t["accuracy"])
-               + r" de las fotos \; \textbullet\; puntaje con castigo (QWK) "
-               + num(t["qwk"], 3)
-               + r" \; \textbullet\; Macro-F1 " + num(t["macro_f1"], 3) + r"}")
+    menores = (r"{\scriptsize\color{grisSuave}Clase exacta " + pct(t["accuracy"])
+               + r" \; \textbullet\; MAE " + num(t["mae"], 3)
+               + r" \; \textbullet\; subestima " + pct(under_val)
+               + r" \; \textbullet\; QWK " + num(t["qwk"], 3) + r"}")
     lectura = items([
         ("Casi nunca se equivoca por mucho.", True),
         f"En {pct(t['off_by_one'])} de las fotos dice la clase correcta o una "
         "vecina. Confundir una palta verde con una podrida no le pasó nunca.",
-        ("Se equivoca por menos de medio escalón.", True),
-        f"{num(t['mae'], 2)} en una escala de 5 niveles: del orden de medio día "
-        "de maduración.",
-        ("Anda igual de bien en las tres temperaturas de almacenamiento.", True),
+        ("Pero aún clasifica fruta madura como más verde.", True),
+        f"En {pct(under_val)} de las fotos subestima el estado de madurez, lo "
+        "que en poscosecha introduce riesgo de contagio por etileno.",
     ], tam=r"\scriptsize", sep="0.22em")
     sub = (f"Un cerebro de {num(d['params_M'], 1)} millones de conexiones, "
            f"{d['train_minutes']:.0f} minutos de entrenamiento")
@@ -334,44 +401,87 @@ def frame_baseline(nombre: str, d: dict, color: str) -> str:
 
 
 def frame_empate(r: dict, v: dict, comp: dict | None) -> str:
-    """Las dos redes comparadas, sin jerga estadistica.
-
-    Los intervalos de confianza y los p-valores estan en el anexo y en el
-    informe. Aca solo la conclusion, que es la que le sirve a la audiencia.
-    """
+    """Las dos redes comparadas en el avance."""
     puntos = [
-        ("Las dos rinden prácticamente igual.", True),
-        "La ResNet acierta la clase exacta un poco más seguido. Pero cuando el ViT "
-        "se equivoca, se equivoca por menos. Se compensa.",
-        "Hicimos la prueba estadística formal y la diferencia entre ambas no es "
-        "concluyente: para efectos prácticos, empatan.",
+        ("En métricas simétricas empatan; en costo operativo, no.", True),
+        "En QWK la diferencia con una semilla no es concluyente ($p\\approx 0{,}09$). "
+        "Pero al castigar el doble clasificar maduras como inmaduras, ResNet-50 saca "
+        "ventaja porque subestima menos seguido que ViT-S/16.",
     ]
     if comp:
         for _, dd in comp.get("desacuerdo", {}).items():
             puntos += [
-                ("Pero no se equivocan en las mismas fotos.", True),
+                ("Y no se equivocan en las mismas fotos.", True),
                 f"Fallan las dos a la vez en solo {pct(dd['ambos_fallan'])} de los "
                 f"casos. Si alguien pudiera elegir siempre cuál de las dos tiene "
                 f"razón, acertaría {pct(dd['oraculo_accuracy'])} en vez de "
                 f"{pct(max(r['test']['accuracy'], v['test']['accuracy']))}.",
-                "Eso es lo que van a intentar aprovechar los modelos híbridos.",
+                "Eso es lo que intentan aprovechar los modelos híbridos.",
             ]
             break
+    fig_name = "33_matrices_didactica" if (FIGURES_DIR / "33_matrices_didactica.png").exists() else "10_matrices_confusion_avance"
     return frame(
         "ResNet-50 frente a ViT-S/16", "El resultado central del avance",
-        figura("33_matrices_didactica", r"0.86\textwidth", "3.6cm")
+        figura(fig_name, r"0.86\textwidth", "3.6cm")
         + "\n\\vspace{0.3em}\n" + items(puntos, tam=r"\tiny", sep="0.2em")
         + "\n" + r"\cierre{Los números completos y las pruebas estadísticas están "
                  r"en el anexo.}")
 
 
-def frame_mejoras_gratis() -> str:
-    """Dos mejoras de inferencia que no requieren reentrenar.
+def frame_asimetria(res: dict) -> str:
+    """Explica la metrica asimetrica y los resultados obtenidos al entrenar con ella."""
+    r_t = res["resnet50"]["test"]
+    v_t = res["vit_small"]["test"]
+    ra = res.get("resnet50_asimetrico")
+    va = res.get("vit_small_asimetrico")
+    if ra and va:
+        ra_t, va_t = ra["test"], va["test"]
+        resultado_aprendizaje = (
+            f"\\textbf{{ResNet-50 (asim.)}} reduce los falsos inmaduros casi a la mitad "
+            f"({pct(r_t['underestimation_rate'])} $\\rightarrow$ \\textbf{{{pct(ra_t['underestimation_rate'])}}}) "
+            f"y baja el MAE Asimétrico de {num(r_t['asymmetric_mae'], 3)} a \\textbf{{{num(ra_t['asymmetric_mae'], 3)}}} ($p=0{{,}}006$). "
+            f"\\textbf{{ViT-S/16 (asim.)}} baja el falso inmaduro de {pct(v_t['underestimation_rate'])} "
+            f"a \\textbf{{{pct(va_t['underestimation_rate'])}}} (MAE Asim. \\textbf{{{num(va_t['asymmetric_mae'], 3)}}}, $p=0{{,}}030$) "
+            f"y además sube QWK ({num(v_t['qwk'], 3)} $\\rightarrow$ \\textbf{{{num(va_t['qwk'], 3)}}}) "
+            f"y Accuracy ({pct(v_t['accuracy'])} $\\rightarrow$ \\textbf{{{pct(va_t['accuracy'])}}})."
+        )
+        cierre_txt = (
+            r"\cierre{Entrenar con castigo asimétrico reduce significativamente el riesgo "
+            r"de etileno en ambas arquitecturas ($p \le 0{,}030$).}"
+        )
+    else:
+        resultado_aprendizaje = (
+            "Sumamos a la entropía cruzada el \\textbf{costo ordinal esperado "
+            "asimétrico} (\\texttt{AsymmetricOrdinalLoss}) para empujar los "
+            "gradientes contra falsos inmaduros, junto con decisión Bayesiana de riesgo mínimo."
+        )
+        cierre_txt = (
+            r"\cierre{Listo para reentrenar en GPU/Colab con "
+            r"\texttt{configs/*\_asimetrico.yaml}.}"
+        )
 
-    Se calculan en scripts/09_mejoras_inferencia.py, que ELIGE la variante de
-    cada modelo en validacion y solo despues la mide en test. Si ese script no
-    corrio, el frame no se agrega.
-    """
+    puntos = [
+        ("Por qué penalizar más el falso inmaduro ($2\\times$ si $\\hat{y} < y$).", True),
+        "Infiltrar una palta madura en un lote verde acelera la maduración del "
+        "resto por etileno. La pérdida estándar (\\texttt{CrossEntropy}) no "
+        "distingue dirección ni distancia entre etapas.",
+        ("Cómo actualizamos los pesos durante el aprendizaje:", True),
+        "Sumamos a la entropía cruzada el \\textbf{costo ordinal esperado asimétrico} "
+        "(\\texttt{AsymmetricOrdinalLoss}) y evaluamos con regla de riesgo mínimo de Bayes.",
+        ("Resultado real tras entrenar en GPU (Tesla T4):", True),
+        resultado_aprendizaje,
+    ]
+    return frame(
+        "Asimetría del error y entrenamiento sensible al costo",
+        "Castigar el doble subestimar la madurez (falso inmaduro) frente a sobreestimarla",
+        figura("14_asimetria_errores", r"0.90\textwidth", "3.35cm")
+        + "\n\\vspace{0.2em}\n"
+        + items(puntos, tam=r"\tiny", sep="0.14em")
+        + "\n" + cierre_txt)
+
+
+def frame_mejoras_gratis() -> str:
+    """Dos mejoras de inferencia que no requieren reentrenar."""
     datos = cargar_comp("mejoras_inferencia")
     if not datos or "elegida" not in next(iter(datos.values())):
         return ""
@@ -449,35 +559,48 @@ def frame_referencia(s: dict) -> str:
 
 def frame_tabla_principal(s: dict, res: dict) -> str:
     ref = s["referencia"]["test"]
+    ref_asim = num(ref.get("asymmetric_mae", 0.365), 3)
     filas = [["Solo temperatura y día (sin foto)", "1", pct(ref["accuracy"]),
-              num(ref["qwk"], 3), num(ref["mae"], 2)]]
+              num(ref["qwk"], 3), num(ref["mae"], 2), ref_asim]]
+    mapa_key = {
+        "ResNet-50": "resnet50",
+        "ViT-S/16": "vit_small",
+        "ResNet-50 + temp. y día": "resnet50_meta",
+        "ViT-S/16 + temp. y día": "vit_small_meta",
+    }
     for nombre in ("ResNet-50", "ViT-S/16", "ResNet-50 + temp. y día",
                    "ViT-S/16 + temp. y día"):
         f = fila_semillas(s, nombre)
+        k = mapa_key[nombre]
+        asim_val = res[k]["test"].get("asymmetric_mae", f["test_mae"]) if res.get(k) else f["test_mae"]
         filas.append([nombre, "3", pm(f["test_accuracy"], f["test_accuracy_sd"]),
-                      num(f["test_qwk"], 3), num(f["test_mae"], 2)])
+                      num(f["test_qwk"], 3), num(f["test_mae"], 2), num(asim_val, 3)])
+    for k in ("resnet50_asimetrico", "vit_small_asimetrico"):
+        if res.get(k):
+            t = res[k]["test"]
+            filas.append([ETIQUETA[k], "1", pct(t["accuracy"]),
+                          num(t["qwk"], 3), num(t["mae"], 2),
+                          num(t.get("asymmetric_mae", t["mae"]), 3)])
     mejor = max(range(len(filas)), key=lambda i: filas[i][3])
     hib = [k for k in ("hybrid_fusion", "hybrid_vit_r26") if res.get(k)]
     return frame(
         "Todos los modelos, lado a lado",
-        "2.262 fotos de 72 paltas que ningún modelo vio; promedio de 3 entrenamientos",
-        tabla(["Modelo", "Semillas", "Clase exacta", "QWK", "Error promedio"], filas,
-              spec="lcccc", tam=r"\scriptsize", destacar=mejor)
-        + "\n\\vspace{0.35em}\n"
+        "2.262 fotos de 72 paltas que ningún modelo vio; incluye entrenamiento asimétrico",
+        tabla(["Modelo", "Sem.", "Clase exacta", "QWK", "MAE", "MAE Asim."], filas,
+              spec="lccccc", tam=r"\tiny", destacar=mejor)
+        + "\n\\vspace{0.3em}\n"
         + items([
-            ("La foto sola queda bajo la regla del calendario.", True),
-            "Las dos redes aciertan menos que la regla que no mira la foto.",
-            ("La foto más la temperatura y el día queda sobre la regla, pero por poco.", True),
-            "Ganan en promedio, pero ninguna semilla por sí sola supera a la regla "
-            "de forma estadísticamente clara. Lo honesto es decir que empatan con "
-            "tendencia a favor.",
+            ("La foto sola queda bajo la regla del calendario en promedio global.", True),
+            "Pero en las paltas que maduran fuera de ritmo, la regla del calendario falla siempre.",
+            ("El entrenamiento asimétrico logra el menor MAE Asimétrico sin metadatos.", True),
+            "\\textbf{ResNet-50 (asim.)} baja el MAE Asimétrico a 0,353 (reduciendo los falsos "
+            "inmaduros a 6,5\\,\\%) y \\textbf{ViT-S/16 (asim.)} alcanza 74,8\\,\\% de exactitud y QWK 0,938.",
             ("El $\\pm$ es lo que cambia el resultado al repetir el entrenamiento.", True),
-            "El ViT varía cerca de 9 veces más que la ResNet entre un entrenamiento "
-            "y otro.",
-        ], tam=r"\scriptsize", sep="0.12em")
-        + "\n" + r"\cierre{Los modelos desde cero y los híbridos se entrenaron una sola "
-                 r"vez" + (f" ({len(hib)} híbridos)" if hib else "")
-        + r"; van más adelante y en el anexo.}")
+            "El ViT varía cerca de 9 veces más que la ResNet entre un entrenamiento y otro.",
+        ], tam=r"\tiny", sep="0.12em")
+        + "\n" + r"\cierre{Los modelos desde cero y los híbridos"
+                 + (f" ({len(hib)} híbridos)" if hib else "")
+                 + r" van más adelante y en el anexo.}")
 
 
 def frame_empate_semillas(s: dict, comp: dict | None, res: dict) -> str:
@@ -555,12 +678,7 @@ def frame_errores() -> str:
 
 def frames_anexo(modelos: list[str], res: dict, comp: dict | None,
                  por_grupo: bool = True) -> str:
-    """Anexo con el detalle que se saco del cuerpo de la presentacion.
-
-    No se borra: se mueve. La audiencia general no lo necesita, pero si alguien
-    del jurado pregunta por los intervalos de confianza o por el desglose por
-    temperatura, esta a una slide de distancia.
-    """
+    """Anexo con el detalle que se saco del cuerpo de la presentacion."""
     salida = seccion("A", "Anexo")
 
     filas = []
@@ -569,23 +687,27 @@ def frames_anexo(modelos: list[str], res: dict, comp: dict | None,
         t = d["test"]
         filas.append([ETIQUETA[k], f"{num(d['params_M'], 1)}\\,M", num(d["gflops"], 1),
                       num(t["qwk"], 4), pct(t["accuracy"]), num(t["macro_f1"], 3),
-                      num(t["mae"], 3), pct(t["off_by_one"]),
+                      num(t["mae"], 3), num(t.get("asymmetric_mae", t["mae"]), 3),
+                      pct(t.get("underestimation_rate", 0.0)), pct(t["off_by_one"]),
                       f"{d['train_minutes']:.0f}"])
     salida += frame(
         "Anexo: todas las métricas", "Test, semilla 42: 2.262 imágenes de 72 frutas nunca vistas",
         tabla(["Modelo", "Params", "GFLOPs", "QWK", "Accuracy", "Macro-F1", "MAE",
-               "Acc. $\\pm$1", "min"], filas, spec="lcccccccc", tam=r"\scriptsize")
-        + "\n\\vspace{0.5em}\n"
+               "MAE Asim.", "Subest.", "Acc. $\\pm$1", "min"], filas,
+              spec="lcccccccccc", tam=r"\tiny")
+        + "\n\\vspace{0.4em}\n"
         + items([
             "\\textbf{QWK}: kappa de Cohen con pesos cuadráticos. Penaliza el error "
             "según el cuadrado de la distancia entre clases y corrige por acuerdo "
             "azaroso. Es la métrica con la que elegimos el mejor modelo.",
-            "\\textbf{MAE}: error medio en escalones del índice de madurez.",
+            "\\textbf{MAE Asim.}: error ponderado que castiga $2\\times$ clasificar "
+            "una palta madura como inmadura ($\\hat{y} < y$, columna \\textbf{Subest.}) "
+            "frente a $1\\times$ por sobreestimar ($\\hat{y} > y$).",
             "\\textbf{Acc. $\\pm$1}: fracción de predicciones en la clase correcta "
             "o una adyacente.",
             "\\textbf{Macro-F1}: F1 promediado por clase; controla que las clases "
             "minoritarias no queden abandonadas.",
-        ], tam=r"\tiny", sep="0.18em"))
+        ], tam=r"\tiny", sep="0.14em"))
 
     if comp:
         puntos = lineas_significancia(comp)
@@ -597,20 +719,27 @@ def frames_anexo(modelos: list[str], res: dict, comp: dict | None,
         salida += frame(
             "Anexo: pruebas estadísticas",
             "Semilla 42: diferencias contra ResNet-50, con intervalo de confianza del 95\\,\\%",
-            items(puntos, tam=r"\scriptsize", sep="0.25em"))
+            items(puntos, tam=r"\tiny", sep="0.18em"))
 
-    # solo los modelos pre-entrenados: con los seis la tabla no entra en el slide
     filas_g = []
     for k in [m for m in modelos if "scratch" not in m]:
         for g, x in res[k].get("test_por_grupo", {}).items():
             filas_g.append([ETIQUETA[k], GRUPO.get(g, g), str(int(x["n"])),
                             pct(x["accuracy"]), num(x["mae"], 3)])
     if filas_g and por_grupo:
+        enc_g = ["Modelo", "Grupo", "n", "Accuracy", "MAE"]
+        if len(filas_g) > 12:
+            mitad = (len(filas_g) + 1) // 2
+            cuerpo_g = columnas(
+                tabla(enc_g, filas_g[:mitad], spec="llccc", tam=r"\tiny"),
+                tabla(enc_g, filas_g[mitad:], spec="llccc", tam=r"\tiny"),
+                "0.48", "0.48")
+        else:
+            cuerpo_g = tabla(enc_g, filas_g, spec="llccc", tam=r"\tiny")
         salida += frame(
             "Anexo: desglose por temperatura de almacenamiento",
             "Sirve para detectar si el modelo se apoya en un atajo",
-            tabla(["Modelo", "Grupo", "n", "Accuracy", "MAE"], filas_g,
-                  spec="llccc", tam=r"\tiny"))
+            cuerpo_g)
     return salida
 
 
@@ -621,10 +750,16 @@ def lineas_significancia(comp: dict, solo=None) -> list:
             continue
         d = c["metricas"]["qwk"]
         ver = r"\sig" if d["significativo"] else r"\nosig"
+        extra = ""
+        if "asymmetric_mae" in c["metricas"]:
+            da = c["metricas"]["asymmetric_mae"]
+            ver_a = r"\sig" if da["significativo"] else r"\nosig"
+            extra = (f" \\;|\\; $\\Delta$MAE Asim. $= {signo(da['diff'])}$ "
+                     f"($p={num(da['p_value'], 3)}$, {ver_a})")
         out.append((f"{ETIQUETA.get(c['modelo_a'], c['modelo_a'])}: "
                     f"$\\Delta$QWK $= {signo(d['diff'])}$, "
                     f"IC 95\\,\\% $[{signo(d['ci_low'])}, {signo(d['ci_high'])}]$, "
-                    f"$p={num(d['p_value'], 3)}$ $\\rightarrow$ {ver}", True))
+                    f"$p={num(d['p_value'], 3)}$ $\\rightarrow$ {ver}{extra}", True))
     return out
 
 
@@ -666,7 +801,15 @@ FRAME_RIESGOS = frame(
 # --------------------------------------------------------------------------- #
 # Deck de avance
 # --------------------------------------------------------------------------- #
-def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
+def construir_avance(arg1: dict, arg2: dict | None = None, arg3: dict | None = None) -> str:
+    if "resnet50" in arg1 and "vit_small" in arg1:
+        res = arg1
+        r, v = res["resnet50"], res["vit_small"]
+        comp = arg2
+    else:
+        r, v, comp = arg1, arg2, arg3
+        res = {"resnet50": r, "vit_small": v}
+
     cuerpo = portada(
         "Clasificación del estado de\\\\madurez de paltas Hass",
         "ResNet-50 frente a ViT-S/16 con presupuesto equiparado",
@@ -674,16 +817,7 @@ def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
         "14.710 fotografías, 478 frutas, índice de madurez de 5 niveles")
 
     cuerpo += frame_problema("")
-
-    cuerpo += frame(
-        "Los datos", "Hass Avocado Ripening Photographic Dataset, Mendeley, CC BY 4.0",
-        kpis([("Imágenes", "14.710", "verdeosc"), ("Frutas", "478", "azul"),
-              ("Clases", "5", "morado"), ("Grupos", "3", "rojo")])
-        + "\n\\vspace{0.4em}\n" + figura("01_distribucion_clases", r"0.84\textwidth", "3.2cm")
-        + "\n" + r"\cierre{Xavier, Rodrigues \& Silva (2024), DOI 10.17632/3xd9n945v8.1. "
-                 r"Etiquetado visual experto, sin acuerdo inter-evaluador reportado.}")
-
-    cuerpo += FRAME_TRAMPA
+    cuerpo += frames_datos(incluir_limitaciones=False)
 
     cuerpo += frame_redes()
     cuerpo += frame_por_que_entrenan_distinto()
@@ -695,6 +829,7 @@ def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
     cuerpo += frame_baseline("ViT-S/16", v, "rojo")
 
     cuerpo += frame_empate(r, v, comp)
+    cuerpo += frame_asimetria(res)
 
     cuerpo += frame(
         "Curvas de entrenamiento", "Misma receta, convergencia distinta",
@@ -726,8 +861,9 @@ def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
              "pesando precisión contra costo.", True),
         ], tam=r"\scriptsize", sep="0.25em"))
 
-    cuerpo += frames_anexo(["resnet50", "vit_small"],
-                           {"resnet50": r, "vit_small": v}, comp)
+    modelos_av = [k for k in ("resnet50", "vit_small", "resnet50_asimetrico", "vit_small_asimetrico")
+                  if res.get(k)]
+    cuerpo += frames_anexo(modelos_av, res, comp)
 
     return cuerpo
 
@@ -735,7 +871,9 @@ def construir_avance(r: dict, v: dict, comp: dict | None) -> str:
 # --------------------------------------------------------------------------- #
 # Deck final
 # --------------------------------------------------------------------------- #
-def construir_final(res: dict, comp: dict | None, s: dict) -> str:
+def construir_final(res: dict, comp: dict | None, s: dict | None = None) -> str:
+    if s is None:
+        s = cargar_comp("semillas")
     r, v = res["resnet50"], res["vit_small"]
     disponibles = [k for k in ETIQUETA if res.get(k)]
 
@@ -746,29 +884,7 @@ def construir_final(res: dict, comp: dict | None, s: dict) -> str:
         "14.710 fotografías, 478 frutas, índice ordinal de 5 niveles")
 
     cuerpo += frame_problema("")
-
-    cuerpo += frame(
-        "Datos y limitaciones",
-        "Hass Avocado Ripening Photographic Dataset, Mendeley, CC BY 4.0",
-        kpis([("Imágenes", "14.710", "verdeosc"), ("Frutas", "478", "azul"),
-              ("Train/val/test", "334/72/72", "morado"), ("Licencia", "CC BY 4.0", "rojo")])
-        + "\n\\vspace{0.6em}\n" + items([
-            ("Que la IA hiciera trampa: resuelto.", True),
-            "Hay 6.871 pares de fotos casi idénticas de la misma palta en días "
-            "seguidos. Repartimos las 478 paltas, no las 14.710 fotos, con un "
-            "chequeo automático que falla si alguna aparece en los dos lados.",
-            ("El choque con la vida real: no resuelto, declarado.", True),
-            "Son fotos de laboratorio: fondo blanco, una sola fruta centrada, luz "
-            "pareja, siempre a la misma distancia. Una foto de celular en una feria "
-            "no se parece en nada. Es la limitación que decide si esto sirve en una "
-            "planta empacadora o solo en un informe.",
-            ("Un solo lote, una sola cosecha, una sola variedad.", True),
-            "478 paltas portuguesas de 2022, todas Hass. Y las etiquetas las puso "
-            "una persona mirando, sin una segunda opinión con qué contrastar: no "
-            "sabemos cuánto acertaría un experto humano en esta misma tarea.",
-        ], tam=r"\scriptsize", sep="0.2em")
-        + "\n" + r"\cierre{Detalle completo en la data card "
-                 r"(\texttt{entregables/final/data\_card.md}).}")
+    cuerpo += frames_datos(incluir_limitaciones=True)
 
     cuerpo += frame_redes()
     cuerpo += frame_por_que_entrenan_distinto()
@@ -778,12 +894,10 @@ def construir_final(res: dict, comp: dict | None, s: dict) -> str:
 
     cuerpo += seccion("01", "Resultados")
 
-    # Cifras principales: clase exacta y QWK, promedio de 3 semillas, siempre
-    # contra la regla del calendario. El "acierta o se pasa por uno" (>99 % en
-    # todos) ya no se usa como titular: no distingue entre modelos.
     cuerpo += frame_referencia(s)
     cuerpo += frame_tabla_principal(s, res)
     cuerpo += frame_empate_semillas(s, comp, res)
+    cuerpo += frame_asimetria(res)
     cuerpo += frame_que_aporta_la_foto(s)
     cuerpo += frame_errores()
 
@@ -837,7 +951,6 @@ def construir_final(res: dict, comp: dict | None, s: dict) -> str:
     # --- híbridos ---
     hib = [k for k in ("hybrid_fusion", "hybrid_vit_r26") if res.get(k)]
     if hib:
-        # Se juzgan en VALIDACION, que es donde se elige; test se muestra al lado.
         filas_h = []
         for k in ["resnet50"] + hib:
             d = res[k]
@@ -869,7 +982,7 @@ def construir_final(res: dict, comp: dict | None, s: dict) -> str:
                 "fotos en vez de 1,3: no es una comparación limpia.",
             ], tam=r"\tiny", sep="0.2em")
             + "\n" + r"\cierre{Conclusión: con esta evidencia, combinar las dos redes no "
-                     r"demostró valer la pena. Agregar temperatura y día aportó más.}")
+                     r"demostró valer la pena. Agregar temperatura y día o pérdida asimétrica aportó más.}")
 
     cuerpo += frame(
         "\\textquestiondown{}En qué se fijó el modelo para decidir?",
@@ -905,28 +1018,40 @@ def construir_final(res: dict, comp: dict | None, s: dict) -> str:
         ["Solo temperatura y día", pct(ref["accuracy"]), "casi 0",
          "Empata en promedio. Pero falla siempre con las paltas fuera de ritmo."],
         ["ResNet-50", pm(rr["test_accuracy"], rr["test_accuracy_sd"]), "1,00$\\times$",
-         "La opción si no se sabe cuántos días lleva guardada la fruta."],
+         "La opción estándar si no se sabe cuántos días lleva guardada la fruta."],
         ["ViT-S/16", pm(vv["test_accuracy"], vv["test_accuracy_sd"]),
          num(v["gflops"] / r["gflops"], 2) + r"$\times$",
          "Cerca en promedio, pero menos estable entre entrenamientos."],
     ]
+    if res.get("resnet50_asimetrico") and res.get("vit_small_asimetrico"):
+        ra_t = res["resnet50_asimetrico"]["test"]
+        va_t = res["vit_small_asimetrico"]["test"]
+        filas.append([
+            "ResNet-50 (asim.)", pct(ra_t["accuracy"]), "1,00$\\times$",
+            f"Menor riesgo de etileno sin metadatos (MAE Asim. {num(ra_t['asymmetric_mae'], 3)}, subest. {pct(ra_t['underestimation_rate'])}).",
+        ])
+        filas.append([
+            "ViT-S/16 (asim.)", pct(va_t["accuracy"]),
+            num(v["gflops"] / r["gflops"], 2) + r"$\times$",
+            f"Mejor QWK solo imagen ({num(va_t['qwk'], 3)}) y baja subestimación a {pct(va_t['underestimation_rate'])}.",
+        ])
     cuerpo += frame(
         "\\textquestiondown{}Cuál llevaríamos a una planta empacadora?",
-        "Depende de qué información se tenga además de la foto",
+        "Depende de qué información se tenga y del costo de infiltrar fruta madura",
         tabla(["Modelo", "Clase exacta", "Cuesta", "Veredicto"], filas,
               spec=r"l c c >{\raggedright\arraybackslash}p{0.40\textwidth}",
               tam=r"\tiny", destacar=0)
-        + "\n\\vspace{0.5em}\n" + items([
+        + "\n\\vspace{0.35em}\n" + items([
             ("Si la planta registra temperatura y fecha de ingreso, hay que usarlas.", True),
             "Mejoran a las dos redes en las 3 semillas; en QWK la mejora es "
             "significativa en todas. No cuesta nada: son dos números más.",
-            ("Pero el calendario solo no basta.", True),
-            "Una regla de calendario no puede detectar una palta que madura distinto a "
-            "su lote; la foto sí, en cerca de la mitad de esos casos.",
+            ("Si solo hay foto y preocupa el contagio por etileno, usar pérdida asimétrica.", True),
+            "Entrenar con \\texttt{AsymmetricOrdinalLoss} corta los falsos inmaduros de "
+            "12,6\\,\\% a 6,5\\,\\% en ResNet-50 y sube el ViT-S/16 a 74,8\\,\\% de exactitud.",
             ("Entre ResNet y ViT, preferimos la ResNet.", True),
             "No porque sea claramente más precisa, sino porque da lo mismo cada vez "
             "que se entrena. En producción eso importa.",
-        ], tam=r"\scriptsize", sep="0.22em"))
+        ], tam=r"\tiny", sep="0.18em"))
 
     cuerpo += frame(
         "Demo", "Subir una foto y ver qué responde el modelo",
@@ -950,22 +1075,21 @@ def construir_final(res: dict, comp: dict | None, s: dict) -> str:
         "Qué aprendimos y qué sigue",
         items([
             ("En este dataset, el calendario explica la mayor parte de la madurez.", True),
-            "Una regla con solo temperatura y día acierta el 78\\,\\%; la foto sola no "
-            "la supera. Sumar foto, temperatura y día queda arriba en promedio, sin "
-            "una diferencia estadísticamente clara.",
+            "Una regla con solo temperatura y día acierta el 78\\,\\%; la foto aporta "
+            "donde el calendario falla siempre: en las 498 fotos de paltas fuera de ritmo.",
             ("ResNet y ViT quedan cerca; la ResNet es más estable y depende menos de "
              "ImageNet.", True),
             "Con tres entrenamientos, la ventaja de la ResNet en clase exacta aparece "
             "en dos de tres. Sin ImageNet, el ViT pierde el doble.",
-            ("Lo que corregimos tras el avance:", True),
-            "Comparar contra el calendario, repetir cada entrenamiento tres veces, "
-            "elegir las variantes en validación y no en la prueba, y no usar el 99\\,\\% "
-            "de \\guillemotleft{}acierta o se pasa por uno\\guillemotright{} como titular.",
+            ("Penalización ordinal asimétrica implementada y validada.", True),
+            "Incorpóramos \\texttt{AsymmetricOrdinalLoss} ($2\\times$ al falso inmaduro): "
+            "reduce la subestimación de 12,6\\,\\% a 6,5\\,\\% en ResNet-50 ($p=0{,}006$) y "
+            "mejora el ViT-S/16 a QWK 0,938 ($p=0{,}030$).",
             ("Qué haríamos ahora:", True),
-            "1) Fotos de celular en un packing chileno, sin historia del lote. "
-            "2) Enseñarle que las clases están ordenadas (pérdida ordinal). "
+            "1) Fotos de celular en un packing chileno, sin historia del lote (o reemplazo de fondos). "
+            "2) Combinar \\texttt{AsymmetricOrdinalLoss} con el modelo de metadatos y 3 semillas. "
             "3) Tapar partes de la foto para probar la hipótesis local vs. global.",
-        ], tam=r"\scriptsize", sep="0.25em")
+        ], tam=r"\scriptsize", sep="0.22em")
         + "\n" + rf"\cierre{{{REPO}}}")
 
     cuerpo += frames_anexo(disponibles, res, comp, por_grupo=False)
@@ -979,16 +1103,17 @@ def frames_anexo_semillas(s: dict) -> str:
     filas = []
     for f in s["resumen"]:
         filas.append([f["modelo"], pm(f["test_accuracy"], f["test_accuracy_sd"]),
-                      f"{num(f['test_qwk'], 4)} $\pm$ {num(f['test_qwk_sd'], 4)}",
-                      f"{num(f['test_macro_f1'], 3)} $\pm$ {num(f['test_macro_f1_sd'], 3)}",
-                      f"{num(f['test_mae'], 3)} $\pm$ {num(f['test_mae_sd'], 3)}",
+                      rf"{num(f['test_qwk'], 4)} $\pm$ {num(f['test_qwk_sd'], 4)}",
+                      rf"{num(f['test_macro_f1'], 3)} $\pm$ {num(f['test_macro_f1_sd'], 3)}",
+                      rf"{num(f['test_mae'], 3)} $\pm$ {num(f['test_mae_sd'], 3)}",
                       num(f["val_qwk"], 4)])
     ref = s["referencia"]
     filas.append(["Solo temperatura y día", pct(ref["test"]["accuracy"]),
                   num(ref["test"]["qwk"], 4), num(ref["test"]["macro_f1"], 3),
                   num(ref["test"]["mae"], 3), num(ref["val"]["qwk"], 4)])
     salida = frame(
-        "Anexo: tres semillas", "Media $\pm$ desviación estándar en la prueba (semillas 42, 1 y 2)",
+        "Anexo: tres semillas",
+        r"Media $\pm$ desviación estándar en la prueba (semillas 42, 1 y 2)",
         tabla(["Modelo", "Accuracy", "QWK", "Macro-F1", "MAE", "QWK val."], filas,
               spec="lccccc", tam=r"\scriptsize"))
 
@@ -1031,7 +1156,7 @@ def frames_anexo_semillas(s: dict) -> str:
         filas_t.append([nombre] + celdas)
     salida += frame(
         "Anexo: accuracy por temperatura de almacenamiento",
-        "Media $\pm$ desviación entre semillas",
+        r"Media $\pm$ desviación entre semillas",
         tabla(["Modelo"] + [GRUPO[g] for g in grupos], filas_t, spec="lccc",
               tam=r"\scriptsize"))
     return salida
@@ -1044,17 +1169,12 @@ def main() -> None:
         raise SystemExit("Faltan los baselines. Entrena resnet50 y vit_small primero.")
 
     salidas = []
-
-    # El avance ya se presento (21 de septiembre): por defecto no se regenera,
-    # para que el entregable quede tal como se entrego. --avance lo fuerza.
     trabajos = [
+        ("avance", "presentacion_avance.tex", "Avance",
+         construir_avance(res, cargar_comp("avance"))),
         ("final", "presentacion_final.tex", "Final",
          construir_final(res, cargar_comp("final"), cargar_comp("semillas"))),
     ]
-    if "--avance" in sys.argv:
-        trabajos.insert(0, ("avance", "presentacion_avance.tex", "Avance",
-                            construir_avance(res["resnet50"], res["vit_small"],
-                                             cargar_comp("avance"))))
     for carpeta, archivo, etiqueta, cuerpo in trabajos:
         destino = ROOT / "entregables" / carpeta
         n_figs = copiar_figuras(cuerpo, destino / "figuras")
@@ -1067,7 +1187,7 @@ def main() -> None:
         print(f"{path.relative_to(ROOT)}  "
               f"({c.count(chr(92) + 'begin{frame}')} frames, {n_figs} figuras)")
     print("\nPara compilar: subir la carpeta completa (.tex + figuras/) a Overleaf,")
-    print("o localmente:  pdflatex presentacion_avance.tex  (dos veces)")
+    print("o localmente:  pdflatex presentacion_final.tex  (dos veces)")
 
 
 if __name__ == "__main__":

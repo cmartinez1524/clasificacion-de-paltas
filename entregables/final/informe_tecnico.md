@@ -401,6 +401,35 @@ se elige para el ViT-Hybrid R26; en los demás no mejora en validación y no se 
 columna "variante elegida" se calcula sobre 1.131 fruta-día y no sobre 2.262 fotos, así que no
 es la misma población que "por foto".
 
+### 4.10 Penalización ordinal asimétrica (riesgo de etileno)
+
+En poscosecha los dos sentidos del error no cuestan igual: clasificar una palta madura como
+inmadura ($\hat{y} < y$, **falso inmaduro**) infiltra fruta productora de etileno en lotes
+verdes de guarda o exportación y acelera la maduración del resto de la caja, mientras que
+sobreestimar ($\hat{y} > y$, **falso maduro**) solo adelanta su despacho comercial. Definimos la
+matriz de costo ordinal asimétrica $C(y, \hat{y}) = 2(y - \hat{y})$ si $\hat{y} < y$ y
+$1(\hat{y} - y)$ si $\hat{y} > y$, la métrica **MAE Asimétrico** $\frac{1}{N}\sum C(y_i, \hat{y}_i)$,
+la función de pérdida diferenciable `AsymmetricOrdinalLoss` ($\mathcal{L}_{\text{CE}} + \lambda \sum_k p_k C(y, k)$ con $\lambda = 0{,}6$)
+y la regla de decisión de mínimo riesgo de Bayes $\arg\min_k \sum_y p(y\mid x) C(y, k)$
+(`src/paltas/metrics.py`, `src/paltas/engine.py`, `scripts/10_evaluar_asimetria.py`).
+
+Entrenando ambos backbones en GPU Tesla T4 (`configs/resnet50_asimetrico.yaml` y
+`configs/vit_small_asimetrico.yaml`, `notebooks/entrenar_en_colab.ipynb`):
+
+| Modelo | Accuracy | QWK | MAE | MAE Asimétrico | Subestimación ($\hat{y}<y$) | Sobreestimación ($\hat{y}>y$) |
+|---|--:|--:|--:|--:|--:|--:|
+| ResNet-50 (semilla 42) | 74,6 % | 0,9356 | 0,2617 | 0,3904 | 12,6 % | 12,8 % |
+| **ResNet-50 *(asimétrico)*** | 72,2 % | 0,9296 | 0,2865 | **0,3532** ($p=0{,}006$) | **6,5 %** (−48,3 %) | 21,2 % |
+| ViT-S/16 (semilla 42) | 72,2 % | 0,9313 | 0,2825 | 0,4293 | 14,5 % | 13,3 % |
+| **ViT-S/16 *(asimétrico)*** | **74,8 %** | **0,9379** | **0,2573** | **0,3563** ($p=0{,}030$) | **9,8 %** (−32,6 %) | 15,5 % |
+
+En ambas arquitecturas el entrenamiento asimétrico reduce de forma estadísticamente
+significativa el MAE Asimétrico (bootstrap pareado por fruta, $p=0{,}006$ en ResNet-50 y
+$p=0{,}030$ en ViT-S/16): **ResNet-50 (asim.)** recorta casi a la mitad los falsos inmaduros
+(de 12,6 % a **6,5 %**), mientras que **ViT-S/16 (asim.)** reduce la subestimación a **9,8 %** y
+además regulariza mejor, alcanzando el mayor QWK (**0,9379**) y accuracy (**74,8 %**) entre los
+modelos que miran únicamente la fotografía.
+
 ## 5. Discusión
 
 **El calendario explica la mayor parte de la madurez en este dataset.** Es la observación más
@@ -441,7 +470,8 @@ pocos ejemplos, no una medición.
 | Escenario | Modelo recomendado | Accuracy test | Motivo |
 |---|---|--:|---|
 | Se conoce la temperatura y la fecha de ingreso del lote | ResNet-50 + temp. y día | 79,2 ± 1,3 % | Mejor promedio; mismo costo que la ResNet |
-| No se conoce la historia de la fruta | ResNet-50 | 74,8 ± 0,3 % | Más estable que el ViT, mismo costo |
+| No se conoce la historia de la fruta (criterio simétrico) | ResNet-50 | 74,8 ± 0,3 % | Más estable que el ViT, mismo costo |
+| Minimizar infiltración de fruta madura en lotes verdes (riesgo etileno) | ResNet-50 *(asim.)* / ViT-S/16 *(asim.)* | 72,2 % / 74,8 % | Menor MAE Asimétrico (0,353 / 0,356) y baja subestimación (6,5 % / 9,8 %) |
 | Interesa detectar paltas que maduran distinto a su lote | ResNet-50 (solo imagen) | 52,9 % en esos casos | El modelo con metadatos pierde 7 puntos ahí |
 
 La fusión tardía no se justifica: no supera a la ResNet en validación y cuesta el doble. En

@@ -33,11 +33,11 @@
   "seed": 2,
   "val": {
     "accuracy": 0.7625,
-    "balanced_accuracy": 0.7566142334350876,
-    "macro_f1": 0.7562679036683588,
-    "qwk": 0.9393114805579618,
-    "mae": 0.24419642857142856,
-    "off_by_one": 0.9933035714285714,
+    "balanced_accuracy": 0.7566,
+    "macro_f1": 0.7563,
+    "qwk": 0.9393,
+    "mae": 0.2442,
+    "off_by_one": 0.9933,
     "per_class_f1": [
       0.872858431018936,
       0.7042640990371389,
@@ -81,7 +81,10 @@
         103,
         320
       ]
-    ]
+    ],
+    "asymmetric_mae": 0.3545,
+    "underestimation_rate": 0.1058,
+    "overestimation_rate": 0.1317
   },
   "test": {
     "accuracy": 0.746684350132626,
@@ -133,7 +136,10 @@
         101,
         327
       ]
-    ]
+    ],
+    "asymmetric_mae": 0.3731,
+    "underestimation_rate": 0.1105,
+    "overestimation_rate": 0.1428
   },
   "test_por_grupo": {
     "T10": {

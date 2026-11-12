@@ -1,0 +1,127 @@
+{
+  "config": {
+    "name": "vit_small_asimetrico",
+    "model": "vit_small",
+    "pretrained": true,
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 2,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 15,
+    "lr": 0.0001,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 2.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.1,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.5,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "asymmetric_mae",
+    "use_bayes_risk_eval": true,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "ViT-S/16 con perdida ordinal asimetrica (2x falso inmaduro) y decision Bayesiana"
+  },
+  "params_M": 21.668,
+  "params_entrenables_M": 21.668,
+  "gflops": 8.482,
+  "best_epoch": 7,
+  "train_minutes": 17.24,
+  "test": {
+    "accuracy": 0.7475685234305924,
+    "balanced_accuracy": 0.736281641741596,
+    "macro_f1": 0.7398034963690157,
+    "qwk": 0.9378725266522135,
+    "mae": 0.2572944297082228,
+    "asymmetric_mae": 0.3563,
+    "underestimation_rate": 0.0977,
+    "overestimation_rate": 0.1547,
+    "off_by_one": 0.9951370468611848,
+    "per_class_f1": [
+      0.8932735426008969,
+      0.6899841017488076,
+      0.6894031668696712,
+      0.6510757717492984,
+      0.7752808988764045
+    ],
+    "confusion_matrix": [
+      [
+        498,
+        52,
+        0,
+        0,
+        0
+      ],
+      [
+        67,
+        217,
+        54,
+        4,
+        0
+      ],
+      [
+        0,
+        18,
+        283,
+        127,
+        4
+      ],
+      [
+        0,
+        0,
+        49,
+        348,
+        109
+      ],
+      [
+        0,
+        0,
+        3,
+        84,
+        345
+      ]
+    ]
+  },
+  "test_por_grupo": {
+    "T10": {
+      "n": 1350,
+      "accuracy": 0.7704,
+      "mae": 0.2326,
+      "asymmetric_mae": 0.3096,
+      "underestimation_rate": 0.0748
+    },
+    "T20": {
+      "n": 466,
+      "accuracy": 0.7017,
+      "mae": 0.3069,
+      "asymmetric_mae": 0.427,
+      "underestimation_rate": 0.1202
+    },
+    "Tam": {
+      "n": 446,
+      "accuracy": 0.7265,
+      "mae": 0.2803,
+      "asymmetric_mae": 0.4238,
+      "underestimation_rate": 0.1435
+    }
+  },
+  "val": {
+    "accuracy": 0.7584821428571429,
+    "balanced_accuracy": 0.7486024812739771,
+    "macro_f1": 0.7492679295900283,
+    "qwk": 0.9378153905437624,
+    "mae": 0.25089285714285714,
+    "asymmetric_mae": 0.34732142857142856,
+    "underestimation_rate": 0.090625,
+    "overestimation_rate": 0.15089285714285713,
+    "off_by_one": 0.990625
+  }
+}

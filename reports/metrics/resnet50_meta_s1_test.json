@@ -32,12 +32,12 @@
   "train_minutes": 5.39,
   "seed": 1,
   "val": {
-    "accuracy": 0.8004464285714286,
-    "balanced_accuracy": 0.7920983576981789,
-    "macro_f1": 0.7928408959558528,
-    "qwk": 0.9511710832462663,
-    "mae": 0.20089285714285715,
-    "off_by_one": 0.9986607142857142,
+    "accuracy": 0.8004,
+    "balanced_accuracy": 0.7921,
+    "macro_f1": 0.7928,
+    "qwk": 0.9512,
+    "mae": 0.2009,
+    "off_by_one": 0.9987,
     "per_class_f1": [
       0.9130044843049328,
       0.7182481751824817,
@@ -81,7 +81,10 @@
         98,
         332
       ]
-    ]
+    ],
+    "asymmetric_mae": 0.2991,
+    "underestimation_rate": 0.0973,
+    "overestimation_rate": 0.1022
   },
   "test": {
     "accuracy": 0.7780725022104332,
@@ -133,7 +136,10 @@
         92,
         339
       ]
-    ]
+    ],
+    "asymmetric_mae": 0.3307,
+    "underestimation_rate": 0.1079,
+    "overestimation_rate": 0.1141
   },
   "test_por_grupo": {
     "T10": {

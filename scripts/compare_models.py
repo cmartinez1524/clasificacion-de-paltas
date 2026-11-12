@@ -32,6 +32,8 @@ use_utf8()
 ETIQUETAS = {
     "resnet50": "ResNet-50",
     "vit_small": "ViT-S/16",
+    "resnet50_asimetrico": "ResNet-50 (asim.)",
+    "vit_small_asimetrico": "ViT-S/16 (asim.)",
     "resnet50_scratch": "ResNet-50 (scratch)",
     "vit_small_scratch": "ViT-S/16 (scratch)",
     "hybrid_fusion": "Fusion tardia",
@@ -44,7 +46,7 @@ def etiqueta(m: str) -> str:
 
 
 def color(m: str) -> str:
-    base = m.replace("_scratch", "")
+    base = m.replace("_scratch", "").replace("_asimetrico", "")
     c = MODEL_COLORS.get(base, "#888")
     return c
 
@@ -71,6 +73,8 @@ def tabla_principal(models: list[str], res: dict, preds: dict, n_boot: int) -> p
         r = res[m]
         punto, lo, hi = cluster_bootstrap_ci(preds[m], "qwk", n_boot=n_boot)
         acc, acc_lo, acc_hi = cluster_bootstrap_ci(preds[m], "accuracy", n_boot=n_boot)
+        asym, _, _ = cluster_bootstrap_ci(preds[m], "asymmetric_mae", n_boot=min(n_boot, 200))
+        under, _, _ = cluster_bootstrap_ci(preds[m], "underestimation_rate", n_boot=min(n_boot, 200))
         filas.append({
             "modelo": etiqueta(m),
             "params (M)": r["params_M"],
@@ -83,6 +87,8 @@ def tabla_principal(models: list[str], res: dict, preds: dict, n_boot: int) -> p
             "QWK": round(punto, 4),
             "QWK IC95%": f"[{lo:.3f}, {hi:.3f}]",
             "MAE": round(r["test"]["mae"], 4),
+            "MAE Asim.": round(r["test"].get("asymmetric_mae", asym), 4),
+            "Subestim.": round(r["test"].get("underestimation_rate", under), 4),
             "Acc. ±1": round(r["test"]["off_by_one"], 4),
         })
     return pd.DataFrame(filas)
@@ -212,7 +218,7 @@ def main() -> None:
         print("\n" + "-" * 100)
         print(f"{etiqueta(m)}  vs  {etiqueta(base)}   (bootstrap pareado, {args.n_boot} replicas)")
         comp = {"modelo_a": m, "modelo_b": base, "metricas": {}}
-        for met in ("qwk", "accuracy", "macro_f1"):
+        for met in ("qwk", "asymmetric_mae", "accuracy", "macro_f1"):
             d = paired_bootstrap_diff(preds[m], preds[base], met, n_boot=args.n_boot)
             comp["metricas"][met] = d
             veredicto = "SIGNIFICATIVA" if d["significativo"] else "no significativa"

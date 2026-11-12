@@ -1,8 +1,12 @@
 {
-  "n_boot": 2000,
+  "n_boot": 500,
   "modelos": [
     "resnet50",
     "vit_small",
+    "resnet50_asimetrico",
+    "vit_small_asimetrico",
+    "resnet50_meta",
+    "vit_small_meta",
     "resnet50_scratch",
     "vit_small_scratch",
     "hybrid_fusion",
@@ -15,12 +19,14 @@
       "GFLOPs": 8.174,
       "min. entren.": 9.88,
       "epoca best": 11,
-      "Accuracy": 0.7458,
+      "Accuracy": 0.7462,
       "Acc. IC95%": "[0.716, 0.773]",
-      "Macro-F1": 0.735,
+      "Macro-F1": 0.7354,
       "QWK": 0.9356,
-      "QWK IC95%": "[0.926, 0.944]",
-      "MAE": 0.2617,
+      "QWK IC95%": "[0.926, 0.945]",
+      "MAE": 0.2613,
+      "MAE Asim.": 0.3899,
+      "Subestim.": 0.1264,
       "Acc. ±1": 0.9925
     },
     {
@@ -30,12 +36,78 @@
       "min. entren.": 4.97,
       "epoca best": 4,
       "Accuracy": 0.7224,
-      "Acc. IC95%": "[0.694, 0.747]",
+      "Acc. IC95%": "[0.695, 0.747]",
       "Macro-F1": 0.7109,
       "QWK": 0.9313,
-      "QWK IC95%": "[0.922, 0.939]",
+      "QWK IC95%": "[0.923, 0.940]",
       "MAE": 0.2825,
+      "MAE Asim.": 0.4293,
+      "Subestim.": 0.145,
       "Acc. ±1": 0.9951
+    },
+    {
+      "modelo": "ResNet-50 (asim.)",
+      "params (M)": 23.518,
+      "GFLOPs": 8.174,
+      "min. entren.": 23.46,
+      "epoca best": 11,
+      "Accuracy": 0.7224,
+      "Acc. IC95%": "[0.698, 0.750]",
+      "Macro-F1": 0.7168,
+      "QWK": 0.9296,
+      "QWK IC95%": "[0.921, 0.939]",
+      "MAE": 0.2865,
+      "MAE Asim.": 0.3532,
+      "Subestim.": 0.0654,
+      "Acc. ±1": 0.9912
+    },
+    {
+      "modelo": "ViT-S/16 (asim.)",
+      "params (M)": 21.668,
+      "GFLOPs": 8.482,
+      "min. entren.": 17.24,
+      "epoca best": 7,
+      "Accuracy": 0.7476,
+      "Acc. IC95%": "[0.721, 0.770]",
+      "Macro-F1": 0.7398,
+      "QWK": 0.9379,
+      "QWK IC95%": "[0.930, 0.946]",
+      "MAE": 0.2573,
+      "MAE Asim.": 0.3563,
+      "Subestim.": 0.0977,
+      "Acc. ±1": 0.9951
+    },
+    {
+      "modelo": "resnet50_meta",
+      "params (M)": 23.523,
+      "GFLOPs": 8.174,
+      "min. entren.": 10.26,
+      "epoca best": 8,
+      "Accuracy": 0.7958,
+      "Acc. IC95%": "[0.767, 0.820]",
+      "Macro-F1": 0.7892,
+      "QWK": 0.9511,
+      "QWK IC95%": "[0.944, 0.957]",
+      "MAE": 0.2047,
+      "MAE Asim.": 0.3024,
+      "Subestim.": 0.0977,
+      "Acc. ±1": 0.9996
+    },
+    {
+      "modelo": "vit_small_meta",
+      "params (M)": 21.672,
+      "GFLOPs": 8.482,
+      "min. entren.": 5.88,
+      "epoca best": 7,
+      "Accuracy": 0.7869,
+      "Acc. IC95%": "[0.760, 0.812]",
+      "Macro-F1": 0.778,
+      "QWK": 0.949,
+      "QWK IC95%": "[0.941, 0.955]",
+      "MAE": 0.2144,
+      "MAE Asim.": 0.3373,
+      "Subestim.": 0.1225,
+      "Acc. ±1": 0.9987
     },
     {
       "modelo": "ResNet-50 (scratch)",
@@ -44,11 +116,13 @@
       "min. entren.": 17.64,
       "epoca best": 23,
       "Accuracy": 0.6715,
-      "Acc. IC95%": "[0.641, 0.700]",
+      "Acc. IC95%": "[0.642, 0.700]",
       "Macro-F1": 0.6546,
       "QWK": 0.9152,
       "QWK IC95%": "[0.901, 0.928]",
       "MAE": 0.3519,
+      "MAE Asim.": 0.4523,
+      "Subestim.": 0.0959,
       "Acc. ±1": 0.9766
     },
     {
@@ -58,11 +132,13 @@
       "min. entren.": 6.02,
       "epoca best": 5,
       "Accuracy": 0.6123,
-      "Acc. IC95%": "[0.575, 0.648]",
+      "Acc. IC95%": "[0.571, 0.647]",
       "Macro-F1": 0.5787,
       "QWK": 0.8891,
-      "QWK IC95%": "[0.860, 0.909]",
+      "QWK IC95%": "[0.861, 0.909]",
       "MAE": 0.4094,
+      "MAE Asim.": 0.6583,
+      "Subestim.": 0.2352,
       "Acc. ±1": 0.981
     },
     {
@@ -75,8 +151,10 @@
       "Acc. IC95%": "[0.738, 0.794]",
       "Macro-F1": 0.7595,
       "QWK": 0.941,
-      "QWK IC95%": "[0.931, 0.950]",
+      "QWK IC95%": "[0.932, 0.950]",
       "MAE": 0.2378,
+      "MAE Asim.": 0.3727,
+      "Subestim.": 0.1326,
       "Acc. ±1": 0.9947
     },
     {
@@ -86,11 +164,13 @@
       "min. entren.": 14.91,
       "epoca best": 10,
       "Accuracy": 0.7617,
-      "Acc. IC95%": "[0.733, 0.790]",
+      "Acc. IC95%": "[0.732, 0.789]",
       "Macro-F1": 0.7519,
       "QWK": 0.9411,
-      "QWK IC95%": "[0.932, 0.949]",
+      "QWK IC95%": "[0.933, 0.949]",
       "MAE": 0.2418,
+      "MAE Asim.": 0.3851,
+      "Subestim.": 0.1419,
       "Acc. ±1": 0.9965
     }
   ],
@@ -100,24 +180,167 @@
       "modelo_b": "resnet50",
       "metricas": {
         "qwk": {
-          "diff": -0.004233853894986317,
-          "ci_low": -0.009513021314078923,
-          "ci_high": 0.0006030873353168388,
-          "p_value": 0.095,
+          "diff": -0.004316499375657812,
+          "ci_low": -0.009435202737675896,
+          "ci_high": 9.185112976040649e-05,
+          "p_value": 0.06,
           "significativo": false
         },
+        "asymmetric_mae": {
+          "diff": 0.03934571175950485,
+          "ci_low": 0.010074356233078985,
+          "ci_high": 0.07605697890099695,
+          "p_value": 0.004,
+          "significativo": true
+        },
         "accuracy": {
-          "diff": -0.023430592396109673,
-          "ci_low": -0.04349995837894827,
-          "ci_high": -0.003943736327437623,
-          "p_value": 0.026,
+          "diff": -0.023872679045092826,
+          "ci_low": -0.04492217791071233,
+          "ci_high": -0.005481371834578257,
+          "p_value": 0.004,
           "significativo": true
         },
         "macro_f1": {
-          "diff": -0.024137324718719322,
-          "ci_low": -0.044757565552801,
-          "ci_high": -0.004619400757026429,
-          "p_value": 0.017,
+          "diff": -0.02456129257247719,
+          "ci_low": -0.04572280015074113,
+          "ci_high": -0.006416857032771343,
+          "p_value": 0.004,
+          "significativo": true
+        }
+      }
+    },
+    {
+      "modelo_a": "resnet50_asimetrico",
+      "modelo_b": "resnet50",
+      "metricas": {
+        "qwk": {
+          "diff": -0.006020367865787191,
+          "ci_low": -0.011776383679477606,
+          "ci_high": -0.0010956649111527666,
+          "p_value": 0.032,
+          "significativo": true
+        },
+        "asymmetric_mae": {
+          "diff": -0.03669319186560566,
+          "ci_low": -0.06723980847101439,
+          "ci_high": -0.006808277911507537,
+          "p_value": 0.004,
+          "significativo": true
+        },
+        "accuracy": {
+          "diff": -0.023872679045092826,
+          "ci_low": -0.041826793350254965,
+          "ci_high": -0.004218798285302279,
+          "p_value": 0.02,
+          "significativo": true
+        },
+        "macro_f1": {
+          "diff": -0.01863582983197065,
+          "ci_low": -0.03684624045000526,
+          "ci_high": 0.0005699120793142431,
+          "p_value": 0.076,
+          "significativo": false
+        }
+      }
+    },
+    {
+      "modelo_a": "vit_small_asimetrico",
+      "modelo_b": "resnet50",
+      "metricas": {
+        "qwk": {
+          "diff": 0.0022326010900172166,
+          "ci_low": -0.0037955767481055195,
+          "ci_high": 0.007916288198924988,
+          "p_value": 0.5,
+          "significativo": false
+        },
+        "asymmetric_mae": {
+          "diff": -0.03359858532272325,
+          "ci_low": -0.06566789745679918,
+          "ci_high": -0.0027249435083536904,
+          "p_value": 0.032,
+          "significativo": true
+        },
+        "accuracy": {
+          "diff": 0.0013262599469496816,
+          "ci_low": -0.01750538720591413,
+          "ci_high": 0.02024938437064156,
+          "p_value": 0.832,
+          "significativo": false
+        },
+        "macro_f1": {
+          "diff": 0.00435521976141251,
+          "ci_low": -0.014958140935573877,
+          "ci_high": 0.022707117712324573,
+          "p_value": 0.632,
+          "significativo": false
+        }
+      }
+    },
+    {
+      "modelo_a": "resnet50_meta",
+      "modelo_b": "resnet50",
+      "metricas": {
+        "qwk": {
+          "diff": 0.015473188438045127,
+          "ci_low": 0.008875948629429703,
+          "ci_high": 0.023127489885490588,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "asymmetric_mae": {
+          "diff": -0.08753315649867377,
+          "ci_low": -0.12181944444444444,
+          "ci_high": -0.05563863037752418,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "accuracy": {
+          "diff": 0.04951370468611849,
+          "ci_low": 0.03132266718567188,
+          "ci_high": 0.06829067861195832,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "macro_f1": {
+          "diff": 0.05380019744376374,
+          "ci_low": 0.03505105701076513,
+          "ci_high": 0.07222584075558282,
+          "p_value": 0.0,
+          "significativo": true
+        }
+      }
+    },
+    {
+      "modelo_a": "vit_small_meta",
+      "modelo_b": "resnet50",
+      "metricas": {
+        "qwk": {
+          "diff": 0.01338361332619531,
+          "ci_low": 0.0070594573120611485,
+          "ci_high": 0.020048864012501975,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "asymmetric_mae": {
+          "diff": -0.05260831122900089,
+          "ci_low": -0.08769759685672514,
+          "ci_high": -0.017218359117840667,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "accuracy": {
+          "diff": 0.040671971706454535,
+          "ci_low": 0.02231364428945074,
+          "ci_high": 0.06120263110632184,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "macro_f1": {
+          "diff": 0.042599548240952245,
+          "ci_low": 0.02311709108546533,
+          "ci_high": 0.0635891605822321,
+          "p_value": 0.0,
           "significativo": true
         }
       }
@@ -127,23 +350,30 @@
       "modelo_b": "resnet50",
       "metricas": {
         "qwk": {
-          "diff": -0.020338183672522936,
-          "ci_low": -0.028276798065664466,
-          "ci_high": -0.012277970383337717,
+          "diff": -0.02042082915319443,
+          "ci_low": -0.028021036829841223,
+          "ci_high": -0.012424499051608369,
           "p_value": 0.0,
           "significativo": true
         },
+        "asymmetric_mae": {
+          "diff": 0.06233421750663132,
+          "ci_low": 0.016592453675480033,
+          "ci_high": 0.10506421337233784,
+          "p_value": 0.012,
+          "significativo": true
+        },
         "accuracy": {
-          "diff": -0.07427055702917773,
-          "ci_low": -0.09879219184093413,
-          "ci_high": -0.048217336937864064,
+          "diff": -0.07471264367816088,
+          "ci_low": -0.09829747688631445,
+          "ci_high": -0.046555020349286554,
           "p_value": 0.0,
           "significativo": true
         },
         "macro_f1": {
-          "diff": -0.08045800245183243,
-          "ci_low": -0.10596070194694908,
-          "ci_high": -0.053640210220429536,
+          "diff": -0.0808819703055903,
+          "ci_low": -0.10539229638462617,
+          "ci_high": -0.05279897679396853,
           "p_value": 0.0,
           "significativo": true
         }
@@ -154,23 +384,30 @@
       "modelo_b": "resnet50",
       "metricas": {
         "qwk": {
-          "diff": -0.04646992429107788,
-          "ci_low": -0.06915392176713336,
-          "ci_high": -0.031606483740204805,
+          "diff": -0.046552569771749375,
+          "ci_low": -0.0688916851289174,
+          "ci_high": -0.0317274126828976,
+          "p_value": 0.0,
+          "significativo": true
+        },
+        "asymmetric_mae": {
+          "diff": 0.2683465959328028,
+          "ci_low": 0.20408199910900182,
+          "ci_high": 0.3520400918056094,
           "p_value": 0.0,
           "significativo": true
         },
         "accuracy": {
-          "diff": -0.1335101679929266,
-          "ci_low": -0.15968308245840843,
-          "ci_high": -0.10618110350429337,
+          "diff": -0.13395225464190974,
+          "ci_low": -0.161942897732472,
+          "ci_high": -0.10749823929690915,
           "p_value": 0.0,
           "significativo": true
         },
         "macro_f1": {
-          "diff": -0.15636766451599726,
-          "ci_low": -0.18369852581839727,
-          "ci_high": -0.12875461458529386,
+          "diff": -0.15679163236975513,
+          "ci_low": -0.1866339589148121,
+          "ci_high": -0.12907705809615277,
           "p_value": 0.0,
           "significativo": true
         }
@@ -181,23 +418,30 @@
       "modelo_b": "resnet50",
       "metricas": {
         "qwk": {
-          "diff": 0.0054762049860653805,
-          "ci_low": 0.0020957366673259453,
-          "ci_high": 0.00867367837076766,
-          "p_value": 0.001,
+          "diff": 0.005393559505393886,
+          "ci_low": 0.00216314431004061,
+          "ci_high": 0.008545256988755998,
+          "p_value": 0.0,
           "significativo": true
         },
+        "asymmetric_mae": {
+          "diff": -0.017241379310344807,
+          "ci_low": -0.03366799910560525,
+          "ci_high": 0.00045770412096951383,
+          "p_value": 0.072,
+          "significativo": false
+        },
         "accuracy": {
-          "diff": 0.021662245800176838,
-          "ci_low": 0.009660747230455794,
-          "ci_high": 0.03302828114337705,
-          "p_value": 0.001,
+          "diff": 0.021220159151193685,
+          "ci_low": 0.00935335056671304,
+          "ci_high": 0.031606983177779,
+          "p_value": 0.0,
           "significativo": true
         },
         "macro_f1": {
-          "diff": 0.024487657401615515,
-          "ci_low": 0.011749050055698004,
-          "ci_high": 0.03656157013777488,
+          "diff": 0.024063689547857647,
+          "ci_low": 0.011732922476384976,
+          "ci_high": 0.03504221564703433,
           "p_value": 0.0,
           "significativo": true
         }
@@ -208,24 +452,31 @@
       "modelo_b": "resnet50",
       "metricas": {
         "qwk": {
-          "diff": 0.005526773771698634,
-          "ci_low": 0.00045051198846182694,
-          "ci_high": 0.010395738845885388,
-          "p_value": 0.031,
+          "diff": 0.005444128291027139,
+          "ci_low": 0.00087250626523038,
+          "ci_high": 0.010355300886563848,
+          "p_value": 0.028,
           "significativo": true
         },
+        "asymmetric_mae": {
+          "diff": -0.00486295313881524,
+          "ci_low": -0.03348505107195179,
+          "ci_high": 0.02427295041202352,
+          "p_value": 0.756,
+          "significativo": false
+        },
         "accuracy": {
-          "diff": 0.01591511936339518,
-          "ci_low": -0.002770339829379284,
-          "ci_high": 0.03429680340726395,
-          "p_value": 0.098,
+          "diff": 0.015473032714412027,
+          "ci_low": -0.0016459655485040628,
+          "ci_high": 0.03304659828080384,
+          "p_value": 0.084,
           "significativo": false
         },
         "macro_f1": {
-          "diff": 0.0169147486386636,
-          "ci_low": -0.0020897793975897137,
-          "ci_high": 0.03558161273950186,
-          "p_value": 0.091,
+          "diff": 0.016490780784905734,
+          "ci_low": -0.0019307159437346453,
+          "ci_high": 0.03426180305779843,
+          "p_value": 0.076,
           "significativo": false
         }
       }
@@ -246,17 +497,121 @@
         },
         {
           "caso": "Solo ResNet-50",
-          "n": 220,
-          "%": 9.73
+          "n": 221,
+          "%": 9.77
         },
         {
           "caso": "Ambos fallan",
-          "n": 408,
-          "%": 18.04
+          "n": 407,
+          "%": 17.99
         }
       ],
-      "oraculo_accuracy": 0.8196286472148541,
-      "ambos_fallan": 0.18037135278514588
+      "oraculo_accuracy": 0.8200707338638373,
+      "ambos_fallan": 0.1799292661361627
+    },
+    "resnet50_asimetrico_vs_resnet50": {
+      "tabla": [
+        {
+          "caso": "Ambos aciertan",
+          "n": 1471,
+          "%": 65.03
+        },
+        {
+          "caso": "Solo ResNet-50 (asim.)",
+          "n": 163,
+          "%": 7.21
+        },
+        {
+          "caso": "Solo ResNet-50",
+          "n": 217,
+          "%": 9.59
+        },
+        {
+          "caso": "Ambos fallan",
+          "n": 411,
+          "%": 18.17
+        }
+      ],
+      "oraculo_accuracy": 0.8183023872679045,
+      "ambos_fallan": 0.1816976127320955
+    },
+    "vit_small_asimetrico_vs_resnet50": {
+      "tabla": [
+        {
+          "caso": "Ambos aciertan",
+          "n": 1496,
+          "%": 66.14
+        },
+        {
+          "caso": "Solo ViT-S/16 (asim.)",
+          "n": 195,
+          "%": 8.62
+        },
+        {
+          "caso": "Solo ResNet-50",
+          "n": 192,
+          "%": 8.49
+        },
+        {
+          "caso": "Ambos fallan",
+          "n": 379,
+          "%": 16.76
+        }
+      ],
+      "oraculo_accuracy": 0.832449160035367,
+      "ambos_fallan": 0.16755083996463307
+    },
+    "resnet50_meta_vs_resnet50": {
+      "tabla": [
+        {
+          "caso": "Ambos aciertan",
+          "n": 1581,
+          "%": 69.89
+        },
+        {
+          "caso": "Solo resnet50_meta",
+          "n": 219,
+          "%": 9.68
+        },
+        {
+          "caso": "Solo ResNet-50",
+          "n": 107,
+          "%": 4.73
+        },
+        {
+          "caso": "Ambos fallan",
+          "n": 355,
+          "%": 15.69
+        }
+      ],
+      "oraculo_accuracy": 0.8430592396109637,
+      "ambos_fallan": 0.15694076038903626
+    },
+    "vit_small_meta_vs_resnet50": {
+      "tabla": [
+        {
+          "caso": "Ambos aciertan",
+          "n": 1531,
+          "%": 67.68
+        },
+        {
+          "caso": "Solo vit_small_meta",
+          "n": 249,
+          "%": 11.01
+        },
+        {
+          "caso": "Solo ResNet-50",
+          "n": 157,
+          "%": 6.94
+        },
+        {
+          "caso": "Ambos fallan",
+          "n": 325,
+          "%": 14.37
+        }
+      ],
+      "oraculo_accuracy": 0.8563218390804598,
+      "ambos_fallan": 0.14367816091954022
     },
     "resnet50_scratch_vs_resnet50": {
       "tabla": [
@@ -272,17 +627,17 @@
         },
         {
           "caso": "Solo ResNet-50",
-          "n": 351,
-          "%": 15.52
+          "n": 352,
+          "%": 15.56
         },
         {
           "caso": "Ambos fallan",
-          "n": 392,
-          "%": 17.33
+          "n": 391,
+          "%": 17.29
         }
       ],
-      "oraculo_accuracy": 0.8267020335985853,
-      "ambos_fallan": 0.17329796640141468
+      "oraculo_accuracy": 0.8271441202475686,
+      "ambos_fallan": 0.17285587975243147
     },
     "vit_small_scratch_vs_resnet50": {
       "tabla": [
@@ -298,29 +653,29 @@
         },
         {
           "caso": "Solo ResNet-50",
-          "n": 498,
-          "%": 22.02
+          "n": 499,
+          "%": 22.06
         },
         {
           "caso": "Ambos fallan",
-          "n": 379,
-          "%": 16.76
+          "n": 378,
+          "%": 16.71
         }
       ],
-      "oraculo_accuracy": 0.832449160035367,
-      "ambos_fallan": 0.16755083996463307
+      "oraculo_accuracy": 0.8328912466843501,
+      "ambos_fallan": 0.16710875331564987
     },
     "hybrid_fusion_vs_resnet50": {
       "tabla": [
         {
           "caso": "Ambos aciertan",
-          "n": 1626,
-          "%": 71.88
+          "n": 1627,
+          "%": 71.93
         },
         {
           "caso": "Solo Fusion tardia",
-          "n": 110,
-          "%": 4.86
+          "n": 109,
+          "%": 4.82
         },
         {
           "caso": "Solo ResNet-50",
@@ -340,13 +695,13 @@
       "tabla": [
         {
           "caso": "Ambos aciertan",
-          "n": 1531,
-          "%": 67.68
+          "n": 1532,
+          "%": 67.73
         },
         {
           "caso": "Solo ViT-Hybrid R26",
-          "n": 192,
-          "%": 8.49
+          "n": 191,
+          "%": 8.44
         },
         {
           "caso": "Solo ResNet-50",

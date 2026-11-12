@@ -1,0 +1,127 @@
+{
+  "config": {
+    "name": "resnet50_asimetrico",
+    "model": "resnet50",
+    "pretrained": true,
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 2,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 15,
+    "lr": 0.0003,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.5,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "asymmetric_mae",
+    "use_bayes_risk_eval": true,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "ResNet-50 con perdida ordinal asimetrica (2x falso inmaduro) y decision Bayesiana"
+  },
+  "params_M": 23.518,
+  "params_entrenables_M": 23.518,
+  "gflops": 8.174,
+  "best_epoch": 11,
+  "train_minutes": 23.46,
+  "test": {
+    "accuracy": 0.7223695844385499,
+    "balanced_accuracy": 0.7200852576104292,
+    "macro_f1": 0.7168124467756325,
+    "qwk": 0.9296195576964091,
+    "mae": 0.2864721485411141,
+    "asymmetric_mae": 0.3532,
+    "underestimation_rate": 0.0654,
+    "overestimation_rate": 0.2122,
+    "off_by_one": 0.9911582670203359,
+    "per_class_f1": [
+      0.8657004830917875,
+      0.6820809248554913,
+      0.6609336609336609,
+      0.6087824351297405,
+      0.7665647298674821
+    ],
+    "confusion_matrix": [
+      [
+        448,
+        102,
+        0,
+        0,
+        0
+      ],
+      [
+        37,
+        236,
+        67,
+        2,
+        0
+      ],
+      [
+        0,
+        12,
+        269,
+        136,
+        15
+      ],
+      [
+        0,
+        0,
+        43,
+        305,
+        158
+      ],
+      [
+        0,
+        0,
+        3,
+        53,
+        376
+      ]
+    ]
+  },
+  "test_por_grupo": {
+    "T10": {
+      "n": 1350,
+      "accuracy": 0.7237,
+      "mae": 0.2852,
+      "asymmetric_mae": 0.3496,
+      "underestimation_rate": 0.0622
+    },
+    "T20": {
+      "n": 466,
+      "accuracy": 0.7253,
+      "mae": 0.2833,
+      "asymmetric_mae": 0.3283,
+      "underestimation_rate": 0.0451
+    },
+    "Tam": {
+      "n": 446,
+      "accuracy": 0.7152,
+      "mae": 0.2937,
+      "asymmetric_mae": 0.3901,
+      "underestimation_rate": 0.0964
+    }
+  },
+  "val": {
+    "accuracy": 0.7290178571428572,
+    "balanced_accuracy": 0.7293947373543962,
+    "macro_f1": 0.7229607840199811,
+    "qwk": 0.930195893556448,
+    "mae": 0.28169642857142857,
+    "asymmetric_mae": 0.35535714285714287,
+    "underestimation_rate": 0.07053571428571428,
+    "overestimation_rate": 0.20044642857142858,
+    "off_by_one": 0.9892857142857143
+  }
+}

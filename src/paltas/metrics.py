@@ -11,6 +11,9 @@ que la acompanamos de metricas sensibles a la distancia:
   metrica principal del proyecto.
 - MAE en el indice: error medio en "escalones" de madurez, directamente
   interpretable.
+- MAE Asimetrico: penaliza mas fuerte clasificar como inmaduro (y_pred < y_true)
+  que como maduro (y_pred > y_true), porque infiltrar fruta madura en lotes
+  verdes libera etileno y echa a perder el lote completo.
 - Accuracy off-by-one: fraccion de predicciones que caen en la clase correcta o
   en una adyacente. Aproxima la utilidad operativa real.
 """
@@ -31,17 +34,54 @@ METRIC_NAMES = {
     "macro_f1": "Macro-F1",
     "qwk": "QWK",
     "mae": "MAE (escalones)",
+    "asymmetric_mae": "MAE Asimetrico",
+    "underestimation_rate": "Subestim. (<real)",
+    "overestimation_rate": "Sobreestim. (>real)",
     "off_by_one": "Acc. ±1 clase",
 }
 #: Metrica usada para seleccionar el mejor checkpoint y para ordenar resultados.
 PRIMARY_METRIC = "qwk"
 
 
-def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, num_classes: int = 5) -> dict:
+def cost_matrix(
+    num_classes: int = 5,
+    underripe_penalty: float = 2.0,
+    overripe_penalty: float = 1.0,
+) -> np.ndarray:
+    """Matriz M[y_true, y_pred] de costos ordinales asimetricos.
+
+    Cuando y_pred < y_true (falso inmaduro), penaliza `underripe_penalty` por
+    escalon; cuando y_pred > y_true (falso maduro), `overripe_penalty` por escalon.
+    """
+    idx = np.arange(num_classes)
+    diff = idx[None, :] - idx[:, None]  # diff[y, k] = k - y
+    mat = np.zeros((num_classes, num_classes), dtype=np.float64)
+    mat[diff < 0] = underripe_penalty * (-diff[diff < 0])
+    mat[diff > 0] = overripe_penalty * diff[diff > 0]
+    return mat
+
+
+def bayes_min_risk_predict(probs: np.ndarray, cost_mat: np.ndarray) -> np.ndarray:
+    """Elige la clase que minimiza el costo esperado: argmin_k sum_y p_y * M[y, k]."""
+    p = np.asarray(probs, dtype=np.float64)
+    if p.ndim == 1:
+        p = p[None, :]
+    expected_risk = p @ np.asarray(cost_mat, dtype=np.float64)
+    return expected_risk.argmin(axis=1)
+
+
+def compute_metrics(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    num_classes: int = 5,
+    underripe_penalty: float = 2.0,
+    overripe_penalty: float = 1.0,
+) -> dict:
     """Calcula el paquete completo de metricas. Espera etiquetas en 0..C-1."""
-    y_true = np.asarray(y_true).ravel()
-    y_pred = np.asarray(y_pred).ravel()
+    y_true = np.asarray(y_true, dtype=int).ravel()
+    y_pred = np.asarray(y_pred, dtype=int).ravel()
     labels = list(range(num_classes))
+    costs = cost_matrix(num_classes, underripe_penalty=underripe_penalty, overripe_penalty=overripe_penalty)
 
     return {
         "accuracy": float((y_true == y_pred).mean()),
@@ -49,6 +89,9 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, num_classes: int = 5
         "macro_f1": float(f1_score(y_true, y_pred, average="macro", labels=labels, zero_division=0)),
         "qwk": float(cohen_kappa_score(y_true, y_pred, weights="quadratic", labels=labels)),
         "mae": float(np.abs(y_true - y_pred).mean()),
+        "asymmetric_mae": float(costs[y_true, y_pred].mean()),
+        "underestimation_rate": float((y_pred < y_true).mean()),
+        "overestimation_rate": float((y_pred > y_true).mean()),
         "off_by_one": float((np.abs(y_true - y_pred) <= 1).mean()),
         "per_class_f1": f1_score(y_true, y_pred, average=None, labels=labels,
                                  zero_division=0).tolist(),
@@ -59,7 +102,9 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, num_classes: int = 5
 def format_metrics(m: dict) -> str:
     """Una linea legible para los logs de entrenamiento."""
     return "  ".join(
-        f"{k}={m[k]:.4f}" for k in ("accuracy", "macro_f1", "qwk", "mae", "off_by_one")
+        f"{k}={m[k]:.4f}"
+        for k in ("accuracy", "macro_f1", "qwk", "mae", "asymmetric_mae", "underestimation_rate", "off_by_one")
+        if k in m
     )
 
 

@@ -88,6 +88,7 @@ sería más justo, solo peor para el ViT.
 |---|---|
 | **QWK** (kappa cuadrático) | **Principal.** Penaliza el error según el cuadrado de la distancia entre clases y corrige por acuerdo azaroso |
 | **Accuracy** | **Principal.** La más fácil de interpretar: clase exacta |
+| **MAE Asimétrico** | Penaliza $2\times$ subestimar la madurez ($\hat{y} < y$, riesgo de contagio por etileno en lotes verdes) y $1\times$ sobreestimarla ($\hat{y} > y$) |
 | MAE | Error medio en "escalones" de madurez, directamente interpretable |
 | Macro-F1 | Controla que las clases minoritarias no queden abandonadas |
 | Accuracy ±1 | Solo informativa: supera el 99 % en todos los modelos y no los distingue |
@@ -103,17 +104,19 @@ Test: 2.262 imágenes de 72 frutas que ningún modelo vio durante el entrenamien
 baselines y los modelos con metadatos se entrenaron con **tres semillas** (42, 1 y 2): se
 reporta media ± desviación estándar.
 
-| Modelo | Semillas | Accuracy | QWK | Macro-F1 | MAE |
-|---|:-:|--:|--:|--:|--:|
-| Solo temperatura y día (sin foto) | — | 78,0 % | 0,942 | 0,770 | 0,227 |
-| ResNet-50 | 3 | 74,8 ± 0,3 % | 0,937 ± 0,002 | 0,740 | 0,258 |
-| ViT-S/16 | 3 | 73,1 ± 2,6 % | 0,933 ± 0,006 | 0,719 | 0,276 |
-| ResNet-50 + temperatura y día | 3 | **79,2 ± 1,3 %** | **0,950 ± 0,003** | **0,785** | **0,208** |
-| ViT-S/16 + temperatura y día | 3 | 78,5 ± 0,7 % | 0,948 ± 0,002 | 0,778 | 0,217 |
-| ResNet-50 *(desde cero)* | 1 | 67,2 % | 0,915 | 0,655 | 0,352 |
-| ViT-S/16 *(desde cero)* | 1 | 61,2 % | 0,889 | 0,579 | 0,409 |
-| Híbrido · fusión tardía | 1 | 76,8 % | 0,941 | 0,760 | 0,238 |
-| ViT-Hybrid R26+S/32 † | 1 | 76,2 % | 0,941 | 0,752 | 0,242 |
+| Modelo | Semillas | Accuracy | QWK | Macro-F1 | MAE | MAE Asim. | Subest. ($\hat{y}<y$) |
+|---|:-:|--:|--:|--:|--:|--:|--:|
+| Solo temperatura y día (sin foto) | — | 78,0 % | 0,942 | 0,770 | 0,227 | 0,365 | 12,9 % |
+| ResNet-50 | 3 | 74,8 ± 0,3 % | 0,937 ± 0,002 | 0,740 | 0,258 | 0,390 | 12,6 % |
+| ViT-S/16 | 3 | 73,1 ± 2,6 % | 0,933 ± 0,006 | 0,719 | 0,276 | 0,429 | 14,5 % |
+| **ResNet-50 *(asimétrico)*** | 1 | 72,2 % | 0,930 | 0,715 | 0,286 | **0,353** | **6,5 %** |
+| **ViT-S/16 *(asimétrico)*** | 1 | 74,8 % | 0,938 | 0,741 | 0,257 | **0,356** | **9,8 %** |
+| ResNet-50 + temperatura y día | 3 | **79,2 ± 1,3 %** | **0,950 ± 0,003** | **0,785** | **0,208** | 0,318 | 10,8 % |
+| ViT-S/16 + temperatura y día | 3 | 78,5 ± 0,7 % | 0,948 ± 0,002 | 0,778 | 0,217 | 0,322 | 10,4 % |
+| ResNet-50 *(desde cero)* | 1 | 67,2 % | 0,915 | 0,655 | 0,352 | 0,534 | 16,6 % |
+| ViT-S/16 *(desde cero)* | 1 | 61,2 % | 0,889 | 0,579 | 0,409 | 0,636 | 20,6 % |
+| Híbrido · fusión tardía | 1 | 76,8 % | 0,941 | 0,760 | 0,238 | 0,373 | 13,2 % |
+| ViT-Hybrid R26+S/32 † | 1 | 76,2 % | 0,941 | 0,752 | 0,242 | 0,382 | 13,7 % |
 
 † Usa pesos de ImageNet-21k y 1,5× los parámetros: no es un competidor equiparable.
 
@@ -125,6 +128,14 @@ semilla por sí sola supera a la regla de forma significativa: es un empate con 
 **Dónde aporta la foto.** En las 498 fotos de paltas que maduran fuera del ritmo de su grupo,
 la regla falla siempre; la foto sola acierta ~53 %. El modelo con metadatos baja ahí a 45,5 %:
 aprende a confiar en el calendario y deja de mirar la imagen justo donde más aporta.
+
+**Entrenamiento ordinal asimétrico (`AsymmetricOrdinalLoss`).** Clasificar una palta madura como
+inmadura ($\hat{y} < y$) infiltra fruta productora de etileno en lotes verdes. Al penalizar
+$2\times$ el costo esperado hacia etapas inferiores durante el entrenamiento y decidir por
+riesgo mínimo de Bayes, **ResNet-50 (asim.)** reduce los falsos inmaduros casi a la mitad
+(de 12,6 % a **6,5 %**, MAE Asimétrico **0,353**, $p=0{,}006$) y **ViT-S/16 (asim.)** reduce
+la subestimación de 14,5 % a **9,8 %** (MAE Asimétrico **0,356**, $p=0{,}030$) mejorando a la
+vez QWK (0,938) y Accuracy (74,8 %).
 
 **ResNet frente a ViT.** En promedio la ResNet acierta 1,7 puntos más, con diferencia
 significativa en dos de tres semillas en accuracy y en una de tres en QWK. Lo más robusto es la
@@ -197,6 +208,10 @@ python scripts/train.py --config configs/vit_small_scratch.yaml
 # Híbridos (requieren los dos baselines ya entrenados)
 python scripts/train.py --config configs/hybrid_fusion.yaml
 python scripts/train.py --config configs/hybrid_vit_r26.yaml
+
+# Entrenamiento ordinal asimétrico (2x castigo al falso inmaduro; también disponible en notebooks/entrenar_en_colab.ipynb)
+python scripts/train.py --config configs/resnet50_asimetrico.yaml
+python scripts/train.py --config configs/vit_small_asimetrico.yaml
 ```
 
 Cada corrida escribe `checkpoints/<name>.pt`, `reports/metrics/<name>_history.json`,
@@ -211,6 +226,7 @@ bash scripts/run_semillas.sh
 
 ```bash
 python scripts/10_referencia_metadatos.py   # regla sin imagen (temperatura y día)
+python scripts/10_evaluar_asimetria.py      # métrica y desglose asimétrico (2x falso inmaduro)
 python scripts/11_resumen_semillas.py       # tres semillas, por temperatura y calendario
 python scripts/09_mejoras_inferencia.py     # dos caras y TTA, elegidas en validación
 python scripts/12_ejemplos_errores.py       # fotos de errores
