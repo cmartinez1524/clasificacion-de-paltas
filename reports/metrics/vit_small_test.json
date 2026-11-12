@@ -145,17 +145,23 @@
     "T10": {
       "n": 1350,
       "accuracy": 0.7385,
-      "mae": 0.2674
+      "mae": 0.2674,
+      "asymmetric_mae": 0.3956,
+      "underestimation_rate": 0.1252
     },
     "T20": {
       "n": 466,
       "accuracy": 0.6867,
-      "mae": 0.3176
+      "mae": 0.3176,
+      "asymmetric_mae": 0.4764,
+      "underestimation_rate": 0.1588
     },
     "Tam": {
       "n": 446,
       "accuracy": 0.7108,
-      "mae": 0.2915
+      "mae": 0.2915,
+      "asymmetric_mae": 0.4821,
+      "underestimation_rate": 0.1906
     }
   }
 }

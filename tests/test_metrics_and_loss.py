@@ -89,6 +89,33 @@ def test_existing_and_asymmetric_configs_load():
         assert asym.overripe_penalty == 1.0
         assert asym.primary_metric == "asymmetric_mae"
         assert asym.use_bayes_risk_eval is True
+        assert asym.predict_mode == "bayes"
+        assert asym.selection_metric == "asymmetric_mae"
+
+    # Todos los archivos YAML en configs/ deben cargar sin errores
+    cfg_dir = Path(__file__).resolve().parents[1] / "configs"
+    for p in sorted(cfg_dir.glob("*.yaml")):
+        c = TrainConfig.from_yaml(p)
+        assert c.name and c.model
+
+
+def test_standalone_asymmetric_helpers():
+    from paltas.metrics import (
+        asymmetric_mae,
+        bayes_optimal_predict,
+        overestimation_rate,
+        underestimation_rate,
+    )
+
+    yt = np.array([2, 3, 1, 4])
+    yp = np.array([1, 3, 2, 2])
+    assert np.isclose(asymmetric_mae(yt, yp, underripe_penalty=2.0, overripe_penalty=1.0), 1.75)
+    assert np.isclose(underestimation_rate(yt, yp), 0.5)
+    assert np.isclose(overestimation_rate(yt, yp), 0.25)
+
+    probs = np.array([[0.0, 0.45, 0.55, 0.0, 0.0]])
+    pred = bayes_optimal_predict(probs, underripe_penalty=2.0, overripe_penalty=1.0)
+    assert int(pred[0]) == 2
 
 
 def test_is_better_metric_direction():
@@ -214,3 +241,101 @@ def test_deck_latex_includes_data_and_asymmetry_frames():
     tex_av = mod.documento("", "Avance", mod.AUTOR, avance)
     tex_fn = mod.documento("", "Final", mod.AUTOR, final)
     assert r"\begin{document}" in tex_av and r"\begin{document}" in tex_fn
+
+
+def test_fit_and_evaluate_with_asymmetric_config(tmp_path: Path):
+    """Prueba end-to-end que fit() y evaluate() corran con TrainConfig asimetrico."""
+    import torch
+    from torch.utils.data import DataLoader, TensorDataset
+    from paltas.config import TrainConfig
+    from paltas.engine import evaluate, fit
+
+    cfg = TrainConfig.from_yaml(
+        Path(__file__).resolve().parents[1] / "configs" / "resnet50_asimetrico.yaml"
+    ).override(epochs=1, batch_size=4)
+    cfg.amp = False
+
+    x = torch.randn(8, 3, 32, 32)
+    y = torch.tensor([0, 1, 2, 3, 4, 1, 2, 3], dtype=torch.long)
+    ds = TensorDataset(x, y)
+    loaders = {
+        "train": DataLoader(ds, batch_size=4, shuffle=False),
+        "val": DataLoader(ds, batch_size=4, shuffle=False),
+        "test": DataLoader(ds, batch_size=4, shuffle=False),
+    }
+    model = torch.nn.Sequential(
+        torch.nn.AdaptiveAvgPool2d(1),
+        torch.nn.Flatten(),
+        torch.nn.Linear(3, 5),
+    )
+    ckpt = tmp_path / "ckpt.pt"
+    hist = tmp_path / "hist.json"
+    res = fit(model, loaders, cfg, torch.device("cpu"), None, ckpt, hist)
+    assert ckpt.exists() and hist.exists()
+    assert res["best_epoch"] == 1
+
+    ev = evaluate(
+        model,
+        loaders["test"],
+        torch.device("cpu"),
+        amp=False,
+        return_logits=True,
+        use_bayes_risk=cfg.use_bayes_risk_eval,
+        underripe_penalty=cfg.underripe_penalty,
+        overripe_penalty=cfg.overripe_penalty,
+    )
+    assert "asymmetric_mae" in ev and "logits" in ev
+
+
+def test_train_script_main_runs_end_to_end(tmp_path: Path, monkeypatch):
+    """Ejecuta scripts/train.py main() de punta a punta con datos sinteticos."""
+    import importlib.util
+    import pandas as pd
+    import torch
+    from torch.utils.data import DataLoader, TensorDataset
+
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "train.py"
+    spec = importlib.util.spec_from_file_location("train_script", script_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    x = torch.randn(6, 3, 32, 32)
+    y = torch.tensor([0, 1, 2, 3, 4, 2], dtype=torch.long)
+    ds = TensorDataset(x, y)
+    loader = DataLoader(ds, batch_size=3, shuffle=False)
+    df = pd.DataFrame({
+        "file_name": [f"img_{i}.jpg" for i in range(6)],
+        "sample_id": [f"T10_{i}" for i in range(6)],
+        "storage_group": ["T10", "T10", "T20", "T20", "Tam", "Tam"],
+        "day": [1, 2, 3, 4, 5, 6],
+        "side": ["a", "b", "a", "b", "a", "b"],
+        "ripening_index": [1, 2, 3, 4, 5, 3],
+        "target": [0, 1, 2, 3, 4, 2],
+    })
+    loaders = {"train": loader, "val": loader, "test": loader}
+    frames = {"train": df, "val": df, "test": df}
+
+    class TinyModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.pool = torch.nn.AdaptiveAvgPool2d(1)
+            self.fc = torch.nn.Linear(3, 5)
+
+        def forward(self, inp):
+            return self.fc(self.pool(inp).flatten(1))
+
+    monkeypatch.setattr(mod, "build_dataloaders", lambda *a, **kw: (loaders, frames))
+    monkeypatch.setattr(mod, "build_model", lambda *a, **kw: TinyModel())
+    monkeypatch.setattr(mod, "estimate_gflops", lambda *a, **kw: 0.01)
+    monkeypatch.setattr(mod, "CHECKPOINT_DIR", tmp_path)
+    monkeypatch.setattr(mod, "METRICS_DIR", tmp_path)
+    cfg_path = str(Path(__file__).resolve().parents[1] / "configs" / "resnet50_asimetrico.yaml")
+    monkeypatch.setattr(
+        sys, "argv",
+        ["train.py", "--config", cfg_path, "--epochs", "1", "--batch-size", "3", "--name", "smoke_test"],
+    )
+    mod.main()
+    assert (tmp_path / "smoke_test.pt").exists()
+    assert (tmp_path / "smoke_test_test.json").exists()
+    assert (tmp_path / "smoke_test_val_preds.csv").exists()
+    assert (tmp_path / "smoke_test_test_preds.csv").exists()

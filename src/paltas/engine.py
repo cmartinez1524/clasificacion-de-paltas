@@ -155,7 +155,7 @@ def evaluate(
     amp: bool = True,
     tta_hflip: bool = False,
     return_logits: bool = False,
-    predict_mode: str = "argmax",
+    use_bayes_risk: bool = False,
     underripe_penalty: float = 2.0,
     overripe_penalty: float = 1.0,
 ) -> dict:
@@ -172,20 +172,21 @@ def evaluate(
 
     logits = torch.cat(logits_all)
     y_true = torch.cat(y_all).numpy()
-    if predict_mode == "bayes":
+    if use_bayes_risk:
         probs = torch.softmax(logits, dim=1).numpy()
-        cmat = cost_matrix(
+        costs = cost_matrix(
             num_classes=logits.shape[1],
             underripe_penalty=underripe_penalty,
             overripe_penalty=overripe_penalty,
         )
-        y_pred = bayes_min_risk_predict(probs, cmat)
+        y_pred = bayes_min_risk_predict(probs, costs)
     else:
         y_pred = logits.argmax(1).numpy()
 
     m = compute_metrics(
         y_true,
         y_pred,
+        num_classes=logits.shape[1],
         underripe_penalty=underripe_penalty,
         overripe_penalty=overripe_penalty,
     )
@@ -238,9 +239,13 @@ def fit(
     ckpt_path: Path,
     history_path: Path,
 ) -> dict:
-    """Entrena, selecciona el mejor checkpoint segun validacion y lo guarda."""
+    """Entrena, selecciona el mejor checkpoint por la metrica primaria y lo guarda."""
     model.to(device)
     criterion = build_criterion(cfg, class_weights, device)
+    metric_name = getattr(cfg, "primary_metric", PRIMARY_METRIC) or PRIMARY_METRIC
+    use_bayes = getattr(cfg, "use_bayes_risk_eval", False)
+    under_pen = getattr(cfg, "underripe_penalty", 2.0)
+    over_pen = getattr(cfg, "overripe_penalty", 1.0)
 
     optimizer = torch.optim.AdamW(
         param_groups(model, cfg.lr, cfg.head_lr_mult, cfg.weight_decay), lr=cfg.lr
@@ -253,12 +258,7 @@ def fit(
     )
     scaler = torch.amp.GradScaler("cuda", enabled=cfg.amp and device.type == "cuda")
 
-    selection_metric = getattr(cfg, "selection_metric", PRIMARY_METRIC) or PRIMARY_METRIC
-    predict_mode = getattr(cfg, "predict_mode", "argmax")
-    underripe_penalty = getattr(cfg, "underripe_penalty", 2.0)
-    overripe_penalty = getattr(cfg, "overripe_penalty", 1.0)
-
-    mejor_init = np.inf if selection_metric in LOWER_IS_BETTER else -np.inf
+    mejor_init = np.inf if metric_name in LOWER_IS_BETTER else -np.inf
     historia, mejor, mejor_epoca, sin_mejora = [], mejor_init, -1, 0
     t0 = time.time()
 
@@ -273,9 +273,9 @@ def fit(
             device,
             cfg.amp,
             cfg.eval_tta_hflip,
-            predict_mode=predict_mode,
-            underripe_penalty=underripe_penalty,
-            overripe_penalty=overripe_penalty,
+            use_bayes_risk=use_bayes,
+            underripe_penalty=under_pen,
+            overripe_penalty=over_pen,
         )
         dt = time.time() - t_ep
 
@@ -285,8 +285,8 @@ def fit(
             **{k: v for k, v in va.items() if isinstance(v, float)},
         })
         marca = ""
-        if is_better_metric(va[selection_metric], mejor, selection_metric):
-            mejor, mejor_epoca, sin_mejora = va[selection_metric], ep, 0
+        if is_better_metric(va[metric_name], mejor, metric_name):
+            mejor, mejor_epoca, sin_mejora = va[metric_name], ep, 0
             ckpt_path.parent.mkdir(parents=True, exist_ok=True)
             torch.save({"model": model.state_dict(), "epoch": ep,
                         "val_metrics": {k: v for k, v in va.items() if isinstance(v, float)},
@@ -303,11 +303,11 @@ def fit(
         history_path.write_text(json.dumps(historia, indent=2), encoding="utf-8")
 
         if sin_mejora >= cfg.early_stop_patience:
-            print(f"Early stopping: {sin_mejora} epocas sin mejorar {selection_metric}.")
+            print(f"Early stopping: {sin_mejora} epocas sin mejorar {metric_name}.")
             break
 
-    print(f"\nMejor epoca: {mejor_epoca}  ({selection_metric} val = {mejor:.4f})")
+    print(f"\nMejor epoca: {mejor_epoca}  ({metric_name} val = {mejor:.4f})")
     print(f"Tiempo total: {(time.time() - t0) / 60:.1f} min")
     return {"history": historia, "best_epoch": mejor_epoca,
-            f"best_val_{selection_metric}": float(mejor),
+            f"best_val_{metric_name}": float(mejor),
             "train_minutes": round((time.time() - t0) / 60, 2)}

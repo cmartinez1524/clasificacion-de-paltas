@@ -47,13 +47,16 @@ VERDE = "#2E6B2F"
 GRIS = "#8A9098"
 
 
-def _una_palta(clase: int = 3, seed: int = 4) -> np.ndarray:
+def _una_palta(clase: int = 3, seed: int = 4) -> np.ndarray | None:
     """Una imagen de test de la clase pedida, a 224x224."""
     df = pd.read_csv(SPLITS_CSV)
     sub = df[(df["split"] == "test") & (df["ripening_index"] == clase)]
     fila = sub.iloc[np.random.default_rng(seed).integers(len(sub))]
     carpeta = CACHE_DIR if any(CACHE_DIR.glob("*.jpg")) else IMAGES_DIR
-    return np.array(Image.open(carpeta / fila["image_file"]).convert("RGB").resize((224, 224)))
+    ruta = carpeta / fila["image_file"]
+    if not ruta.exists():
+        return None
+    return np.array(Image.open(ruta).convert("RGB").resize((224, 224)))
 
 
 def _bbox_fruta(img: np.ndarray, umbral: int = 205) -> tuple[int, int, int, int]:
@@ -72,6 +75,9 @@ def _bbox_fruta(img: np.ndarray, umbral: int = 205) -> tuple[int, int, int, int]
 def fig_como_mira_cada_red() -> None:
     """La figura central: la lupa que recorre vs el rompecabezas que conversa."""
     img = _una_palta()
+    if img is None:
+        print("  [aviso] no hay imagenes en disco; omito 30_como_mira_cada_red.png")
+        return
     fx0, fy0, fx1, fy1 = _bbox_fruta(img)
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.7))
 

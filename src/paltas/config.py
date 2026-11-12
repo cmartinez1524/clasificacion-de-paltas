@@ -83,3 +83,11 @@ class TrainConfig:
             if v is not None and hasattr(self, k):
                 setattr(self, k, v)
         return self
+
+    @property
+    def selection_metric(self) -> str:
+        return self.primary_metric
+
+    @property
+    def predict_mode(self) -> str:
+        return "bayes" if self.use_bayes_risk_eval else "argmax"

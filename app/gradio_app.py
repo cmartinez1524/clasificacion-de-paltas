@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from paltas.data import build_transforms  # noqa: E402
 from paltas.interpret import GradCAM, attention_rollout, resnet_target_layer  # noqa: E402
+from paltas.metrics import bayes_optimal_predict  # noqa: E402
 from paltas.models import build_model  # noqa: E402
 from paltas.paths import (  # noqa: E402
     CACHE_DIR,
@@ -40,6 +41,8 @@ TF = build_transforms(224, train=False)
 DISPONIBLES = {
     "resnet50": ("resnet50", "ResNet-50"),
     "vit_small": ("vit_small", "ViT-S/16"),
+    "resnet50_asimetrico": ("resnet50", "ResNet-50 (asimétrico)"),
+    "vit_small_asimetrico": ("vit_small", "ViT-S/16 (asimétrico)"),
     "hybrid_fusion": ("hybrid_fusion", "Hibrido (fusion tardia)"),
     "hybrid_vit_r26": ("hybrid_vit_r26", "ViT-Hybrid R26+S/32"),
 }
@@ -92,7 +95,10 @@ def predecir(imagen: Image.Image, clave_modelo: str, mostrar_mapa: bool):
     with torch.no_grad():
         probs = torch.softmax(model(x), dim=1)[0].cpu().numpy()
 
-    pred = int(probs.argmax()) + 1
+    if clave.endswith("_asimetrico"):
+        pred = int(bayes_optimal_predict(probs[None, :], underripe_penalty=2.0, overripe_penalty=1.0)[0]) + 1
+    else:
+        pred = int(probs.argmax()) + 1
     etiquetas = {f"{i+1} · {CLASS_NAMES[i+1]}": float(probs[i]) for i in range(5)}
 
     # Valor esperado del indice: mas informativo que el argmax cuando el modelo
@@ -129,10 +135,10 @@ def mapa_de_atencion(model, clave: str, x):
     las activaciones convolucionales, asi que el mapa refleja lo que el modelo
     COMPLETO usa de la rama convolucional, no lo que usaria la ResNet sola.
     """
-    if clave == "resnet50":
+    if clave.startswith("resnet50"):
         with GradCAM(model, resnet_target_layer(model)) as cam:
             return cam(x)[0]
-    if clave == "vit_small":
+    if clave.startswith("vit_small"):
         return attention_rollout(model, x)[0]
     if clave == "hybrid_fusion":
         with GradCAM(model, model.cnn.layer4[-1]) as cam:

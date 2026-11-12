@@ -70,6 +70,47 @@ def bayes_min_risk_predict(probs: np.ndarray, cost_mat: np.ndarray) -> np.ndarra
     return expected_risk.argmin(axis=1)
 
 
+def bayes_optimal_predict(
+    probs: np.ndarray,
+    underripe_penalty: float = 2.0,
+    overripe_penalty: float = 1.0,
+) -> np.ndarray:
+    """Atajo de decision Bayesiana construyendo la matriz de costos asimetrica."""
+    p = np.asarray(probs, dtype=np.float64)
+    if p.ndim == 1:
+        p = p[None, :]
+    cmat = cost_matrix(p.shape[1], underripe_penalty=underripe_penalty, overripe_penalty=overripe_penalty)
+    return bayes_min_risk_predict(p, cmat)
+
+
+def asymmetric_mae(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    underripe_penalty: float = 2.0,
+    overripe_penalty: float = 1.0,
+) -> float:
+    """Error medio ponderado asimetricamente."""
+    yt = np.asarray(y_true, dtype=int).ravel()
+    yp = np.asarray(y_pred, dtype=int).ravel()
+    diff = yp - yt
+    cost = np.where(diff < 0, underripe_penalty * (-diff), overripe_penalty * diff)
+    return float(cost.mean())
+
+
+def underestimation_rate(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """Fraccion de muestras donde el modelo subestima la madurez (y_pred < y_true)."""
+    yt = np.asarray(y_true, dtype=int).ravel()
+    yp = np.asarray(y_pred, dtype=int).ravel()
+    return float((yp < yt).mean())
+
+
+def overestimation_rate(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """Fraccion de muestras donde el modelo sobreestima la madurez (y_pred > y_true)."""
+    yt = np.asarray(y_true, dtype=int).ravel()
+    yp = np.asarray(y_pred, dtype=int).ravel()
+    return float((yp > yt).mean())
+
+
 def compute_metrics(
     y_true: np.ndarray,
     y_pred: np.ndarray,

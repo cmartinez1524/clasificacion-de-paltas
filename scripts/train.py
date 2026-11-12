@@ -75,11 +75,11 @@ def main() -> None:
     print(f"Dispositivo : {device}  "
           f"{torch.cuda.get_device_name(0) if device.type == 'cuda' else ''}")
     print(f"Imagenes    : {images_dir}")
-    if cfg.asymmetric_loss_weight > 0 or cfg.predict_mode != "argmax":
+    if cfg.asymmetric_loss_weight > 0 or cfg.use_bayes_risk_eval:
         print(f"Loss        : CrossEntropy + AsymmetricOrdinalLoss("
               f"w={cfg.asymmetric_loss_weight}, under={cfg.underripe_penalty}, "
-              f"over={cfg.overripe_penalty}) | pred={cfg.predict_mode} | "
-              f"sel={cfg.selection_metric}")
+              f"over={cfg.overripe_penalty}) | bayes={cfg.use_bayes_risk_eval} | "
+              f"sel={cfg.primary_metric}")
     if cfg.notes:
         print(f"Notas       : {cfg.notes}")
     print("=" * 78)
@@ -132,7 +132,7 @@ def main() -> None:
         cfg.amp,
         cfg.eval_tta_hflip,
         return_logits=True,
-        predict_mode=cfg.predict_mode,
+        use_bayes_risk=cfg.use_bayes_risk_eval,
         underripe_penalty=cfg.underripe_penalty,
         overripe_penalty=cfg.overripe_penalty,
     )
@@ -143,7 +143,7 @@ def main() -> None:
         cfg.amp,
         cfg.eval_tta_hflip,
         return_logits=True,
-        predict_mode=cfg.predict_mode,
+        use_bayes_risk=cfg.use_bayes_risk_eval,
         underripe_penalty=cfg.underripe_penalty,
         overripe_penalty=cfg.overripe_penalty,
     )
@@ -151,7 +151,7 @@ def main() -> None:
     print(f"TEST  {format_metrics(test)}")
 
     # Desglose por grupo de almacenamiento: informa el domain gap.
-    cmat = cost_matrix(
+    costs = cost_matrix(
         num_classes=5,
         underripe_penalty=cfg.underripe_penalty,
         overripe_penalty=cfg.overripe_penalty,
@@ -163,7 +163,7 @@ def main() -> None:
         df_test.assign(
             ok=lambda d: d["y_true"] == d["y_pred"],
             err=lambda d: (d["y_true"] - d["y_pred"]).abs(),
-            asym_err=lambda d: cmat[d["y_true"].to_numpy(), d["y_pred"].to_numpy()],
+            asym_err=lambda d: costs[d["y_true"].to_numpy(), d["y_pred"].to_numpy()],
             underest=lambda d: d["y_pred"] < d["y_true"],
         )
         .groupby("storage_group")

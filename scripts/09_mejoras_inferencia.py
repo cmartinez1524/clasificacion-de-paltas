@@ -193,6 +193,10 @@ def main() -> None:
         del model
         torch.cuda.empty_cache()
 
+    if not todo:
+        print("\n[aviso] Ningun checkpoint base en checkpoints/; conservo mejoras_inferencia.json existente.")
+        return
+
     destino = METRICS_DIR / "mejoras_inferencia.json"
     destino.write_text(json.dumps(todo, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nGuardado en {destino}")

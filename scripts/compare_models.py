@@ -34,10 +34,13 @@ ETIQUETAS = {
     "vit_small": "ViT-S/16",
     "resnet50_asimetrico": "ResNet-50 (asim.)",
     "vit_small_asimetrico": "ViT-S/16 (asim.)",
+    "resnet50_meta": "ResNet-50 + meta",
+    "vit_small_meta": "ViT-S/16 + meta",
     "resnet50_scratch": "ResNet-50 (scratch)",
     "vit_small_scratch": "ViT-S/16 (scratch)",
     "hybrid_fusion": "Fusion tardia",
     "hybrid_vit_r26": "ViT-Hybrid R26",
+    "referencia_metadatos": "Calendario (sin imagen)",
 }
 
 
@@ -46,7 +49,7 @@ def etiqueta(m: str) -> str:
 
 
 def color(m: str) -> str:
-    base = m.replace("_scratch", "").replace("_asimetrico", "")
+    base = m.replace("_scratch", "").replace("_asimetrico", "").replace("_meta", "")
     c = MODEL_COLORS.get(base, "#888")
     return c
 

@@ -41,7 +41,12 @@ use_utf8()
 def cargar(nombre: str, arquitectura: str, device):
     ckpt = CHECKPOINT_DIR / f"{nombre}.pt"
     if not ckpt.exists():
-        raise FileNotFoundError(f"Falta {ckpt}; entrena {arquitectura} primero.")
+        alt = CHECKPOINT_DIR / f"{nombre}_asimetrico.pt"
+        if alt.exists():
+            print(f"[aviso] {ckpt.name} no existe; usando {alt.name}")
+            ckpt = alt
+        else:
+            raise FileNotFoundError(f"Falta {ckpt}; entrena {arquitectura} primero.")
     model = build_model(arquitectura, pretrained=False)
     estado = torch.load(ckpt, map_location="cpu", weights_only=False)["model"]
     model.load_state_dict(estado)
