@@ -1,0 +1,21 @@
+name: resnet50_app_ce_v2
+model: resnet50
+pretrained: true
+img_size: 224
+batch_size: 64
+num_workers: 4
+use_cache: true
+use_class_weights: false
+epochs: 30
+lr: 0.0001
+head_lr_mult: 10.0
+weight_decay: 0.05
+warmup_epochs: 2.0
+label_smoothing: 0.05
+drop_path_rate: 0.0
+grad_clip: 1.0
+amp: true
+seed: 42
+early_stop_patience: 8
+primary_metric: qwk
+notes: "App v2: ajuste mas gradual y CE sin pesos de clase; seleccionar solo en validacion"

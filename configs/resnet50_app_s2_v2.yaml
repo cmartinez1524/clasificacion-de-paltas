@@ -1,0 +1,21 @@
+name: resnet50_app_s2_v2
+model: resnet50
+pretrained: true
+img_size: 224
+batch_size: 64
+num_workers: 4
+use_cache: true
+use_class_weights: true
+epochs: 15
+lr: 0.0003
+head_lr_mult: 10.0
+weight_decay: 0.05
+warmup_epochs: 1.0
+label_smoothing: 0.05
+drop_path_rate: 0.0
+grad_clip: 1.0
+amp: true
+seed: 2
+early_stop_patience: 5
+primary_metric: qwk
+notes: "Receta original de la app, nueva semilla 2; seleccion por validacion"

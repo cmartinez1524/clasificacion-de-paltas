@@ -13,6 +13,8 @@ Salidas:
 Con --eval-only no entrena: carga checkpoints/<name>.pt y regenera las salidas
 de evaluacion (sirve para exportar las predicciones de validacion de modelos ya
 entrenados).
+
+Con --val-only no evalua test: guarda <name>_val.json y predicciones de validacion.
 """
 
 from __future__ import annotations
@@ -22,7 +24,6 @@ import json
 import sys
 from pathlib import Path
 
-import pandas as pd
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -38,12 +39,22 @@ from paltas.paths import (  # noqa: E402
     IMAGES_DIR,
     METRICS_DIR,
     SPLITS_CSV,
+    ROOT,
     ensure_dirs,
 )
 from paltas.splits import class_weights  # noqa: E402
 from paltas.console import use_utf8  # noqa: E402
 
 use_utf8()
+
+
+def guardar_predicciones(nombre, split, frame, resultado):
+    probs = torch.softmax(torch.from_numpy(resultado["logits"]), 1).numpy()
+    out = frame[["file_name", "sample_id", "storage_group", "day", "side"]].copy()
+    out["y_true"], out["y_pred"] = resultado["y_true"], resultado["y_pred"]
+    for c in range(probs.shape[1]):
+        out[f"p{c + 1}"] = probs[:, c].round(5)
+    out.to_csv(METRICS_DIR / f"{nombre}_{split}_preds.csv", index=False)
 
 
 def main() -> None:
@@ -57,6 +68,7 @@ def main() -> None:
     ap.add_argument("--num-workers", type=int, default=None)
     ap.add_argument("--eval-only", action="store_true",
                     help="no entrenar: evaluar el checkpoint existente")
+    ap.add_argument("--val-only", action="store_true", help="evaluar solo validacion; no usar test")
     args = ap.parse_args()
 
     ensure_dirs()
@@ -95,8 +107,12 @@ def main() -> None:
     extra = {}
     if cfg.model == "hybrid_fusion":
         extra["freeze_backbones"] = cfg.freeze_backbones
-    model = build_model(cfg.model, pretrained=cfg.pretrained and not args.eval_only,
+    model = build_model(cfg.model, pretrained=cfg.pretrained and not args.eval_only and not cfg.init_checkpoint,
                         drop_path_rate=cfg.drop_path_rate, **extra)
+    if cfg.init_checkpoint and not args.eval_only:
+        initial = ROOT / cfg.init_checkpoint
+        model.load_state_dict(torch.load(initial, map_location="cpu", weights_only=True)["model"])
+        print(f"Pesos iniciales: {initial}")
 
     if cfg.model == "hybrid_fusion" and (cfg.cnn_ckpt or cfg.vit_ckpt):
         model.load_finetuned_backbones(
@@ -116,14 +132,17 @@ def main() -> None:
     hist = METRICS_DIR / f"{cfg.name}_history.json"
 
     if args.eval_only:
-        previo = json.loads((METRICS_DIR / f"{cfg.name}_test.json").read_text(encoding="utf-8"))
+        previous = METRICS_DIR / f"{cfg.name}_test.json"
+        if not previous.exists():
+            previous = METRICS_DIR / f"{cfg.name}_val.json"
+        previo = json.loads(previous.read_text(encoding="utf-8"))
         resumen = {"best_epoch": previo["best_epoch"], "train_minutes": previo["train_minutes"]}
         model.to(device)
     else:
         resumen = fit(model, loaders, cfg, device, w, ckpt, hist)
 
     # --- Evaluacion final con el mejor checkpoint ---
-    print("\nCargando el mejor checkpoint y evaluando en validacion y test...")
+    print("\nCargando el mejor checkpoint y evaluando...")
     model.load_state_dict(torch.load(ckpt, map_location=device, weights_only=False)["model"])
     val = evaluate(
         model,
@@ -136,6 +155,17 @@ def main() -> None:
         underripe_penalty=cfg.underripe_penalty,
         overripe_penalty=cfg.overripe_penalty,
     )
+    if args.val_only:
+        salida = {
+            "config": cfg.to_dict(), "best_epoch": resumen["best_epoch"],
+            "train_minutes": resumen["train_minutes"], "seed": cfg.seed,
+            "val": {k: v for k, v in val.items() if k not in ("logits", "y_true", "y_pred")},
+        }
+        (METRICS_DIR / f"{cfg.name}_val.json").write_text(
+            json.dumps(salida, indent=2, ensure_ascii=False), encoding="utf-8")
+        guardar_predicciones(cfg.name, "val", frames["val"], val)
+        print(f"VAL   {format_metrics(val)}; test no evaluado")
+        return
     test = evaluate(
         model,
         loaders["test"],
@@ -198,16 +228,7 @@ def main() -> None:
     # de significancia de compare_models.py. Las probabilidades permiten promediar
     # caras o semillas; las de validacion, elegir variantes sin mirar test.
     for split, res in (("val", val), ("test", test)):
-        probs = torch.softmax(torch.from_numpy(res["logits"]), 1).numpy()
-        f = frames[split]
-        out = pd.DataFrame({
-            "file_name": f["file_name"], "sample_id": f["sample_id"],
-            "storage_group": f["storage_group"], "day": f["day"], "side": f["side"],
-            "y_true": res["y_true"], "y_pred": res["y_pred"],
-        })
-        for c in range(probs.shape[1]):
-            out[f"p{c + 1}"] = probs[:, c].round(5)
-        out.to_csv(METRICS_DIR / f"{cfg.name}_{split}_preds.csv", index=False)
+        guardar_predicciones(cfg.name, split, frames[split], res)
 
     print(f"\nGuardado: {METRICS_DIR / (cfg.name + '_test.json')}")
 

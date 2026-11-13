@@ -1,5 +1,36 @@
 # Clasificación del estado de madurez de paltas Hass
 
+### Experimentos de mejora de la app
+
+`scripts/mejorar_modelo_app.py` compara dos recetas nuevas de ResNet-50 (ajuste
+gradual sin pesos de clase y la misma receta con costo ordinal simétrico).
+Entrena con `--val-only`: **test no se evalúa durante la selección**. Se elige
+por QWK de validación, con accuracy para desempatar, incluyendo el modelo actual
+como candidato; solo el elegido se evalúa en test. Los experimentos usan nombres
+nuevos y conservan `resnet50_app` y las métricas anteriores.
+
+El protocolo y la elección quedan en `reports/metrics/app_mejoras_v2.json`.
+La comparación es exploratoria con una semilla y no demuestra una mejora en
+fotos de cámaras reales. No vuelvas a ejecutar el orquestador sobre resultados
+existentes: se detiene para no sobrescribirlos.
+
+Las fases adicionales usan `--refinar` (parte del checkpoint actual) y
+`--semillas` (receta original, semillas 1 y 2); sus registros son
+`app_refinado_v2.json` y `app_semillas_v2.json`. Todas eligen por validación.
+Resumen de resultados y límites: [`reports/estudio_app_v2.md`](reports/estudio_app_v2.md).
+
+El checkpoint elegido fue `resnet50_app_s1_v2`: en test obtuvo 75,55 % de accuracy
+exacta y QWK 0,93917, frente a 74,62 % y 0,93369 del anterior. Es una mejora
+observada, **no estadísticamente concluyente** en el bootstrap por fruta. La
+receta no cambió; se eligió otra inicialización por validación. La nueva app es
+experimental y falta evaluarla con las cámaras reales.
+
+Para empaquetar el checkpoint experimental elegido sin reemplazar el ZIP anterior:
+
+```powershell
+python scripts/empaquetar_app.py --modelo resnet50_app_s1_v2
+```
+
 ### Demostración local en varios computadores Windows
 
 El paquete `dist/PaltasDemo.zip` contiene la app y los parámetros ya entrenados.

@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -320,7 +321,8 @@ def test_fit_and_evaluate_with_asymmetric_config(tmp_path: Path):
     assert "asymmetric_mae" in ev and "logits" in ev
 
 
-def test_train_script_main_runs_end_to_end(tmp_path: Path, monkeypatch):
+@pytest.mark.parametrize("val_only, initialize", [(False, False), (True, False), (True, True)])
+def test_train_script_main_runs_end_to_end(tmp_path: Path, monkeypatch, val_only, initialize):
     """Ejecuta scripts/train.py main() de punta a punta con datos sinteticos."""
     import importlib.util
     import pandas as pd
@@ -347,6 +349,11 @@ def test_train_script_main_runs_end_to_end(tmp_path: Path, monkeypatch):
     })
     loaders = {"train": loader, "val": loader, "test": loader}
     frames = {"train": df, "val": df, "test": df}
+    if val_only:
+        class ForbiddenTestLoader:
+            def __iter__(self):
+                raise AssertionError("Test no se puede evaluar durante seleccion")
+        loaders["test"] = ForbiddenTestLoader()
 
     class TinyModel(torch.nn.Module):
         def __init__(self):
@@ -363,12 +370,32 @@ def test_train_script_main_runs_end_to_end(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(mod, "CHECKPOINT_DIR", tmp_path)
     monkeypatch.setattr(mod, "METRICS_DIR", tmp_path)
     cfg_path = str(Path(__file__).resolve().parents[1] / "configs" / "resnet50_asimetrico.yaml")
-    monkeypatch.setattr(
-        sys, "argv",
-        ["train.py", "--config", cfg_path, "--epochs", "1", "--batch-size", "3", "--name", "smoke_test"],
-    )
+    if initialize:
+        initial = TinyModel()
+        with torch.no_grad():
+            initial.fc.weight.fill_(0.123)
+        initial_path = tmp_path / "initial.pt"
+        torch.save({"model": initial.state_dict()}, initial_path)
+        cfg = mod.TrainConfig.from_yaml(cfg_path)
+        cfg.init_checkpoint = str(initial_path)
+        monkeypatch.setattr(mod.TrainConfig, "from_yaml", lambda path: cfg)
+        original_fit = mod.fit
+        def warm_start_fit(model, *args):
+            assert torch.equal(model.fc.weight, initial.fc.weight)
+            return original_fit(model, *args)
+        monkeypatch.setattr(mod, "fit", warm_start_fit)
+    args = ["train.py", "--config", cfg_path, "--epochs", "1", "--batch-size", "3", "--name", "smoke_test"]
+    monkeypatch.setattr(sys, "argv", args + (["--val-only"] if val_only else []))
     mod.main()
     assert (tmp_path / "smoke_test.pt").exists()
-    assert (tmp_path / "smoke_test_test.json").exists()
     assert (tmp_path / "smoke_test_val_preds.csv").exists()
+    if val_only:
+        assert (tmp_path / "smoke_test_val.json").exists()
+        assert not (tmp_path / "smoke_test_test.json").exists()
+        assert not (tmp_path / "smoke_test_test_preds.csv").exists()
+        loaders["test"] = loader
+        monkeypatch.setattr(sys, "argv", args + ["--eval-only"])
+        monkeypatch.setattr(mod, "fit", lambda *a: pytest.fail("--eval-only no reentrena"))
+        mod.main()
+    assert (tmp_path / "smoke_test_test.json").exists()
     assert (tmp_path / "smoke_test_test_preds.csv").exists()

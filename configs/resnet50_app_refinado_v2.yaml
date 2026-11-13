@@ -1,0 +1,22 @@
+name: resnet50_app_refinado_v2
+model: resnet50
+pretrained: false
+init_checkpoint: checkpoints/resnet50_app.pt
+img_size: 224
+batch_size: 64
+num_workers: 4
+use_cache: true
+use_class_weights: true
+epochs: 12
+lr: 0.00003
+head_lr_mult: 1.0
+weight_decay: 0.05
+warmup_epochs: 1.0
+label_smoothing: 0.05
+drop_path_rate: 0.0
+grad_clip: 1.0
+amp: true
+seed: 42
+early_stop_patience: 6
+primary_metric: qwk
+notes: "Refinar los pesos del baseline, con optimizador nuevo y pasos pequenos; conservar balance de clases"

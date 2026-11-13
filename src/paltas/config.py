@@ -14,6 +14,7 @@ class TrainConfig:
     name: str = "exp"
     model: str = "resnet50"
     pretrained: bool = True
+    init_checkpoint: str | None = None  # pesos entrenados para un refinamiento nuevo
 
     # --- datos ---
     img_size: int = 224

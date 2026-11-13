@@ -41,6 +41,7 @@ TF = build_transforms(224, train=False)
 #: checkpoint -> (arquitectura, etiqueta en la interfaz)
 DISPONIBLES = {
     "resnet50_app": ("resnet50", "ResNet-50 · nueva app"),
+    "resnet50_app_s1_v2": ("resnet50", "ResNet-50 · v2 experimental (semilla 1)"),
     "resnet50": ("resnet50", "ResNet-50"),
     "vit_small": ("vit_small", "ViT-S/16"),
     "resnet50_asimetrico": ("resnet50", "ResNet-50 (asimétrico)"),
