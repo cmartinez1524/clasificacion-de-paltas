@@ -1,0 +1,92 @@
+{
+  "config": {
+    "name": "resnet50_app_refinado_v2",
+    "model": "resnet50",
+    "pretrained": false,
+    "init_checkpoint": "checkpoints/resnet50_app.pt",
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 12,
+    "lr": 3e-05,
+    "head_lr_mult": 1.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 6,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Refinar los pesos del baseline, con optimizador nuevo y pasos pequenos; conservar balance de clases"
+  },
+  "best_epoch": 3,
+  "train_minutes": 5.44,
+  "seed": 42,
+  "val": {
+    "accuracy": 0.7732142857142857,
+    "balanced_accuracy": 0.7661099223981075,
+    "macro_f1": 0.7657946211129427,
+    "qwk": 0.9366493419858858,
+    "mae": 0.240625,
+    "asymmetric_mae": 0.36339285714285713,
+    "underestimation_rate": 0.11205357142857143,
+    "overestimation_rate": 0.11473214285714285,
+    "off_by_one": 0.9861607142857143,
+    "per_class_f1": [
+      0.8944099378881988,
+      0.7321178120617111,
+      0.7245657568238213,
+      0.7125984251968503,
+      0.7652811735941321
+    ],
+    "confusion_matrix": [
+      [
+        504,
+        74,
+        0,
+        0,
+        0
+      ],
+      [
+        45,
+        261,
+        42,
+        0,
+        0
+      ],
+      [
+        0,
+        27,
+        292,
+        66,
+        7
+      ],
+      [
+        0,
+        3,
+        59,
+        362,
+        68
+      ],
+      [
+        0,
+        0,
+        21,
+        96,
+        313
+      ]
+    ]
+  }
+}

@@ -1,0 +1,307 @@
+{
+  "baseline": "resnet50_app",
+  "semilla": 42,
+  "criterio": "Mayor QWK en validacion; desempate accuracy; baseline incluido. Test no participa.",
+  "candidatos": [
+    {
+      "name": "resnet50_app_ce_v2",
+      "model": "resnet50",
+      "pretrained": true,
+      "img_size": 224,
+      "batch_size": 64,
+      "num_workers": 4,
+      "use_cache": true,
+      "use_class_weights": false,
+      "epochs": 30,
+      "lr": 0.0001,
+      "head_lr_mult": 10.0,
+      "weight_decay": 0.05,
+      "warmup_epochs": 2.0,
+      "label_smoothing": 0.05,
+      "drop_path_rate": 0.0,
+      "grad_clip": 1.0,
+      "amp": true,
+      "seed": 42,
+      "early_stop_patience": 8,
+      "eval_tta_hflip": false,
+      "asymmetric_loss_weight": 0.0,
+      "underripe_penalty": 2.0,
+      "overripe_penalty": 1.0,
+      "primary_metric": "qwk",
+      "use_bayes_risk_eval": false,
+      "freeze_backbones": false,
+      "cnn_ckpt": null,
+      "vit_ckpt": null,
+      "notes": "App v2: ajuste mas gradual y CE sin pesos de clase; seleccionar solo en validacion"
+    },
+    {
+      "name": "resnet50_app_ordinal_v2",
+      "model": "resnet50",
+      "pretrained": true,
+      "img_size": 224,
+      "batch_size": 64,
+      "num_workers": 4,
+      "use_cache": true,
+      "use_class_weights": false,
+      "epochs": 30,
+      "lr": 0.0001,
+      "head_lr_mult": 10.0,
+      "weight_decay": 0.05,
+      "warmup_epochs": 2.0,
+      "label_smoothing": 0.05,
+      "drop_path_rate": 0.0,
+      "grad_clip": 1.0,
+      "amp": true,
+      "seed": 42,
+      "early_stop_patience": 8,
+      "eval_tta_hflip": false,
+      "asymmetric_loss_weight": 0.25,
+      "underripe_penalty": 1.0,
+      "overripe_penalty": 1.0,
+      "primary_metric": "qwk",
+      "use_bayes_risk_eval": false,
+      "freeze_backbones": false,
+      "cnn_ckpt": null,
+      "vit_ckpt": null,
+      "notes": "App v2: CE + costo ordinal esperado simetrico; distancia entre clases, no sesgo hacia maduras"
+    }
+  ],
+  "splits_sha256": "34c65fee5b4e62361f6ccebcaeeb8ea508be2b914b65477f2169555cee0b20c9",
+  "limitacion": "Exploracion con una semilla; no demuestra mejora entre semillas ni en camaras reales.",
+  "validacion": [
+    {
+      "nombre": "resnet50_app",
+      "val": {
+        "accuracy": 0.7669642857142858,
+        "balanced_accuracy": 0.7546180336051149,
+        "macro_f1": 0.7572121045758566,
+        "qwk": 0.938354342576705,
+        "mae": 0.24330357142857142,
+        "asymmetric_mae": 0.3638392857142857,
+        "underestimation_rate": 0.11383928571428571,
+        "overestimation_rate": 0.11919642857142858,
+        "off_by_one": 0.9897321428571428,
+        "per_class_f1": [
+          0.9037294015611448,
+          0.7189349112426036,
+          0.7073791348600509,
+          0.7029608404966571,
+          0.7530562347188264
+        ],
+        "confusion_matrix": [
+          [
+            521,
+            57,
+            0,
+            0,
+            0
+          ],
+          [
+            54,
+            243,
+            51,
+            0,
+            0
+          ],
+          [
+            0,
+            27,
+            278,
+            79,
+            8
+          ],
+          [
+            0,
+            1,
+            51,
+            368,
+            72
+          ],
+          [
+            0,
+            0,
+            14,
+            108,
+            308
+          ]
+        ]
+      }
+    },
+    {
+      "nombre": "resnet50_app_ce_v2",
+      "val": {
+        "accuracy": 0.7566964285714286,
+        "balanced_accuracy": 0.7376161050699661,
+        "macro_f1": 0.7432069498310078,
+        "qwk": 0.9368291207205465,
+        "mae": 0.25357142857142856,
+        "asymmetric_mae": 0.396875,
+        "underestimation_rate": 0.134375,
+        "overestimation_rate": 0.10892857142857143,
+        "off_by_one": 0.9901785714285715,
+        "per_class_f1": [
+          0.908641975308642,
+          0.6985645933014354,
+          0.6988265971316818,
+          0.6773283160865475,
+          0.7326732673267327
+        ],
+        "confusion_matrix": [
+          [
+            552,
+            26,
+            0,
+            0,
+            0
+          ],
+          [
+            84,
+            219,
+            44,
+            1,
+            0
+          ],
+          [
+            1,
+            30,
+            268,
+            91,
+            2
+          ],
+          [
+            0,
+            3,
+            49,
+            360,
+            80
+          ],
+          [
+            0,
+            1,
+            14,
+            119,
+            296
+          ]
+        ]
+      }
+    },
+    {
+      "nombre": "resnet50_app_ordinal_v2",
+      "val": {
+        "accuracy": 0.7549107142857143,
+        "balanced_accuracy": 0.7357887527697781,
+        "macro_f1": 0.7411378401772748,
+        "qwk": 0.9374649910233394,
+        "mae": 0.25535714285714284,
+        "asymmetric_mae": 0.37142857142857144,
+        "underestimation_rate": 0.10892857142857143,
+        "overestimation_rate": 0.13616071428571427,
+        "off_by_one": 0.990625,
+        "per_class_f1": [
+          0.908036454018227,
+          0.7043618739903069,
+          0.6630581867388363,
+          0.663489037178265,
+          0.766743648960739
+        ],
+        "confusion_matrix": [
+          [
+            548,
+            30,
+            0,
+            0,
+            0
+          ],
+          [
+            81,
+            218,
+            47,
+            2,
+            0
+          ],
+          [
+            0,
+            20,
+            245,
+            122,
+            5
+          ],
+          [
+            0,
+            1,
+            44,
+            348,
+            99
+          ],
+          [
+            0,
+            2,
+            11,
+            85,
+            332
+          ]
+        ]
+      }
+    }
+  ],
+  "elegido_en_validacion": "resnet50_app",
+  "test": {
+    "accuracy": 0.7462422634836428,
+    "balanced_accuracy": 0.7342471203260676,
+    "macro_f1": 0.73773624949042,
+    "qwk": 0.9336883804607184,
+    "mae": 0.2634836427939876,
+    "asymmetric_mae": 0.374447391688771,
+    "underestimation_rate": 0.10831122900088418,
+    "overestimation_rate": 0.14544650751547303,
+    "off_by_one": 0.9902740937223696,
+    "per_class_f1": [
+      0.8922800718132855,
+      0.6894409937888198,
+      0.6633663366336634,
+      0.6727605118829981,
+      0.7708333333333334
+    ],
+    "confusion_matrix": [
+      [
+        497,
+        53,
+        0,
+        0,
+        0
+      ],
+      [
+        67,
+        222,
+        50,
+        3,
+        0
+      ],
+      [
+        0,
+        27,
+        268,
+        124,
+        13
+      ],
+      [
+        0,
+        0,
+        52,
+        368,
+        86
+      ],
+      [
+        0,
+        0,
+        6,
+        93,
+        333
+      ]
+    ]
+  },
+  "costo_reportado": {
+    "subestimacion": 2.0,
+    "sobreestimacion": 1.0
+  }
+}

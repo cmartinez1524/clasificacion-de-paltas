@@ -1,0 +1,332 @@
+{
+  "baseline": "resnet50_app",
+  "baseline_semilla": 42,
+  "criterio": "Mayor QWK en validacion; desempate accuracy; baseline incluido. Test no participa.",
+  "candidatos": [
+    {
+      "name": "resnet50_app_s1_v2",
+      "model": "resnet50",
+      "pretrained": true,
+      "init_checkpoint": null,
+      "img_size": 224,
+      "batch_size": 64,
+      "num_workers": 4,
+      "use_cache": true,
+      "use_class_weights": true,
+      "epochs": 15,
+      "lr": 0.0003,
+      "head_lr_mult": 10.0,
+      "weight_decay": 0.05,
+      "warmup_epochs": 1.0,
+      "label_smoothing": 0.05,
+      "drop_path_rate": 0.0,
+      "grad_clip": 1.0,
+      "amp": true,
+      "seed": 1,
+      "early_stop_patience": 5,
+      "eval_tta_hflip": false,
+      "asymmetric_loss_weight": 0.0,
+      "underripe_penalty": 2.0,
+      "overripe_penalty": 1.0,
+      "primary_metric": "qwk",
+      "use_bayes_risk_eval": false,
+      "freeze_backbones": false,
+      "cnn_ckpt": null,
+      "vit_ckpt": null,
+      "notes": "Receta original de la app, nueva semilla 1; seleccion por validacion"
+    },
+    {
+      "name": "resnet50_app_s2_v2",
+      "model": "resnet50",
+      "pretrained": true,
+      "init_checkpoint": null,
+      "img_size": 224,
+      "batch_size": 64,
+      "num_workers": 4,
+      "use_cache": true,
+      "use_class_weights": true,
+      "epochs": 15,
+      "lr": 0.0003,
+      "head_lr_mult": 10.0,
+      "weight_decay": 0.05,
+      "warmup_epochs": 1.0,
+      "label_smoothing": 0.05,
+      "drop_path_rate": 0.0,
+      "grad_clip": 1.0,
+      "amp": true,
+      "seed": 2,
+      "early_stop_patience": 5,
+      "eval_tta_hflip": false,
+      "asymmetric_loss_weight": 0.0,
+      "underripe_penalty": 2.0,
+      "overripe_penalty": 1.0,
+      "primary_metric": "qwk",
+      "use_bayes_risk_eval": false,
+      "freeze_backbones": false,
+      "cnn_ckpt": null,
+      "vit_ckpt": null,
+      "notes": "Receta original de la app, nueva semilla 2; seleccion por validacion"
+    }
+  ],
+  "splits_sha256": "34c65fee5b4e62361f6ccebcaeeb8ea508be2b914b65477f2169555cee0b20c9",
+  "limitacion": "Test solo del elegido; seleccionar un checkpoint no demuestra mejora de la receta ni generalizacion a camaras reales.",
+  "validacion": [
+    {
+      "nombre": "resnet50_app",
+      "val": {
+        "accuracy": 0.7669642857142858,
+        "balanced_accuracy": 0.7546180336051149,
+        "macro_f1": 0.7572121045758566,
+        "qwk": 0.938354342576705,
+        "mae": 0.24330357142857142,
+        "asymmetric_mae": 0.3638392857142857,
+        "underestimation_rate": 0.11383928571428571,
+        "overestimation_rate": 0.11919642857142858,
+        "off_by_one": 0.9897321428571428,
+        "per_class_f1": [
+          0.9037294015611448,
+          0.7189349112426036,
+          0.7073791348600509,
+          0.7029608404966571,
+          0.7530562347188264
+        ],
+        "confusion_matrix": [
+          [
+            521,
+            57,
+            0,
+            0,
+            0
+          ],
+          [
+            54,
+            243,
+            51,
+            0,
+            0
+          ],
+          [
+            0,
+            27,
+            278,
+            79,
+            8
+          ],
+          [
+            0,
+            1,
+            51,
+            368,
+            72
+          ],
+          [
+            0,
+            0,
+            14,
+            108,
+            308
+          ]
+        ]
+      }
+    },
+    {
+      "nombre": "resnet50_app_s1_v2",
+      "val": {
+        "accuracy": 0.7616071428571428,
+        "balanced_accuracy": 0.7468728891024171,
+        "macro_f1": 0.7508075821520953,
+        "qwk": 0.9396843702981978,
+        "mae": 0.24598214285714284,
+        "asymmetric_mae": 0.37455357142857143,
+        "underestimation_rate": 0.12232142857142857,
+        "overestimation_rate": 0.11607142857142858,
+        "off_by_one": 0.9924107142857143,
+        "per_class_f1": [
+          0.8979591836734694,
+          0.7126099706744868,
+          0.6957708049113234,
+          0.6952469711090401,
+          0.7524509803921569
+        ],
+        "confusion_matrix": [
+          [
+            528,
+            50,
+            0,
+            0,
+            0
+          ],
+          [
+            70,
+            243,
+            35,
+            0,
+            0
+          ],
+          [
+            0,
+            38,
+            255,
+            96,
+            3
+          ],
+          [
+            0,
+            3,
+            40,
+            373,
+            76
+          ],
+          [
+            0,
+            0,
+            11,
+            112,
+            307
+          ]
+        ]
+      }
+    },
+    {
+      "nombre": "resnet50_app_s2_v2",
+      "val": {
+        "accuracy": 0.7553571428571428,
+        "balanced_accuracy": 0.7503902668805,
+        "macro_f1": 0.748558908118748,
+        "qwk": 0.9344804785038602,
+        "mae": 0.2544642857142857,
+        "asymmetric_mae": 0.3825892857142857,
+        "underestimation_rate": 0.12008928571428572,
+        "overestimation_rate": 0.12455357142857143,
+        "off_by_one": 0.9915178571428571,
+        "per_class_f1": [
+          0.8762420957542909,
+          0.6969292389853138,
+          0.7169811320754716,
+          0.6899302093718843,
+          0.7627118644067796
+        ],
+        "confusion_matrix": [
+          [
+            485,
+            93,
+            0,
+            0,
+            0
+          ],
+          [
+            44,
+            261,
+            43,
+            0,
+            0
+          ],
+          [
+            0,
+            41,
+            285,
+            62,
+            4
+          ],
+          [
+            0,
+            3,
+            66,
+            346,
+            77
+          ],
+          [
+            0,
+            3,
+            9,
+            103,
+            315
+          ]
+        ]
+      }
+    }
+  ],
+  "elegido_en_validacion": "resnet50_app_s1_v2",
+  "test": {
+    "accuracy": 0.75552608311229,
+    "balanced_accuracy": 0.7419554584749093,
+    "macro_f1": 0.7460740315884109,
+    "qwk": 0.9391742734414891,
+    "mae": 0.2506631299734748,
+    "asymmetric_mae": 0.363395225464191,
+    "underestimation_rate": 0.11096374889478337,
+    "overestimation_rate": 0.13351016799292661,
+    "off_by_one": 0.9938107869142352,
+    "per_class_f1": [
+      0.903056768558952,
+      0.715625,
+      0.6587301587301587,
+      0.678539626001781,
+      0.7744186046511627
+    ],
+    "confusion_matrix": [
+      [
+        517,
+        33,
+        0,
+        0,
+        0
+      ],
+      [
+        77,
+        229,
+        34,
+        2,
+        0
+      ],
+      [
+        1,
+        36,
+        249,
+        138,
+        8
+      ],
+      [
+        0,
+        0,
+        38,
+        381,
+        87
+      ],
+      [
+        0,
+        0,
+        3,
+        96,
+        333
+      ]
+    ]
+  },
+  "costo_reportado": {
+    "subestimacion": 2.0,
+    "sobreestimacion": 1.0
+  },
+  "diferencias_test_vs_baseline": {
+    "qwk": {
+      "diff": 0.005485892980770624,
+      "ci_low": -0.0005784698855038933,
+      "ci_high": 0.011645259191769265,
+      "p_value": 0.078,
+      "significativo": false
+    },
+    "accuracy": {
+      "diff": 0.009283819628647216,
+      "ci_low": -0.005663873824957896,
+      "ci_high": 0.02486498894916612,
+      "p_value": 0.25,
+      "significativo": false
+    },
+    "mae": {
+      "diff": -0.01282051282051283,
+      "ci_low": -0.030354385724133424,
+      "ci_high": 0.004696399136972169,
+      "p_value": 0.153,
+      "significativo": false
+    }
+  }
+}

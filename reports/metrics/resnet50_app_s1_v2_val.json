@@ -1,0 +1,92 @@
+{
+  "config": {
+    "name": "resnet50_app_s1_v2",
+    "model": "resnet50",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 15,
+    "lr": 0.0003,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 1,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Receta original de la app, nueva semilla 1; seleccion por validacion"
+  },
+  "best_epoch": 10,
+  "train_minutes": 8.44,
+  "seed": 1,
+  "val": {
+    "accuracy": 0.7616071428571428,
+    "balanced_accuracy": 0.7468728891024171,
+    "macro_f1": 0.7508075821520953,
+    "qwk": 0.9396843702981978,
+    "mae": 0.24598214285714284,
+    "asymmetric_mae": 0.37455357142857143,
+    "underestimation_rate": 0.12232142857142857,
+    "overestimation_rate": 0.11607142857142858,
+    "off_by_one": 0.9924107142857143,
+    "per_class_f1": [
+      0.8979591836734694,
+      0.7126099706744868,
+      0.6957708049113234,
+      0.6952469711090401,
+      0.7524509803921569
+    ],
+    "confusion_matrix": [
+      [
+        528,
+        50,
+        0,
+        0,
+        0
+      ],
+      [
+        70,
+        243,
+        35,
+        0,
+        0
+      ],
+      [
+        0,
+        38,
+        255,
+        96,
+        3
+      ],
+      [
+        0,
+        3,
+        40,
+        373,
+        76
+      ],
+      [
+        0,
+        0,
+        11,
+        112,
+        307
+      ]
+    ]
+  }
+}

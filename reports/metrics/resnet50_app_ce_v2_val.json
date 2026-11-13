@@ -1,0 +1,91 @@
+{
+  "config": {
+    "name": "resnet50_app_ce_v2",
+    "model": "resnet50",
+    "pretrained": true,
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": false,
+    "epochs": 30,
+    "lr": 0.0001,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 2.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 8,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "App v2: ajuste mas gradual y CE sin pesos de clase; seleccionar solo en validacion"
+  },
+  "best_epoch": 15,
+  "train_minutes": 12.32,
+  "seed": 42,
+  "val": {
+    "accuracy": 0.7566964285714286,
+    "balanced_accuracy": 0.7376161050699661,
+    "macro_f1": 0.7432069498310078,
+    "qwk": 0.9368291207205465,
+    "mae": 0.25357142857142856,
+    "asymmetric_mae": 0.396875,
+    "underestimation_rate": 0.134375,
+    "overestimation_rate": 0.10892857142857143,
+    "off_by_one": 0.9901785714285715,
+    "per_class_f1": [
+      0.908641975308642,
+      0.6985645933014354,
+      0.6988265971316818,
+      0.6773283160865475,
+      0.7326732673267327
+    ],
+    "confusion_matrix": [
+      [
+        552,
+        26,
+        0,
+        0,
+        0
+      ],
+      [
+        84,
+        219,
+        44,
+        1,
+        0
+      ],
+      [
+        1,
+        30,
+        268,
+        91,
+        2
+      ],
+      [
+        0,
+        3,
+        49,
+        360,
+        80
+      ],
+      [
+        0,
+        1,
+        14,
+        119,
+        296
+      ]
+    ]
+  }
+}

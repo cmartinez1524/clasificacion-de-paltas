@@ -1,0 +1,91 @@
+{
+  "config": {
+    "name": "resnet50_app_ordinal_v2",
+    "model": "resnet50",
+    "pretrained": true,
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": false,
+    "epochs": 30,
+    "lr": 0.0001,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 2.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 8,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.25,
+    "underripe_penalty": 1.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "App v2: CE + costo ordinal esperado simetrico; distancia entre clases, no sesgo hacia maduras"
+  },
+  "best_epoch": 15,
+  "train_minutes": 12.3,
+  "seed": 42,
+  "val": {
+    "accuracy": 0.7549107142857143,
+    "balanced_accuracy": 0.7357887527697781,
+    "macro_f1": 0.7411378401772748,
+    "qwk": 0.9374649910233394,
+    "mae": 0.25535714285714284,
+    "asymmetric_mae": 0.25535714285714284,
+    "underestimation_rate": 0.10892857142857143,
+    "overestimation_rate": 0.13616071428571427,
+    "off_by_one": 0.990625,
+    "per_class_f1": [
+      0.908036454018227,
+      0.7043618739903069,
+      0.6630581867388363,
+      0.663489037178265,
+      0.766743648960739
+    ],
+    "confusion_matrix": [
+      [
+        548,
+        30,
+        0,
+        0,
+        0
+      ],
+      [
+        81,
+        218,
+        47,
+        2,
+        0
+      ],
+      [
+        0,
+        20,
+        245,
+        122,
+        5
+      ],
+      [
+        0,
+        1,
+        44,
+        348,
+        99
+      ],
+      [
+        0,
+        2,
+        11,
+        85,
+        332
+      ]
+    ]
+  }
+}
