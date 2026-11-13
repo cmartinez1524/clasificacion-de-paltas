@@ -1,0 +1,62 @@
+[
+  {
+    "imagen": "T10_d02_111_b_1.jpg",
+    "mapa": "reports\\figures\\mapas_app\\T10_d02_111_b_1_gradcam.png",
+    "probabilidades": {
+      "1 · Verde / no maduro": 0.9213318824768066,
+      "2 · Iniciando maduracion": 0.03688587248325348,
+      "3 · Maduro (etapa 1)": 0.013716536574065685,
+      "4 · Maduro (etapa 2)": 0.015343783423304558,
+      "5 · Sobremaduro": 0.012721995823085308
+    },
+    "resultado": "### Indice predicho: **1** — Verde / no maduro\n\n**Recomendacion:** Aun no comestible. Dejar madurar varios dias a temperatura ambiente.\n\nIndice esperado (promedio ponderado): **1.16**  ·  probabilidad del estado elegido 92.1%  ·  modelo: ResNet-50 · nueva app\n\n**Mapa de calor:** rojo indica mayor intensidad. Se superpone al recorte que vio el modelo. Es una aproximación, no una segmentación de la fruta."
+  },
+  {
+    "imagen": "T10_d09_133_b_2.jpg",
+    "mapa": "reports\\figures\\mapas_app\\T10_d09_133_b_2_gradcam.png",
+    "probabilidades": {
+      "1 · Verde / no maduro": 0.0014457196230068803,
+      "2 · Iniciando maduracion": 0.9762345552444458,
+      "3 · Maduro (etapa 1)": 0.011842340230941772,
+      "4 · Maduro (etapa 2)": 0.009295150637626648,
+      "5 · Sobremaduro": 0.001182143110781908
+    },
+    "resultado": "### Indice predicho: **2** — Iniciando maduracion\n\n**Recomendacion:** Empezando a madurar. Lista en 2-3 dias.\n\nIndice esperado (promedio ponderado): **2.03**  ·  probabilidad del estado elegido 97.6%  ·  modelo: ResNet-50 · nueva app\n\n**Mapa de calor:** rojo indica mayor intensidad. Se superpone al recorte que vio el modelo. Es una aproximación, no una segmentación de la fruta."
+  },
+  {
+    "imagen": "T20_d06_435_a_3.jpg",
+    "mapa": "reports\\figures\\mapas_app\\T20_d06_435_a_3_gradcam.png",
+    "probabilidades": {
+      "1 · Verde / no maduro": 0.005819636397063732,
+      "2 · Iniciando maduracion": 0.006304173730313778,
+      "3 · Maduro (etapa 1)": 0.1380891501903534,
+      "4 · Maduro (etapa 2)": 0.7925794124603271,
+      "5 · Sobremaduro": 0.05720764398574829
+    },
+    "resultado": "### Indice predicho: **4** — Maduro (etapa 2)\n\n**Recomendacion:** Madura, ultimo dia de vida util. Consumir hoy.\n\nIndice esperado (promedio ponderado): **3.89**  ·  probabilidad del estado elegido 79.3%  ·  modelo: ResNet-50 · nueva app\n\n**Mapa de calor:** rojo indica mayor intensidad. Se superpone al recorte que vio el modelo. Es una aproximación, no una segmentación de la fruta."
+  },
+  {
+    "imagen": "T10_d13_448_a_4.jpg",
+    "mapa": "reports\\figures\\mapas_app\\T10_d13_448_a_4_gradcam.png",
+    "probabilidades": {
+      "1 · Verde / no maduro": 0.0034197322092950344,
+      "2 · Iniciando maduracion": 0.004524735268205404,
+      "3 · Maduro (etapa 1)": 0.6504685878753662,
+      "4 · Maduro (etapa 2)": 0.32157713174819946,
+      "5 · Sobremaduro": 0.020009834319353104
+    },
+    "resultado": "### Indice predicho: **3** — Maduro (etapa 1)\n\n**Recomendacion:** Lista para consumo. Optima para venta inmediata.\n\nIndice esperado (promedio ponderado): **3.35**  ·  probabilidad del estado elegido 65.0%  ·  modelo: ResNet-50 · nueva app\n\n**Mapa de calor:** rojo indica mayor intensidad. Se superpone al recorte que vio el modelo. Es una aproximación, no una segmentación de la fruta."
+  },
+  {
+    "imagen": "T20_d10_116_a_5.jpg",
+    "mapa": "reports\\figures\\mapas_app\\T20_d10_116_a_5_gradcam.png",
+    "probabilidades": {
+      "1 · Verde / no maduro": 0.0052985139191150665,
+      "2 · Iniciando maduracion": 0.007660617586225271,
+      "3 · Maduro (etapa 1)": 0.0014032161561772227,
+      "4 · Maduro (etapa 2)": 0.03429192677140236,
+      "5 · Sobremaduro": 0.9513457417488098
+    },
+    "resultado": "### Indice predicho: **5** — Sobremaduro\n\n**Recomendacion:** Sobremadura. Fuera de su punto de consumo.\n\nIndice esperado (promedio ponderado): **4.92**  ·  probabilidad del estado elegido 95.1%  ·  modelo: ResNet-50 · nueva app\n\n**Mapa de calor:** rojo indica mayor intensidad. Se superpone al recorte que vio el modelo. Es una aproximación, no una segmentación de la fruta."
+  }
+]
