@@ -1,0 +1,3 @@
+# Overrides de requirements.txt para NVIDIA Blackwell (RTX 50), CUDA 12.8.
+torch==2.7.1+cu128
+torchvision==0.22.1+cu128

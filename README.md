@@ -1,5 +1,32 @@
 # Clasificación del estado de madurez de paltas Hass
 
+### Tarea E en Windows con NVIDIA RTX 50
+
+Preparar un entorno independiente (Python 3.11, PyTorch 2.7.1 + CUDA 12.8):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/setup_gpu.ps1
+powershell -ExecutionPolicy Bypass -File scripts/run_asimetricas.ps1 -CheckOnly
+powershell -ExecutionPolicy Bypass -File scripts/run_asimetricas.ps1
+```
+
+El entorno vive en `%LOCALAPPDATA%/paltas-gpu/.venv`, fuera de la ruta larga del
+workspace. Requiere `uv` y el driver NVIDIA. `requirements-gpu-rtx50.txt` sustituye
+solo PyTorch y torchvision del entorno original, que no soporta esta GPU.
+El lanzador busca el dataset en `%LOCALAPPDATA%/paltas-gpu/dataset`
+(debe contener `Avocado Ripening Dataset/`) o acepta `-RawDir 'C:/ruta/al/dataset'`.
+También usa `data/cache/` si contiene imágenes; comprueba todos los archivos del split.
+
+Se ejecutan secuencialmente las semillas 1 y 2 de ResNet y ViT asimétricos, con
+batch 64, AMP y cuatro workers (ajustables con `-NumWorkers`). Los nombres son
+`resnet50_asimetrico_s1`, `vit_small_asimetrico_s1`, `resnet50_asimetrico_s2` y
+`vit_small_asimetrico_s2`: si ya existen salidas, se detiene antes de sobrescribir.
+Al final recalcula `semillas.json` y las figuras con las métricas asimétricas y
+comparaciones por semilla; los logs quedan en `logs/`.
+Después hay que actualizar informe y presentación con esos resultados.
+La semilla 42 fue obtenida en otro entorno: documentar la diferencia de hardware
+y PyTorch al interpretar la variación entre corridas.
+
 Comparación controlada entre una **CNN (ResNet-50)** y un **Vision Transformer (ViT-S/16)**
 equiparados en parámetros, cómputo y datos de pre-entrenamiento, sobre la predicción del
 índice de madurez de 5 niveles de paltas Hass a partir de fotografías; y evaluación de dos

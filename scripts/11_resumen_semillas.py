@@ -43,6 +43,8 @@ MODELOS = {
     "vit_small": "ViT-S/16",
     "resnet50_meta": "ResNet-50 + temp. y día",
     "vit_small_meta": "ViT-S/16 + temp. y día",
+    "resnet50_asimetrico": "ResNet-50 (asim.)",
+    "vit_small_asimetrico": "ViT-S/16 (asim.)",
 }
 # Mismos colores que el resto del proyecto (paltas.viz.MODEL_COLORS): ResNet
 # azul y ViT rojo; sus versiones con metadatos, el mismo tono mas claro.
@@ -51,9 +53,12 @@ COLORES = {
     "vit_small": "#d1495b",
     "resnet50_meta": "#8cbbe3",
     "vit_small_meta": "#eb9aa5",
+    "resnet50_asimetrico": "#164f80",
+    "vit_small_asimetrico": "#983442",
 }
 SEMILLAS = {42: "", 1: "_s1", 2: "_s2"}
-METRICAS = ("accuracy", "qwk", "macro_f1", "mae")
+METRICAS = ("accuracy", "qwk", "macro_f1", "mae", "asymmetric_mae",
+            "underestimation_rate", "overestimation_rate")
 REFERENCIA = "referencia_metadatos"
 N_BOOT = 2000
 
@@ -146,14 +151,16 @@ def main() -> None:
 
     # --- 2. comparaciones pareadas, semilla por semilla ---
     pares = [("resnet50", "vit_small"), ("resnet50_meta", "resnet50"),
-             ("vit_small_meta", "vit_small"), ("resnet50_meta", "vit_small_meta")]
+             ("vit_small_meta", "vit_small"), ("resnet50_meta", "vit_small_meta"),
+             ("resnet50_asimetrico", "resnet50"), ("vit_small_asimetrico", "vit_small")]
     comparaciones = []
     for a, b in pares:
         if a not in runs or b not in runs:
             continue
         for s in sorted(set(runs[a]) & set(runs[b])):
             pa, pb = preds(runs[a][s]), preds(runs[b][s])
-            for k in ("qwk", "accuracy"):
+            for k in ("qwk", "accuracy", "asymmetric_mae",
+                      "underestimation_rate", "overestimation_rate"):
                 d = paired_bootstrap_diff(pa, pb, k, n_boot=N_BOOT)
                 comparaciones.append({"a": a, "b": b, "semilla": s, "metrica": k, **d})
     if ref:
