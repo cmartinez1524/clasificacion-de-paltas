@@ -5,8 +5,8 @@ imagenes que ese deck usa. Asi se puede arrastrar la carpeta completa a Overleaf
 sin tocar nada.
 
 Uso:
-    python scripts/07_deck_latex.py            # ambas presentaciones (avance y final)
-    python scripts/07_deck_latex.py --avance   # fuerza regenerar tambien avance
+    python scripts/07_deck_latex.py            # solo la presentacion final
+    python scripts/07_deck_latex.py --avance   # tambien regenera el avance
 """
 
 from __future__ import annotations
@@ -1170,11 +1170,12 @@ def main() -> None:
 
     salidas = []
     trabajos = [
-        ("avance", "presentacion_avance.tex", "Avance",
-         construir_avance(res, cargar_comp("avance"))),
         ("final", "presentacion_final.tex", "Final",
          construir_final(res, cargar_comp("final"), cargar_comp("semillas"))),
     ]
+    if "--avance" in sys.argv:
+        trabajos.insert(0, ("avance", "presentacion_avance.tex", "Avance",
+                            construir_avance(res, cargar_comp("avance"))))
     for carpeta, archivo, etiqueta, cuerpo in trabajos:
         destino = ROOT / "entregables" / carpeta
         n_figs = copiar_figuras(cuerpo, destino / "figuras")
