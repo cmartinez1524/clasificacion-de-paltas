@@ -18,12 +18,12 @@ import gradio as gr
 import numpy as np
 import pandas as pd
 import torch
-from PIL import Image
+from PIL import Image, ImageOps
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from paltas.data import build_transforms  # noqa: E402
-from paltas.interpret import GradCAM, attention_rollout, resnet_target_layer  # noqa: E402
+from paltas.interpret import GradCAM, attention_rollout, denormalize, resnet_target_layer  # noqa: E402
 from paltas.metrics import bayes_optimal_predict  # noqa: E402
 from paltas.models import build_model  # noqa: E402
 from paltas.paths import (  # noqa: E402
@@ -39,6 +39,7 @@ TF = build_transforms(224, train=False)
 
 #: checkpoint -> (arquitectura, etiqueta en la interfaz)
 DISPONIBLES = {
+    "resnet50_app": ("resnet50", "ResNet-50 · nueva app"),
     "resnet50": ("resnet50", "ResNet-50"),
     "vit_small": ("vit_small", "ViT-S/16"),
     "resnet50_asimetrico": ("resnet50", "ResNet-50 (asimétrico)"),
@@ -46,6 +47,10 @@ DISPONIBLES = {
     "hybrid_fusion": ("hybrid_fusion", "Hibrido (fusion tardia)"),
     "hybrid_vit_r26": ("hybrid_vit_r26", "ViT-Hybrid R26+S/32"),
 }
+for semilla in (1, 2):
+    for arquitectura, etiqueta in (("resnet50", "ResNet-50"), ("vit_small", "ViT-S/16")):
+        DISPONIBLES[f"{arquitectura}_asimetrico_s{semilla}"] = (
+            arquitectura, f"{etiqueta} (asimétrico, semilla {semilla})")
 
 ACCION = {
     1: "Aun no comestible. Dejar madurar varios dias a temperatura ambiente.",
@@ -87,15 +92,19 @@ def predecir(imagen: Image.Image, clave_modelo: str, mostrar_mapa: bool):
     if imagen is None:
         return {}, None, "Sube o selecciona una imagen."
 
-    clave = next(k for k, (_, lbl) in DISPONIBLES.items() if lbl == clave_modelo)
+    clave = next((k for k, (_, lbl) in DISPONIBLES.items() if lbl == clave_modelo), None)
+    if clave is None:
+        raise gr.Error("Selecciona un modelo entrenado disponible.")
     model = cargar_modelo(clave)
-    base = imagen.convert("RGB").resize((224, 224))
-    x = TF(imagen.convert("RGB")).unsqueeze(0).to(DEVICE)
+    imagen = ImageOps.exif_transpose(imagen).convert("RGB")
+    x = TF(imagen).unsqueeze(0).to(DEVICE)
+    # El mapa corresponde al recorte que realmente vio la red, no a la foto estirada.
+    base = Image.fromarray((denormalize(x[0]) * 255).round().astype(np.uint8))
 
     with torch.no_grad():
         probs = torch.softmax(model(x), dim=1)[0].cpu().numpy()
 
-    if clave.endswith("_asimetrico"):
+    if "_asimetrico" in clave:
         pred = int(bayes_optimal_predict(probs[None, :], underripe_penalty=2.0, overripe_penalty=1.0)[0]) + 1
     else:
         pred = int(probs.argmax()) + 1
@@ -109,7 +118,7 @@ def predecir(imagen: Image.Image, clave_modelo: str, mostrar_mapa: bool):
         f"### Indice predicho: **{pred}** — {CLASS_NAMES[pred]}\n\n"
         f"**Recomendacion:** {ACCION[pred]}\n\n"
         f"Indice esperado (promedio ponderado): **{esperado:.2f}**  ·  "
-        f"confianza {probs.max():.1%}  ·  modelo: {clave_modelo}"
+        f"probabilidad del estado elegido {probs[pred - 1]:.1%}  ·  modelo: {clave_modelo}"
     )
     if probs.max() < 0.55:
         texto += ("\n\n> El modelo no esta seguro: la probabilidad esta repartida entre "
@@ -118,16 +127,21 @@ def predecir(imagen: Image.Image, clave_modelo: str, mostrar_mapa: bool):
     overlay = None
     if mostrar_mapa:
         try:
-            mapa = mapa_de_atencion(model, clave, x)
+            mapa = mapa_de_atencion(model, clave, x, pred - 1)
             if mapa is not None:
                 overlay = superponer(base, mapa)
+                texto += ("\n\n**Mapa de calor:** rojo indica mayor intensidad. Se superpone al "
+                          "recorte que vio el modelo. Es una aproximación, no una segmentación de la fruta.")
+                if DISPONIBLES[clave][0] in ("vit_small", "hybrid_vit_r26"):
+                    texto += " En ViT muestra atención entre parches; no es específico de la clase predicha."
         except Exception as e:  # la demo no debe caerse por el mapa
             print(f"[aviso] no se pudo generar el mapa: {e}")
+            texto += "\n\nNo se pudo generar el mapa de calor para esta imagen."
 
     return etiquetas, overlay, texto
 
 
-def mapa_de_atencion(model, clave: str, x):
+def mapa_de_atencion(model, clave: str, x, class_idx: int | None = None):
     """Devuelve el mapa de saliencia adecuado a cada arquitectura.
 
     Para la fusion tardia usamos Grad-CAM sobre su ResNet interna: el gradiente
@@ -137,12 +151,12 @@ def mapa_de_atencion(model, clave: str, x):
     """
     if clave.startswith("resnet50"):
         with GradCAM(model, resnet_target_layer(model)) as cam:
-            return cam(x)[0]
+            return cam(x, class_idx=class_idx)[0]
     if clave.startswith("vit_small"):
         return attention_rollout(model, x)[0]
     if clave == "hybrid_fusion":
         with GradCAM(model, model.cnn.layer4[-1]) as cam:
-            return cam(x)[0]
+            return cam(x, class_idx=class_idx)[0]
     if clave == "hybrid_vit_r26":
         # Arquitectura ViT de timm con stem convolucional: expone .blocks igual
         # que un ViT puro, asi que el rollout se aplica sin cambios.
@@ -179,7 +193,7 @@ def construir_interfaz() -> gr.Blocks:
         )
     opciones = [DISPONIBLES[k][1] for k in entrenados]
 
-    with gr.Blocks(title="Madurez de paltas Hass", theme=gr.themes.Soft()) as demo:
+    with gr.Blocks(title="Madurez de paltas Hass") as demo:
         gr.Markdown(
             "# Clasificacion del estado de madurez de paltas Hass\n"
             "Sube una foto de una palta y el modelo estima su estado en el indice "
@@ -191,16 +205,27 @@ def construir_interfaz() -> gr.Blocks:
         )
         with gr.Row():
             with gr.Column(scale=1):
-                img = gr.Image(type="pil", label="Fotografia", height=320)
+                with gr.Tab("Foto"):
+                    img = gr.Image(type="pil", sources=["upload"], label="Subir foto", height=320)
+                    btn = gr.Button("Clasificar foto", variant="primary")
+                with gr.Tab("Cámara en vivo"):
+                    camara = gr.Image(
+                        type="pil", sources=["webcam"], streaming=True,
+                        webcam_options=gr.WebcamOptions(mirror=False, constraints={
+                            "video": {"facingMode": {"ideal": "environment"}}}),
+                        label="Cámara del teléfono o computador", height=320)
+                    gr.Markdown("Activa la cámara para analizar imágenes aproximadamente cada segundo. "
+                                "Usa el control de la cámara para detener el envío.")
                 modelo = gr.Radio(opciones, value=opciones[0], label="Modelo")
                 mapa_chk = gr.Checkbox(
-                    True, label="Mostrar mapa de atencion (Grad-CAM / attention rollout)"
+                    True, label="Mostrar mapa de calor"
                 )
-                btn = gr.Button("Clasificar", variant="primary")
             with gr.Column(scale=1):
                 salida_txt = gr.Markdown()
                 probs = gr.Label(num_top_classes=5, label="Distribucion de probabilidad")
-                overlay = gr.Image(label="Donde mira el modelo", height=280)
+                overlay = gr.Image(label="Mapa de calor sobre el recorte analizado", height=320,
+                                   format="png", buttons=["download", "fullscreen"],
+                                   interactive=False)
 
         ejemplos = ejemplos_de_test()
         if ejemplos:
@@ -211,8 +236,12 @@ def construir_interfaz() -> gr.Blocks:
                 examples_per_page=10,
             )
 
-        btn.click(predecir, [img, modelo, mapa_chk], [probs, overlay, salida_txt])
-        img.change(predecir, [img, modelo, mapa_chk], [probs, overlay, salida_txt])
+        gr.on([btn.click, img.change], predecir,
+              [img, modelo, mapa_chk], [probs, overlay, salida_txt],
+              concurrency_limit=1, concurrency_id="modelo", trigger_mode="always_last")
+        camara.stream(predecir, [camara, modelo, mapa_chk], [probs, overlay, salida_txt],
+                      stream_every=1.0, time_limit=120, concurrency_limit=1,
+                      concurrency_id="modelo", trigger_mode="always_last")
 
     return demo
 
@@ -221,8 +250,10 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--share", action="store_true", help="genera un enlace publico temporal")
     ap.add_argument("--port", type=int, default=7860)
+    ap.add_argument("--host", default="127.0.0.1", help="0.0.0.0 permite acceso desde la red local")
     args = ap.parse_args()
 
     print(f"Dispositivo: {DEVICE}")
     print(f"Modelos disponibles: {modelos_entrenados()}")
-    construir_interfaz().launch(share=args.share, server_port=args.port)
+    construir_interfaz().queue().launch(share=args.share, server_port=args.port,
+                                       server_name=args.host, pwa=True, theme=gr.themes.Soft())

@@ -1,5 +1,44 @@
 # Clasificación del estado de madurez de paltas Hass
 
+### App: foto, cámara y mapa de calor
+
+Con un checkpoint entrenado en `checkpoints/`:
+
+```powershell
+& "$env:LOCALAPPDATA/paltas-gpu/.venv/Scripts/python.exe" app/gradio_app.py
+```
+
+Abre `http://localhost:7860`. La pestaña **Foto** recibe una imagen y devuelve el
+estado de madurez de 1 a 5, las probabilidades y un mapa de calor descargable en
+PNG. La pestaña **Cámara en vivo** envía imágenes aproximadamente cada segundo
+mientras la cámara está activa; la predicción se calcula en la GPU del PC.
+La sesión continua dura hasta dos minutos; se puede volver a activar la cámara.
+
+Para abrirla desde el teléfono en la misma red, agrega `--host 0.0.0.0` y abre
+`http://IP_DEL_PC:7860`. Para usar la cámara en vivo desde el teléfono hace falta
+HTTPS y permiso de cámara del navegador. `--share` genera un enlace HTTPS
+temporal accesible desde Internet: quien tenga ese enlace podrá usar la app.
+El computador debe permanecer encendido. No se cambia el firewall automáticamente.
+
+En ResNet se usa **Grad-CAM para la clase elegida**. En ViT, **attention rollout**
+muestra atención entre parches y no es específico de la clase. El mapa se alinea
+con el recorte que vio la red; no segmenta la palta ni prueba una causa física.
+Las fotos de teléfono siguen siendo un dominio distinto al dataset de laboratorio.
+
+El entrenamiento nuevo para esta app usa el nombre `resnet50_app`; conserva los
+resultados del informe y elige el checkpoint por QWK de validación:
+
+```powershell
+& "$env:LOCALAPPDATA/paltas-gpu/.venv/Scripts/python.exe" scripts/train.py --config configs/resnet50.yaml --name resnet50_app --num-workers 4
+```
+
+La corrida nueva eligió la época 8 por validación. En el test del dataset obtuvo
+74,6 % de accuracy exacta y QWK 0,9337 (`reports/metrics/resnet50_app_test.json`).
+Esto no mide desempeño en fotos de teléfono. Los cinco ejemplos exportados están
+en `reports/figures/mapas_app/`, con sus predicciones en
+`reports/metrics/resnet50_app_mapas.json`. El checkpoint queda localmente en
+`checkpoints/resnet50_app.pt`; los pesos no se versionan en Git.
+
 ### Tarea E en Windows con NVIDIA RTX 50
 
 Preparar un entorno independiente (Python 3.11, PyTorch 2.7.1 + CUDA 12.8):

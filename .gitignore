@@ -20,6 +20,7 @@ venv/
 env/
 .ipynb_checkpoints/
 .pytest_cache/
+.gradio/
 
 # ---- SO / editor ----
 .DS_Store
