@@ -26,7 +26,7 @@ python scripts/train.py --config configs/resnet50_asimetrico.yaml
 python scripts/train.py --config configs/vit_small_asimetrico.yaml
 
 echo "== 5/5  Analisis y entregables =="
-python scripts/10_evaluar_asimetria.py
+python scripts/13_evaluar_asimetria.py
 python scripts/compare_models.py \
   --models resnet50 vit_small resnet50_asimetrico vit_small_asimetrico resnet50_scratch vit_small_scratch hybrid_fusion hybrid_vit_r26 \
   --tag final

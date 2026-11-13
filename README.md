@@ -226,7 +226,7 @@ bash scripts/run_semillas.sh
 
 ```bash
 python scripts/10_referencia_metadatos.py   # regla sin imagen (temperatura y día)
-python scripts/10_evaluar_asimetria.py      # métrica y desglose asimétrico (2x falso inmaduro)
+python scripts/13_evaluar_asimetria.py      # métrica y desglose asimétrico (2x falso inmaduro)
 python scripts/11_resumen_semillas.py       # tres semillas, por temperatura y calendario
 python scripts/09_mejoras_inferencia.py     # dos caras y TTA, elegidas en validación
 python scripts/12_ejemplos_errores.py       # fotos de errores
@@ -268,7 +268,7 @@ son frutas que ningún modelo vio durante el entrenamiento.
 │   ├── viz.py               # estilo común de figuras
 │   ├── beamer.py            # constructor de slides LaTeX (Beamer)
 │   └── console.py           # salida UTF-8 en consolas Windows
-├── scripts/                 # 00..12 + train.py + compare_models.py + run_*.sh
+├── scripts/                 # 00..13 + train.py + compare_models.py + run_*.sh
 ├── tests/                   # pytest: particion sin fuga, metricas, modelos
 ├── app/gradio_app.py        # demo
 ├── entregables/

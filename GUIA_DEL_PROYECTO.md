@@ -361,6 +361,7 @@ difíciles) se cancele.
 | `10_referencia_metadatos.py` | Regla sin imagen: madurez más común por temperatura y día | `reports/metrics/referencia_metadatos*` |
 | `11_resumen_semillas.py` | Tres semillas, comparaciones pareadas, temperatura y calendario | `reports/metrics/semillas.json`, figuras 35-36 |
 | `12_ejemplos_errores.py` | Fotos reales de errores | `reports/figures/37_*.png` |
+| `13_evaluar_asimetria.py` | Métricas y figura de subestimación, sobreestimación y costo asimétrico | `reports/metrics/*_test.json`, `reports/figures/14_asimetria_errores.png` |
 | `run_semillas.sh` | Modelos con temperatura y día + semillas 1 y 2 | ~90 min |
 | `run_all.sh` | Corre **todo** lo anterior en orden | ~3,5 h |
 

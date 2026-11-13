@@ -411,7 +411,7 @@ matriz de costo ordinal asimétrica $C(y, \hat{y}) = 2(y - \hat{y})$ si $\hat{y}
 $1(\hat{y} - y)$ si $\hat{y} > y$, la métrica **MAE Asimétrico** $\frac{1}{N}\sum C(y_i, \hat{y}_i)$,
 la función de pérdida diferenciable `AsymmetricOrdinalLoss` ($\mathcal{L}_{\text{CE}} + \lambda \sum_k p_k C(y, k)$ con $\lambda = 0{,}5$)
 y la regla de decisión de mínimo riesgo de Bayes $\arg\min_k \sum_y p(y\mid x) C(y, k)$
-(`src/paltas/metrics.py`, `src/paltas/engine.py`, `scripts/10_evaluar_asimetria.py`).
+(`src/paltas/metrics.py`, `src/paltas/engine.py`, `scripts/13_evaluar_asimetria.py`).
 
 Entrenando ambos backbones en GPU Tesla T4 (`configs/resnet50_asimetrico.yaml` y
 `configs/vit_small_asimetrico.yaml`, `notebooks/entrenar_en_colab.ipynb`):

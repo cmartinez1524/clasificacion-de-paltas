@@ -178,7 +178,7 @@ def test_evaluar_asimetria_module_generates_summary_and_figure(tmp_path):
     import importlib.util
     import pandas as pd
 
-    script_path = Path(__file__).resolve().parents[1] / "scripts" / "10_evaluar_asimetria.py"
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "13_evaluar_asimetria.py"
     assert script_path.exists()
     spec = importlib.util.spec_from_file_location("eval_asym", script_path)
     mod = importlib.util.module_from_spec(spec)

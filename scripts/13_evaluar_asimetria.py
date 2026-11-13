@@ -6,7 +6,7 @@ etileno), `underestimation_rate` (% de falsos inmaduros) y `overestimation_rate`
 genera reports/figures/14_asimetria_errores.png.
 
 Uso:
-    python scripts/10_evaluar_asimetria.py
+    python scripts/13_evaluar_asimetria.py
 """
 
 from __future__ import annotations
