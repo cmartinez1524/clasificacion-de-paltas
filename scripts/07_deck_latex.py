@@ -11,6 +11,7 @@ Uso:
 
 from __future__ import annotations
 
+import csv
 import json
 import re
 import shutil
@@ -35,6 +36,7 @@ from paltas.beamer import (  # noqa: E402
     signo,
     tabla,
 )
+from paltas.metrics import compute_metrics  # noqa: E402
 from paltas.console import use_utf8  # noqa: E402
 from paltas.paths import FIGURES_DIR, METRICS_DIR, ROOT  # noqa: E402
 
@@ -429,55 +431,44 @@ def frame_empate(r: dict, v: dict, comp: dict | None) -> str:
 
 
 def frame_asimetria(res: dict) -> str:
-    """Explica la metrica asimetrica y los resultados obtenidos al entrenar con ella."""
-    r_t = res["resnet50"]["test"]
-    v_t = res["vit_small"]["test"]
-    ra = res.get("resnet50_asimetrico")
-    va = res.get("vit_small_asimetrico")
-    if ra and va:
-        ra_t, va_t = ra["test"], va["test"]
-        resultado_aprendizaje = (
-            f"\\textbf{{ResNet-50 (asim.)}} reduce los falsos inmaduros casi a la mitad "
-            f"({pct(r_t['underestimation_rate'])} $\\rightarrow$ \\textbf{{{pct(ra_t['underestimation_rate'])}}}) "
-            f"y baja el MAE Asimétrico de {num(r_t['asymmetric_mae'], 3)} a \\textbf{{{num(ra_t['asymmetric_mae'], 3)}}} ($p=0{{,}}006$). "
-            f"\\textbf{{ViT-S/16 (asim.)}} baja el falso inmaduro de {pct(v_t['underestimation_rate'])} "
-            f"a \\textbf{{{pct(va_t['underestimation_rate'])}}} (MAE Asim. \\textbf{{{num(va_t['asymmetric_mae'], 3)}}}, $p=0{{,}}030$) "
-            f"y además sube QWK ({num(v_t['qwk'], 3)} $\\rightarrow$ \\textbf{{{num(va_t['qwk'], 3)}}}) "
-            f"y Accuracy ({pct(v_t['accuracy'])} $\\rightarrow$ \\textbf{{{pct(va_t['accuracy'])}}})."
-        )
-        cierre_txt = (
-            r"\cierre{Entrenar con castigo asimétrico reduce significativamente el riesgo "
-            r"de etileno en ambas arquitecturas ($p \le 0{,}030$).}"
-        )
-    else:
-        resultado_aprendizaje = (
-            "Sumamos a la entropía cruzada el \\textbf{costo ordinal esperado "
-            "asimétrico} (\\texttt{AsymmetricOrdinalLoss}) para empujar los "
-            "gradientes contra falsos inmaduros, junto con decisión Bayesiana de riesgo mínimo."
-        )
-        cierre_txt = (
-            r"\cierre{Listo para reentrenar en GPU/Colab con "
-            r"\texttt{configs/*\_asimetrico.yaml}.}"
-        )
-
-    puntos = [
-        ("Por qué penalizar más el falso inmaduro ($2\\times$ si $\\hat{y} < y$).", True),
-        "Infiltrar una palta madura en un lote verde acelera la maduración del "
-        "resto por etileno. La pérdida estándar (\\texttt{CrossEntropy}) no "
-        "distingue dirección ni distancia entre etapas.",
-        ("Cómo actualizamos los pesos durante el aprendizaje:", True),
-        "Sumamos a la entropía cruzada el \\textbf{costo ordinal esperado asimétrico} "
-        "(\\texttt{AsymmetricOrdinalLoss}) y evaluamos con regla de riesgo mínimo de Bayes.",
-        ("Resultado real tras entrenar en GPU (Tesla T4):", True),
-        resultado_aprendizaje,
-    ]
+    """Muestra ambas direcciones del error, recalculadas desde los CSV."""
+    filas = []
+    for nombre, etiqueta, semillas in (
+        ("referencia_metadatos", "Solo temp. y día", False),
+        ("resnet50", "ResNet-50 (3 semillas)", True),
+        ("resnet50_asimetrico", "ResNet asim. (1 semilla)", False),
+        ("vit_small", "ViT-S/16 (3 semillas)", True),
+        ("vit_small_asimetrico", "ViT asim. (1 semilla)", False),
+    ):
+        metricas = []
+        for sufijo in (["", "_s1", "_s2"] if semillas else [""]):
+            with (METRICS_DIR / f"{nombre}{sufijo}_test_preds.csv").open(
+                    encoding="utf-8", newline="") as f:
+                datos = list(csv.DictReader(f))
+            metricas.append(compute_metrics(
+                [int(d["y_true"]) for d in datos],
+                [int(d["y_pred"]) for d in datos]))
+        valores = []
+        for clave in ("accuracy", "underestimation_rate", "overestimation_rate", "asymmetric_mae"):
+            formato = (lambda x: num(x, 3)) if clave == "asymmetric_mae" else pct
+            xs = [m[clave] for m in metricas]
+            valores.append(formato(min(xs)) + "--" + formato(max(xs))
+                           if semillas else formato(xs[0]))
+        filas.append([etiqueta, *valores])
     return frame(
-        "Asimetría del error y entrenamiento sensible al costo",
-        "Castigar el doble subestimar la madurez (falso inmaduro) frente a sobreestimarla",
-        figura("14_asimetria_errores", r"0.90\textwidth", "3.35cm")
-        + "\n\\vspace{0.2em}\n"
-        + items(puntos, tam=r"\tiny", sep="0.14em")
-        + "\n" + cierre_txt)
+        "Asimetría: menos falsos inmaduros, más falsos maduros",
+        "Costo elegido: subestimar pesa el doble; el etileno no se midió",
+        figura("14_asimetria_errores", r"0.90\textwidth", "3.15cm")
+        + "\n" + tabla(
+            ["Modelo", "Clase exacta", "Subestim.", "Sobreestim.", "MAE asim."],
+            filas, spec="lrrrr", tam=r"\tiny")
+        + "\n" + items([
+            "Baselines: rango de tres semillas. Asimétricos: solo semilla 42. "
+            "El ViT asimétrico queda dentro del rango de accuracy y QWK del ViT normal.",
+        ], tam=r"\tiny", sep="0.1em")
+        + "\n" + r"\cierre{Castigar el falso inmaduro lo reduce casi a la mitad en ResNet, "
+        r"a cambio de más falsos maduros y menos aciertos exactos. Una semilla: resultado preliminar.}")
+
 
 
 def frame_mejoras_gratis() -> str:

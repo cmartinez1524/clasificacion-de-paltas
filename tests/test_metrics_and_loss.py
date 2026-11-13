@@ -243,6 +243,33 @@ def test_deck_latex_includes_data_and_asymmetry_frames():
     assert r"\begin{document}" in tex_av and r"\begin{document}" in tex_fn
 
 
+def test_deck_default_preserves_avance_and_reports_seed_ranges(tmp_path, monkeypatch):
+    import importlib.util
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "07_deck_latex.py"
+    spec = importlib.util.spec_from_file_location("deck_default", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    slide = mod.frame_asimetria({})
+    assert "Sobreestim." in slide and "preliminar" in slide
+    assert mod.pct(0.7462422634836428) + "--" + mod.pct(0.7524314765694076) in slide
+    assert mod.pct(0.21220159151193635) in slide
+    avance = tmp_path / "entregables" / "avance" / "presentacion_avance.tex"
+    avance.parent.mkdir(parents=True)
+    avance.write_text("avance entregado", encoding="utf-8")
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    monkeypatch.setattr(mod, "construir_final", lambda *args: "final")
+    monkeypatch.setattr(mod, "construir_avance", lambda *args: "avance regenerado")
+    monkeypatch.setattr(mod, "copiar_figuras", lambda *args: 0)
+    (tmp_path / "entregables" / "final").mkdir()
+    monkeypatch.setattr(sys, "argv", [str(path)])
+    mod.main()
+    assert avance.read_text(encoding="utf-8") == "avance entregado"
+    monkeypatch.setattr(sys, "argv", [str(path), "--avance"])
+    mod.main()
+    assert "avance regenerado" in avance.read_text(encoding="utf-8")
+
+
 def test_fit_and_evaluate_with_asymmetric_config(tmp_path: Path):
     """Prueba end-to-end que fit() y evaluate() corran con TrainConfig asimetrico."""
     import torch
