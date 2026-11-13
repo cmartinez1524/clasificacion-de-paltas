@@ -13,8 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.mark.skipif(os.name != "nt", reason="Lanzadores PowerShell para Windows")
 def test_windows_launchers_parse():
-    for name in ("setup_gpu.ps1", "run_asimetricas.ps1"):
-        path = str(ROOT / "scripts" / name).replace("'", "''")
+    for relative in ("scripts/setup_gpu.ps1", "scripts/run_asimetricas.ps1",
+                     "app/instalar.ps1", "app/iniciar.ps1"):
+        path = str(ROOT / relative).replace("'", "''")
         subprocess.run([
             "powershell", "-NoProfile", "-Command",
             f"$tokens=$null; $errors=$null; [void][System.Management.Automation.Language.Parser]::ParseFile('{path}',[ref]$tokens,[ref]$errors); if ($errors) {{ $errors; exit 1 }}",

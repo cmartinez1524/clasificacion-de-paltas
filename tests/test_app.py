@@ -40,16 +40,37 @@ def test_heatmap_matches_model_crop_and_bayes_class(app, monkeypatch):
     assert "49.0%" in text
 
 
-def test_camera_and_upload_share_serial_model_queue(app, monkeypatch):
+def test_camera_and_upload_use_http_without_sse(app, monkeypatch):
     monkeypatch.setattr(app, "modelos_entrenados", lambda: ["resnet50_app"])
     monkeypatch.setattr(app, "ejemplos_de_test", lambda: [])
     demo = app.construir_interfaz()
     deps = demo.config["dependencies"]
     stream = next(d for d in deps if any(event == "stream" for _, event in d["targets"]))
     assert stream["stream_every"] == 1.0
-    assert stream["time_limit"] == 120
-    assert all(fn.concurrency_id == "modelo" and fn.concurrency_limit == 1
-               for fn in demo.fns.values())
+    assert all(not d["queue"] for d in deps)
+
+
+def test_concurrent_predictions_do_not_overlap_model_hooks(app, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    import time
+
+    active = 0
+    maximum = 0
+    class Model(torch.nn.Module):
+        def forward(self, x):
+            nonlocal active, maximum
+            active += 1
+            maximum = max(maximum, active)
+            time.sleep(0.05)
+            active -= 1
+            return torch.zeros(1, 5)
+    monkeypatch.setattr(app, "cargar_modelo", lambda key: Model())
+    monkeypatch.setattr(app, "TF", lambda image: torch.zeros(3, 224, 224))
+    def predict(_):
+        return app.predecir(Image.new("RGB", (224, 224)), "ResNet-50", False)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert all(r[0] for r in pool.map(predict, range(2)))
+    assert maximum == 1
 
 
 def test_empty_image_and_failed_heatmap(app, monkeypatch):
@@ -63,3 +84,13 @@ def test_empty_image_and_failed_heatmap(app, monkeypatch):
     monkeypatch.setattr(app, "mapa_de_atencion", fallo)
     probs, overlay, text = app.predecir(Image.new("RGB", (400, 200)), "ResNet-50", True)
     assert probs and overlay is None and "No se pudo generar" in text
+
+
+def test_portable_examples_do_not_need_dataset(app, monkeypatch, tmp_path):
+    monkeypatch.setattr(app, "SPLITS_CSV", tmp_path / "absent.csv")
+    monkeypatch.setattr(app, "__file__", str(tmp_path / "gradio_app.py"))
+    examples = tmp_path / "ejemplos"
+    examples.mkdir()
+    photo = examples / "palta.jpg"
+    Image.new("RGB", (224, 224)).save(photo)
+    assert app.ejemplos_de_test() == [str(photo)]

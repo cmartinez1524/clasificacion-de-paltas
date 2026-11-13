@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from threading import Lock
 from pathlib import Path
 
 import gradio as gr
@@ -61,6 +62,7 @@ ACCION = {
 }
 
 _cache: dict[str, torch.nn.Module] = {}
+_inference_lock = Lock()
 
 
 def cargar_modelo(clave: str) -> torch.nn.Module:
@@ -69,7 +71,7 @@ def cargar_modelo(clave: str) -> torch.nn.Module:
     arq, _ = DISPONIBLES[clave]
     ckpt = CHECKPOINT_DIR / f"{clave}.pt"
     model = build_model(arq, pretrained=False)
-    model.load_state_dict(torch.load(ckpt, map_location="cpu", weights_only=False)["model"])
+    model.load_state_dict(torch.load(ckpt, map_location="cpu", weights_only=True)["model"])
     model.to(DEVICE).eval()
     _cache[clave] = model
     return model
@@ -89,56 +91,58 @@ def superponer(base: Image.Image, mapa: np.ndarray, alpha: float = 0.45) -> Imag
 
 
 def predecir(imagen: Image.Image, clave_modelo: str, mostrar_mapa: bool):
-    if imagen is None:
-        return {}, None, "Sube o selecciona una imagen."
+    # Serializa los hooks de Grad-CAM también en peticiones HTTP sin cola.
+    with _inference_lock:
+        if imagen is None:
+            return {}, None, "Sube o selecciona una imagen."
 
-    clave = next((k for k, (_, lbl) in DISPONIBLES.items() if lbl == clave_modelo), None)
-    if clave is None:
-        raise gr.Error("Selecciona un modelo entrenado disponible.")
-    model = cargar_modelo(clave)
-    imagen = ImageOps.exif_transpose(imagen).convert("RGB")
-    x = TF(imagen).unsqueeze(0).to(DEVICE)
-    # El mapa corresponde al recorte que realmente vio la red, no a la foto estirada.
-    base = Image.fromarray((denormalize(x[0]) * 255).round().astype(np.uint8))
+        clave = next((k for k, (_, lbl) in DISPONIBLES.items() if lbl == clave_modelo), None)
+        if clave is None:
+            raise gr.Error("Selecciona un modelo entrenado disponible.")
+        model = cargar_modelo(clave)
+        imagen = ImageOps.exif_transpose(imagen).convert("RGB")
+        x = TF(imagen).unsqueeze(0).to(DEVICE)
+        # El mapa corresponde al recorte que realmente vio la red, no a la foto estirada.
+        base = Image.fromarray((denormalize(x[0]) * 255).round().astype(np.uint8))
 
-    with torch.no_grad():
-        probs = torch.softmax(model(x), dim=1)[0].cpu().numpy()
+        with torch.no_grad():
+            probs = torch.softmax(model(x), dim=1)[0].cpu().numpy()
 
-    if "_asimetrico" in clave:
-        pred = int(bayes_optimal_predict(probs[None, :], underripe_penalty=2.0, overripe_penalty=1.0)[0]) + 1
-    else:
-        pred = int(probs.argmax()) + 1
-    etiquetas = {f"{i+1} · {CLASS_NAMES[i+1]}": float(probs[i]) for i in range(5)}
+        if "_asimetrico" in clave:
+            pred = int(bayes_optimal_predict(probs[None, :], underripe_penalty=2.0, overripe_penalty=1.0)[0]) + 1
+        else:
+            pred = int(probs.argmax()) + 1
+        etiquetas = {f"{i+1} · {CLASS_NAMES[i+1]}": float(probs[i]) for i in range(5)}
 
-    # Valor esperado del indice: mas informativo que el argmax cuando el modelo
-    # duda entre dos estados adyacentes, que es el caso frecuente.
-    esperado = float((probs * np.arange(1, 6)).sum())
+        # Valor esperado del indice: mas informativo que el argmax cuando el modelo
+        # duda entre dos estados adyacentes, que es el caso frecuente.
+        esperado = float((probs * np.arange(1, 6)).sum())
 
-    texto = (
-        f"### Indice predicho: **{pred}** — {CLASS_NAMES[pred]}\n\n"
-        f"**Recomendacion:** {ACCION[pred]}\n\n"
-        f"Indice esperado (promedio ponderado): **{esperado:.2f}**  ·  "
-        f"probabilidad del estado elegido {probs[pred - 1]:.1%}  ·  modelo: {clave_modelo}"
-    )
-    if probs.max() < 0.55:
-        texto += ("\n\n> El modelo no esta seguro: la probabilidad esta repartida entre "
-                  "estados vecinos. Conviene revision humana.")
+        texto = (
+            f"### Indice predicho: **{pred}** — {CLASS_NAMES[pred]}\n\n"
+            f"**Recomendacion:** {ACCION[pred]}\n\n"
+            f"Indice esperado (promedio ponderado): **{esperado:.2f}**  ·  "
+            f"probabilidad del estado elegido {probs[pred - 1]:.1%}  ·  modelo: {clave_modelo}"
+        )
+        if probs.max() < 0.55:
+            texto += ("\n\n> El modelo no esta seguro: la probabilidad esta repartida entre "
+                      "estados vecinos. Conviene revision humana.")
 
-    overlay = None
-    if mostrar_mapa:
-        try:
-            mapa = mapa_de_atencion(model, clave, x, pred - 1)
-            if mapa is not None:
-                overlay = superponer(base, mapa)
-                texto += ("\n\n**Mapa de calor:** rojo indica mayor intensidad. Se superpone al "
-                          "recorte que vio el modelo. Es una aproximación, no una segmentación de la fruta.")
-                if DISPONIBLES[clave][0] in ("vit_small", "hybrid_vit_r26"):
-                    texto += " En ViT muestra atención entre parches; no es específico de la clase predicha."
-        except Exception as e:  # la demo no debe caerse por el mapa
-            print(f"[aviso] no se pudo generar el mapa: {e}")
-            texto += "\n\nNo se pudo generar el mapa de calor para esta imagen."
+        overlay = None
+        if mostrar_mapa:
+            try:
+                mapa = mapa_de_atencion(model, clave, x, pred - 1)
+                if mapa is not None:
+                    overlay = superponer(base, mapa)
+                    texto += ("\n\n**Mapa de calor:** rojo indica mayor intensidad. Se superpone al "
+                              "recorte que vio el modelo. Es una aproximación, no una segmentación de la fruta.")
+                    if DISPONIBLES[clave][0] in ("vit_small", "hybrid_vit_r26"):
+                        texto += " En ViT muestra atención entre parches; no es específico de la clase predicha."
+            except Exception as e:  # la demo no debe caerse por el mapa
+                print(f"[aviso] no se pudo generar el mapa: {e}")
+                texto += "\n\nNo se pudo generar el mapa de calor para esta imagen."
 
-    return etiquetas, overlay, texto
+        return etiquetas, overlay, texto
 
 
 def mapa_de_atencion(model, clave: str, x, class_idx: int | None = None):
@@ -167,7 +171,7 @@ def mapa_de_atencion(model, clave: str, x, class_idx: int | None = None):
 def ejemplos_de_test(n_por_clase: int = 2, seed: int = 11) -> list[str]:
     """Ejemplos tomados SOLO del conjunto de test: son frutas que el modelo nunca vio."""
     if not SPLITS_CSV.exists():
-        return []
+        return sorted(str(p) for p in (Path(__file__).resolve().parent / "ejemplos").glob("*.jpg"))
     df = pd.read_csv(SPLITS_CSV)
     test = df[df["split"] == "test"]
     carpeta = CACHE_DIR if any(CACHE_DIR.glob("*.jpg")) else IMAGES_DIR
@@ -188,15 +192,16 @@ def construir_interfaz() -> gr.Blocks:
     entrenados = modelos_entrenados()
     if not entrenados:
         raise SystemExit(
-            "No hay checkpoints en checkpoints/. Entrena al menos un modelo:\n"
-            "  python scripts/train.py --config configs/resnet50.yaml"
+            "Falta el modelo entrenado en checkpoints/. Usa el ZIP completo de la demo, "
+            "que incluye resnet50_app.pt; no necesitas reentrenar."
         )
     opciones = [DISPONIBLES[k][1] for k in entrenados]
 
-    with gr.Blocks(title="Madurez de paltas Hass") as demo:
+    with gr.Blocks(title="Madurez de paltas Hass", analytics_enabled=False) as demo:
         gr.Markdown(
             "# Clasificacion del estado de madurez de paltas Hass\n"
-            "Sube una foto de una palta y el modelo estima su estado en el indice "
+            "Conecta una cámara al computador o sube una foto. La clasificación se calcula "
+            "en este equipo y estima el estado en el índice "
             "de madurez de 5 niveles.\n\n"
             "> **Importante:** el modelo fue entrenado con fotografias de laboratorio "
             "(fondo blanco uniforme, fruta unica y centrada, iluminacion controlada). "
@@ -213,10 +218,10 @@ def construir_interfaz() -> gr.Blocks:
                         type="pil", sources=["webcam"], streaming=True,
                         webcam_options=gr.WebcamOptions(mirror=False, constraints={
                             "video": {"facingMode": {"ideal": "environment"}}}),
-                        label="Cámara del teléfono o computador", height=320)
+                        label="Cámara conectada a este computador", height=320)
                     gr.Markdown("Activa la cámara para analizar imágenes aproximadamente cada segundo. "
                                 "Usa el control de la cámara para detener el envío.")
-                modelo = gr.Radio(opciones, value=opciones[0], label="Modelo")
+                modelo = gr.Radio(opciones, value=opciones[0], label="Modelo", visible=len(opciones) > 1)
                 mapa_chk = gr.Checkbox(
                     True, label="Mostrar mapa de calor"
                 )
@@ -238,10 +243,9 @@ def construir_interfaz() -> gr.Blocks:
 
         gr.on([btn.click, img.change], predecir,
               [img, modelo, mapa_chk], [probs, overlay, salida_txt],
-              concurrency_limit=1, concurrency_id="modelo", trigger_mode="always_last")
+              queue=False, trigger_mode="always_last")
         camara.stream(predecir, [camara, modelo, mapa_chk], [probs, overlay, salida_txt],
-                      stream_every=1.0, time_limit=120, concurrency_limit=1,
-                      concurrency_id="modelo", trigger_mode="always_last")
+                      stream_every=1.0, queue=False, trigger_mode="always_last")
 
     return demo
 
@@ -251,9 +255,14 @@ if __name__ == "__main__":
     ap.add_argument("--share", action="store_true", help="genera un enlace publico temporal")
     ap.add_argument("--port", type=int, default=7860)
     ap.add_argument("--host", default="127.0.0.1", help="0.0.0.0 permite acceso desde la red local")
+    ap.add_argument("--cpu", action="store_true", help="fuerza CPU aunque haya una GPU disponible")
+    ap.add_argument("--open-browser", action="store_true", help="abre la app en el navegador del equipo")
     args = ap.parse_args()
+    if args.cpu:
+        DEVICE = torch.device("cpu")
 
     print(f"Dispositivo: {DEVICE}")
     print(f"Modelos disponibles: {modelos_entrenados()}")
-    construir_interfaz().queue().launch(share=args.share, server_port=args.port,
-                                       server_name=args.host, pwa=True, theme=gr.themes.Soft())
+    construir_interfaz().launch(share=args.share, server_port=args.port,
+                               server_name=args.host, pwa=True, theme=gr.themes.Soft(),
+                               inbrowser=args.open_browser)

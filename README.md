@@ -1,5 +1,24 @@
 # Clasificación del estado de madurez de paltas Hass
 
+### Demostración local en varios computadores Windows
+
+El paquete `dist/PaltasDemo.zip` contiene la app y los parámetros ya entrenados.
+En cada computador: extraer todo el ZIP, ejecutar `INSTALAR.cmd` una vez y luego
+`INICIAR.cmd`. Abre una app local con **Cámara en vivo**, carga de **Foto**, madurez
+y mapa de calor descargable. CPU funciona sin GPU; NVIDIA es opcional.
+La instalación inicial necesita Internet, pero la inferencia no necesita dataset,
+reentrenamiento ni conexión a un servicio externo.
+
+Instrucciones completas: [`app/LEEME-local.md`](app/LEEME-local.md).
+Para reconstruir el ZIP en el equipo que tiene el checkpoint:
+
+```powershell
+python scripts/empaquetar_app.py
+```
+
+Los pesos se incluyen en el ZIP, aunque no se versionan en Git. Copiar solo el
+repositorio de GitHub no reemplaza el paquete completo de demostración.
+
 ### App: foto, cámara y mapa de calor
 
 Con un checkpoint entrenado en `checkpoints/`:
@@ -12,13 +31,25 @@ Abre `http://localhost:7860`. La pestaña **Foto** recibe una imagen y devuelve 
 estado de madurez de 1 a 5, las probabilidades y un mapa de calor descargable en
 PNG. La pestaña **Cámara en vivo** envía imágenes aproximadamente cada segundo
 mientras la cámara está activa; la predicción se calcula en la GPU del PC.
-La sesión continua dura hasta dos minutos; se puede volver a activar la cámara.
+El envío termina al detener la cámara. Cada imagen usa una petición HTTP
+independiente, compatible con túneles temporales sin soporte SSE.
 
 Para abrirla desde el teléfono en la misma red, agrega `--host 0.0.0.0` y abre
 `http://IP_DEL_PC:7860`. Para usar la cámara en vivo desde el teléfono hace falta
 HTTPS y permiso de cámara del navegador. `--share` genera un enlace HTTPS
 temporal accesible desde Internet: quien tenga ese enlace podrá usar la app.
 El computador debe permanecer encendido. No se cambia el firewall automáticamente.
+
+Si Windows impide ejecutar el cliente de `--share`, se puede usar un túnel
+temporal de Cloudflare previamente autorizado, con `cloudflared` instalado:
+
+```powershell
+cloudflared tunnel --url http://localhost:7860 --protocol http2
+```
+
+El enlace `trycloudflare.com` que imprime es público y dura mientras el túnel
+permanezca abierto; las fotos pasan por Cloudflare hacia el PC. La app usa
+peticiones HTTP por imagen para evitar depender de SSE en este modo.
 
 En ResNet se usa **Grad-CAM para la clase elegida**. En ViT, **attention rollout**
 muestra atención entre parches y no es específico de la clase. El mapa se alinea
