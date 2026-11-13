@@ -236,6 +236,8 @@ def test_deck_latex_includes_data_and_asymmetry_frames():
         "14-asimetria-errores",
     ):
         assert fig_name in final
+    assert "Mejor QWK solo imagen" not in final
+    assert "mejora el ViT-S/16 a QWK" not in final
 
     # Verifica que ambos decks pasen validar_tex (sin caracteres prohibidos ni tabuladores)
     tex_av = mod.documento("", "Avance", mod.AUTOR, avance)
@@ -254,6 +256,10 @@ def test_deck_default_preserves_avance_and_reports_seed_ranges(tmp_path, monkeyp
     assert "Sobreestim." in slide and "preliminar" in slide
     assert mod.pct(0.7462422634836428) + "--" + mod.pct(0.7524314765694076) in slide
     assert mod.pct(0.21220159151193635) in slide
+    principal = mod.frame_tabla_principal(mod.cargar_comp("semillas"),
+                                         {k: mod.cargar(k) for k in mod.ETIQUETA})
+    assert mod.num(0.34305923961096374, 3) in principal
+    assert mod.num(0.3828470380194518, 3) in principal
     avance = tmp_path / "entregables" / "avance" / "presentacion_avance.tex"
     avance.parent.mkdir(parents=True)
     avance.write_text("avance entregado", encoding="utf-8")

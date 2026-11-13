@@ -74,6 +74,14 @@ def cargar_comp(tag: str) -> dict | None:
     return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
 
 
+def metricas_predicciones(nombre: str) -> dict:
+    """Recalcula las métricas sin modificar los resultados guardados."""
+    with (METRICS_DIR / f"{nombre}_test_preds.csv").open(encoding="utf-8", newline="") as f:
+        datos = list(csv.DictReader(f))
+    return compute_metrics([int(d["y_true"]) for d in datos],
+                           [int(d["y_pred"]) for d in datos])
+
+
 def copiar_figuras(cuerpo: str, destino: Path) -> int:
     """Copia a `destino` exactamente las figuras que el .tex referencia.
 
@@ -155,12 +163,7 @@ def frames_datos(incluir_limitaciones: bool = False) -> str:
     s2 = frame(
         "Diseño experimental: 3 temperaturas y evolución temporal",
         "Cómo se distribuyen las clases y cómo madura cada grupo",
-        kpis([("Imágenes", "14.710", "verdeosc"),
-              ("Frutas", "478", "azul"),
-              ("Caras / día", "2 (a y b)", "morado"),
-              ("Duración máx.", "26 días", "rojo")])
-        + "\n\\vspace{0.35em}\n"
-        + columnas(
+        columnas(
             figura("01_distribucion_clases", r"\textwidth", "2.9cm")
             + "\n\\vspace{0.15em}\n"
             + items([
@@ -442,12 +445,7 @@ def frame_asimetria(res: dict) -> str:
     ):
         metricas = []
         for sufijo in (["", "_s1", "_s2"] if semillas else [""]):
-            with (METRICS_DIR / f"{nombre}{sufijo}_test_preds.csv").open(
-                    encoding="utf-8", newline="") as f:
-                datos = list(csv.DictReader(f))
-            metricas.append(compute_metrics(
-                [int(d["y_true"]) for d in datos],
-                [int(d["y_pred"]) for d in datos]))
+            metricas.append(metricas_predicciones(nombre + sufijo))
         valores = []
         for clave in ("accuracy", "underestimation_rate", "overestimation_rate", "asymmetric_mae"):
             formato = (lambda x: num(x, 3)) if clave == "asymmetric_mae" else pct
@@ -456,14 +454,18 @@ def frame_asimetria(res: dict) -> str:
                            if semillas else formato(xs[0]))
         filas.append([etiqueta, *valores])
     return frame(
+        "Dos direcciones del error, dos costos distintos",
+        "Semilla 42 de cada modelo; el costo elegido no mide etileno",
+        figura("14_asimetria_errores", r"0.95\textwidth", "4.1cm")
+        + "\n" + r"\cierre{Menos falsos inmaduros puede significar más falsos maduros. "
+        r"La tabla siguiente compara con la variación entre semillas.}") + frame(
         "Asimetría: menos falsos inmaduros, más falsos maduros",
         "Costo elegido: subestimar pesa el doble; el etileno no se midió",
-        figura("14_asimetria_errores", r"0.90\textwidth", "3.15cm")
-        + "\n" + tabla(
+        tabla(
             ["Modelo", "Clase exacta", "Subestim.", "Sobreestim.", "MAE asim."],
-            filas, spec="lrrrr", tam=r"\tiny")
+            filas, spec="lrrrr", tam=r"\scriptsize")
         + "\n" + items([
-            "Baselines: rango de tres semillas. Asimétricos: solo semilla 42. "
+            "Tabla: rango de tres semillas en baselines; asimétricos: solo 42. "
             "El ViT asimétrico queda dentro del rango de accuracy y QWK del ViT normal.",
         ], tam=r"\tiny", sep="0.1em")
         + "\n" + r"\cierre{Castigar el falso inmaduro lo reduce casi a la mitad en ResNet, "
@@ -550,7 +552,7 @@ def frame_referencia(s: dict) -> str:
 
 def frame_tabla_principal(s: dict, res: dict) -> str:
     ref = s["referencia"]["test"]
-    ref_asim = num(ref.get("asymmetric_mae", 0.365), 3)
+    ref_asim = num(metricas_predicciones("referencia_metadatos")["asymmetric_mae"], 3)
     filas = [["Solo temperatura y día (sin foto)", "1", pct(ref["accuracy"]),
               num(ref["qwk"], 3), num(ref["mae"], 2), ref_asim]]
     mapa_key = {
@@ -563,7 +565,8 @@ def frame_tabla_principal(s: dict, res: dict) -> str:
                    "ViT-S/16 + temp. y día"):
         f = fila_semillas(s, nombre)
         k = mapa_key[nombre]
-        asim_val = res[k]["test"].get("asymmetric_mae", f["test_mae"]) if res.get(k) else f["test_mae"]
+        asim_val = sum(metricas_predicciones(k + suf)["asymmetric_mae"]
+                       for suf in ("", "_s1", "_s2")) / 3
         filas.append([nombre, "3", pm(f["test_accuracy"], f["test_accuracy_sd"]),
                       num(f["test_qwk"], 3), num(f["test_mae"], 2), num(asim_val, 3)])
     for k in ("resnet50_asimetrico", "vit_small_asimetrico"):
@@ -1019,12 +1022,12 @@ def construir_final(res: dict, comp: dict | None, s: dict | None = None) -> str:
         va_t = res["vit_small_asimetrico"]["test"]
         filas.append([
             "ResNet-50 (asim.)", pct(ra_t["accuracy"]), "1,00$\\times$",
-            f"Menor riesgo de etileno sin metadatos (MAE Asim. {num(ra_t['asymmetric_mae'], 3)}, subest. {pct(ra_t['underestimation_rate'])}).",
+            f"Preliminar (1 semilla): subest. {pct(ra_t['underestimation_rate'])}, sobreest. {pct(ra_t['overestimation_rate'])}; menos aciertos exactos.",
         ])
         filas.append([
             "ViT-S/16 (asim.)", pct(va_t["accuracy"]),
             num(v["gflops"] / r["gflops"], 2) + r"$\times$",
-            f"Mejor QWK solo imagen ({num(va_t['qwk'], 3)}) y baja subestimación a {pct(va_t['underestimation_rate'])}.",
+            f"Preliminar (1 semilla): dentro del rango del ViT normal; sobreest. {pct(va_t['overestimation_rate'])}.",
         ])
     cuerpo += frame(
         "\\textquestiondown{}Cuál llevaríamos a una planta empacadora?",
@@ -1036,9 +1039,9 @@ def construir_final(res: dict, comp: dict | None, s: dict | None = None) -> str:
             ("Si la planta registra temperatura y fecha de ingreso, hay que usarlas.", True),
             "Mejoran a las dos redes en las 3 semillas; en QWK la mejora es "
             "significativa en todas. No cuesta nada: son dos números más.",
-            ("Si solo hay foto y preocupa el contagio por etileno, usar pérdida asimétrica.", True),
-            "Entrenar con \\texttt{AsymmetricOrdinalLoss} corta los falsos inmaduros de "
-            "12,6\\,\\% a 6,5\\,\\% en ResNet-50 y sube el ViT-S/16 a 74,8\\,\\% de exactitud.",
+            ("La pérdida asimétrica requiere más semillas antes de recomendar su uso.", True),
+            "Reduce falsos inmaduros a cambio de más falsos maduros; "
+            "el riesgo de etileno no fue medido.",
             ("Entre ResNet y ViT, preferimos la ResNet.", True),
             "No porque sea claramente más precisa, sino porque da lo mismo cada vez "
             "que se entrena. En producción eso importa.",
@@ -1072,10 +1075,10 @@ def construir_final(res: dict, comp: dict | None, s: dict | None = None) -> str:
              "ImageNet.", True),
             "Con tres entrenamientos, la ventaja de la ResNet en clase exacta aparece "
             "en dos de tres. Sin ImageNet, el ViT pierde el doble.",
-            ("Penalización ordinal asimétrica implementada y validada.", True),
-            "Incorpóramos \\texttt{AsymmetricOrdinalLoss} ($2\\times$ al falso inmaduro): "
-            "reduce la subestimación de 12,6\\,\\% a 6,5\\,\\% en ResNet-50 ($p=0{,}006$) y "
-            "mejora el ViT-S/16 a QWK 0,938 ($p=0{,}030$).",
+            ("Penalización ordinal asimétrica: resultado preliminar, una semilla.", True),
+            "Menor MAE Asimétrico contra la semilla 42 del baseline "
+            "($p=0{,}006$ ResNet; $p=0{,}030$ ViT), con más sobreestimación. "
+            "El efecto entre semillas y el riesgo de etileno no fueron medidos.",
             ("Qué haríamos ahora:", True),
             "1) Fotos de celular en un packing chileno, sin historia del lote (o reemplazo de fondos). "
             "2) Combinar \\texttt{AsymmetricOrdinalLoss} con el modelo de metadatos y 3 semillas. "

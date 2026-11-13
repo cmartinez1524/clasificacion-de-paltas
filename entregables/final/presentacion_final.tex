@@ -207,11 +207,6 @@
 \end{frame}
 
 \begin{frame}{Diseño experimental: 3 temperaturas y evolución temporal}{Cómo se distribuyen las clases y cómo madura cada grupo}
-\kpi[verdeosc]{0.224\textwidth}{Imágenes}{14.710}\hfill
-\kpi[azul]{0.224\textwidth}{Frutas}{478}\hfill
-\kpi[morado]{0.224\textwidth}{Caras / día}{2 (a y b)}\hfill
-\kpi[rojo]{0.224\textwidth}{Duración máx.}{26 días}
-\vspace{0.35em}
 \begin{columns}[T]
 \begin{column}{0.51\textwidth}
 \begin{center}
@@ -463,11 +458,11 @@ Fotos que vio antes de empezar & 1,3 millones & 1,3 millones & ninguna \\
 \toprule
 \rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Sem. & \color{white}\bfseries Clase exacta & \color{white}\bfseries QWK & \color{white}\bfseries MAE & \color{white}\bfseries MAE Asim. \\
 \midrule
-Solo temperatura y día (sin foto) & 1 & 78{,}0\,\% & 0{,}942 & 0{,}23 & 0{,}365 \\
-ResNet-50 & 3 & 74{,}8\,$\pm$\,0{,}3\,\% & 0{,}936 & 0{,}26 & 0{,}390 \\
-ViT-S/16 & 3 & 73{,}1\,$\pm$\,2{,}6\,\% & 0{,}933 & 0{,}28 & 0{,}429 \\
-\rowcolor{verdecla!22}ResNet-50 + temp. y día & 3 & 79{,}2\,$\pm$\,1{,}3\,\% & 0{,}950 & 0{,}21 & 0{,}302 \\
-ViT-S/16 + temp. y día & 3 & 78{,}5\,$\pm$\,0{,}7\,\% & 0{,}948 & 0{,}22 & 0{,}337 \\
+Solo temperatura y día (sin foto) & 1 & 78{,}0\,\% & 0{,}942 & 0{,}23 & 0{,}343 \\
+ResNet-50 & 3 & 74{,}8\,$\pm$\,0{,}3\,\% & 0{,}936 & 0{,}26 & 0{,}383 \\
+ViT-S/16 & 3 & 73{,}1\,$\pm$\,2{,}6\,\% & 0{,}933 & 0{,}28 & 0{,}412 \\
+\rowcolor{verdecla!22}ResNet-50 + temp. y día & 3 & 79{,}2\,$\pm$\,1{,}3\,\% & 0{,}950 & 0{,}21 & 0{,}308 \\
+ViT-S/16 + temp. y día & 3 & 78{,}5\,$\pm$\,0{,}7\,\% & 0{,}948 & 0{,}22 & 0{,}328 \\
 ResNet-50 (asim.) & 1 & 72{,}2\,\% & 0{,}930 & 0{,}29 & 0{,}353 \\
 ViT-S/16 (asim.) & 1 & 74{,}8\,\% & 0{,}938 & 0{,}26 & 0{,}356 \\
 \bottomrule
@@ -505,23 +500,35 @@ ViT-S/16 (asim.) & 1 & 74{,}8\,\% & 0{,}938 & 0{,}26 & 0{,}356 \\
 \cierre{En el avance dijimos \guillemotleft{}ResNet gana en clase exacta\guillemotright{} con un solo entrenamiento. Con tres, la conclusión se matiza.}
 \end{frame}
 
-\begin{frame}{Asimetría del error y entrenamiento sensible al costo}{Castigar el doble subestimar la madurez (falso inmaduro) frente a sobreestimarla}
+\begin{frame}{Dos direcciones del error, dos costos distintos}{Semilla 42 de cada modelo; el costo elegido no mide etileno}
 \begin{center}
-  \includegraphics[width=0.90\textwidth,height=3.35cm,keepaspectratio]{14-asimetria-errores}
+  \includegraphics[width=0.95\textwidth,height=4.1cm,keepaspectratio]{14-asimetria-errores}
 \end{center}
-\vspace{0.2em}
+\cierre{Menos falsos inmaduros puede significar más falsos maduros. La tabla siguiente compara con la variación entre semillas.}
+\end{frame}
+
+\begin{frame}{Asimetría: menos falsos inmaduros, más falsos maduros}{Costo elegido: subestimar pesa el doble; el etileno no se midió}
+{\scriptsize
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Clase exacta & \color{white}\bfseries Subestim. & \color{white}\bfseries Sobreestim. & \color{white}\bfseries MAE asim. \\
+\midrule
+Solo temp. y día & 78{,}0\,\% & 11{,}0\,\% & 11{,}1\,\% & 0{,}343 \\
+ResNet-50 (3 semillas) & 74{,}6\,\%--75{,}2\,\% & 11{,}1\,\%--13{,}2\,\% & 11{,}6\,\%--14{,}3\,\% & 0{,}373--0{,}390 \\
+ResNet asim. (1 semilla) & 72{,}2\,\% & 6{,}5\,\% & 21{,}2\,\% & 0{,}353 \\
+ViT-S/16 (3 semillas) & 71{,}0\,\%--76{,}0\,\% & 10{,}9\,\%--14{,}6\,\% & 9{,}3\,\%--18{,}1\,\% & 0{,}392--0{,}429 \\
+ViT asim. (1 semilla) & 74{,}8\,\% & 9{,}8\,\% & 15{,}5\,\% & 0{,}356 \\
+\bottomrule
+\end{tabular}
+}
 {\tiny
-\setlength{\itemsep}{0.14em}
+\setlength{\itemsep}{0.1em}
 \begin{itemize}
-  \item {\bfseries Por qué penalizar más el falso inmaduro ($2\times$ si $\hat{y} < y$).}
-  \item Infiltrar una palta madura en un lote verde acelera la maduración del resto por etileno. La pérdida estándar (\texttt{CrossEntropy}) no distingue dirección ni distancia entre etapas.
-  \item {\bfseries Cómo actualizamos los pesos durante el aprendizaje:}
-  \item Sumamos a la entropía cruzada el \textbf{costo ordinal esperado asimétrico} (\texttt{AsymmetricOrdinalLoss}) y evaluamos con regla de riesgo mínimo de Bayes.
-  \item {\bfseries Resultado real tras entrenar en GPU (Tesla T4):}
-  \item \textbf{ResNet-50 (asim.)} reduce los falsos inmaduros casi a la mitad (12{,}6\,\% $\rightarrow$ \textbf{6{,}5\,\%}) y baja el MAE Asimétrico de 0{,}390 a \textbf{0{,}353} ($p=0{,}006$). \textbf{ViT-S/16 (asim.)} baja el falso inmaduro de 14{,}5\,\% a \textbf{9{,}8\,\%} (MAE Asim. \textbf{0{,}356}, $p=0{,}030$) y además sube QWK (0{,}931 $\rightarrow$ \textbf{0{,}938}) y Accuracy (72{,}2\,\% $\rightarrow$ \textbf{74{,}8\,\%}).
+  \item Tabla: rango de tres semillas en baselines; asimétricos: solo 42. El ViT asimétrico queda dentro del rango de accuracy y QWK del ViT normal.
 \end{itemize}
 }
-\cierre{Entrenar con castigo asimétrico reduce significativamente el riesgo de etileno en ambas arquitecturas ($p \le 0{,}030$).}
+\cierre{Castigar el falso inmaduro lo reduce casi a la mitad en ResNet, a cambio de más falsos maduros y menos aciertos exactos. Una semilla: resultado preliminar.}
 \end{frame}
 
 \begin{frame}{\textquestiondown{}Qué aporta realmente la foto?}{Separando las paltas según si maduran al ritmo de su grupo}
@@ -673,8 +680,8 @@ ViT-Hybrid R26+S/32 & 0{,}943 & 78{,}0\,\% & 0{,}941 & 76{,}2\,\% & 0{,}84$\time
 Solo temperatura y día & 78{,}0\,\% & casi 0 & Empata en promedio. Pero falla siempre con las paltas fuera de ritmo. \\
 ResNet-50 & 74{,}8\,$\pm$\,0{,}3\,\% & 1,00$\times$ & La opción estándar si no se sabe cuántos días lleva guardada la fruta. \\
 ViT-S/16 & 73{,}1\,$\pm$\,2{,}6\,\% & 1{,}04$\times$ & Cerca en promedio, pero menos estable entre entrenamientos. \\
-ResNet-50 (asim.) & 72{,}2\,\% & 1,00$\times$ & Menor riesgo de etileno sin metadatos (MAE Asim. 0{,}353, subest. 6{,}5\,\%). \\
-ViT-S/16 (asim.) & 74{,}8\,\% & 1{,}04$\times$ & Mejor QWK solo imagen (0{,}938) y baja subestimación a 9{,}8\,\%. \\
+ResNet-50 (asim.) & 72{,}2\,\% & 1,00$\times$ & Preliminar (1 semilla): subest. 6{,}5\,\%, sobreest. 21{,}2\,\%; menos aciertos exactos. \\
+ViT-S/16 (asim.) & 74{,}8\,\% & 1{,}04$\times$ & Preliminar (1 semilla): dentro del rango del ViT normal; sobreest. 15{,}5\,\%. \\
 \bottomrule
 \end{tabular}
 }
@@ -684,8 +691,8 @@ ViT-S/16 (asim.) & 74{,}8\,\% & 1{,}04$\times$ & Mejor QWK solo imagen (0{,}938)
 \begin{itemize}
   \item {\bfseries Si la planta registra temperatura y fecha de ingreso, hay que usarlas.}
   \item Mejoran a las dos redes en las 3 semillas; en QWK la mejora es significativa en todas. No cuesta nada: son dos números más.
-  \item {\bfseries Si solo hay foto y preocupa el contagio por etileno, usar pérdida asimétrica.}
-  \item Entrenar con \texttt{AsymmetricOrdinalLoss} corta los falsos inmaduros de 12,6\,\% a 6,5\,\% en ResNet-50 y sube el ViT-S/16 a 74,8\,\% de exactitud.
+  \item {\bfseries La pérdida asimétrica requiere más semillas antes de recomendar su uso.}
+  \item Reduce falsos inmaduros a cambio de más falsos maduros; el riesgo de etileno no fue medido.
   \item {\bfseries Entre ResNet y ViT, preferimos la ResNet.}
   \item No porque sea claramente más precisa, sino porque da lo mismo cada vez que se entrena. En producción eso importa.
 \end{itemize}
@@ -717,8 +724,8 @@ ViT-S/16 (asim.) & 74{,}8\,\% & 1{,}04$\times$ & Mejor QWK solo imagen (0{,}938)
   \item Una regla con solo temperatura y día acierta el 78\,\%; la foto aporta donde el calendario falla siempre: en las 498 fotos de paltas fuera de ritmo.
   \item {\bfseries ResNet y ViT quedan cerca; la ResNet es más estable y depende menos de ImageNet.}
   \item Con tres entrenamientos, la ventaja de la ResNet en clase exacta aparece en dos de tres. Sin ImageNet, el ViT pierde el doble.
-  \item {\bfseries Penalización ordinal asimétrica implementada y validada.}
-  \item Incorpóramos \texttt{AsymmetricOrdinalLoss} ($2\times$ al falso inmaduro): reduce la subestimación de 12,6\,\% a 6,5\,\% en ResNet-50 ($p=0{,}006$) y mejora el ViT-S/16 a QWK 0,938 ($p=0{,}030$).
+  \item {\bfseries Penalización ordinal asimétrica: resultado preliminar, una semilla.}
+  \item Menor MAE Asimétrico contra la semilla 42 del baseline ($p=0{,}006$ ResNet; $p=0{,}030$ ViT), con más sobreestimación. El efecto entre semillas y el riesgo de etileno no fueron medidos.
   \item {\bfseries Qué haríamos ahora:}
   \item 1) Fotos de celular en un packing chileno, sin historia del lote (o reemplazo de fondos). 2) Combinar \texttt{AsymmetricOrdinalLoss} con el modelo de metadatos y 3 semillas. 3) Tapar partes de la foto para probar la hipótesis local vs. global.
 \end{itemize}
