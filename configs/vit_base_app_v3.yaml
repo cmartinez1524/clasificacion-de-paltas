@@ -1,0 +1,21 @@
+name: vit_base_app_v3
+model: vit_base
+pretrained: true
+img_size: 224
+batch_size: 32
+num_workers: 4
+use_cache: true
+use_class_weights: true
+epochs: 20
+lr: 0.00005
+head_lr_mult: 10.0
+weight_decay: 0.05
+warmup_epochs: 2.0
+label_smoothing: 0.05
+drop_path_rate: 0.1
+grad_clip: 1.0
+amp: true
+seed: 42
+early_stop_patience: 6
+primary_metric: qwk
+notes: "Exploracion de capacidad para la app: DeiT-B/16 ImageNet-1k, seleccion solo en validacion; presupuesto distinto al estudio original."

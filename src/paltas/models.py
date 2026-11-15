@@ -49,8 +49,11 @@ NUM_CLASSES = 5
 
 #: Modelo -> (identificador timm, nombre legible).
 BACKBONES = {
+    # Los modelos grandes exploran capacidad para la app; no igualan el presupuesto del par original.
     "resnet50": ("resnet50.a1_in1k", "ResNet-50"),
+    "resnet101": ("resnet101.a1_in1k", "ResNet-101"),
     "vit_small": ("deit_small_patch16_224.fb_in1k", "ViT-S/16 (DeiT-S)"),
+    "vit_base": ("deit_base_patch16_224.fb_in1k", "ViT-B/16 (DeiT-B)"),
     "hybrid_vit_r26": ("vit_small_r26_s32_224.augreg_in21k_ft_in1k", "ViT-Hybrid R26+S/32"),
 }
 

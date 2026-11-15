@@ -42,6 +42,8 @@ TF = build_transforms(224, train=False)
 DISPONIBLES = {
     "resnet50_app": ("resnet50", "ResNet-50 · nueva app"),
     "resnet50_app_s1_v2": ("resnet50", "ResNet-50 · v2 experimental (semilla 1)"),
+    "resnet101_app_v3": ("resnet101", "ResNet-101 · v3 experimental"),
+    "vit_base_app_v3": ("vit_base", "ViT-Base/16 · v3 experimental"),
     "resnet50": ("resnet50", "ResNet-50"),
     "vit_small": ("vit_small", "ViT-S/16"),
     "resnet50_asimetrico": ("resnet50", "ResNet-50 (asimétrico)"),
@@ -137,7 +139,7 @@ def predecir(imagen: Image.Image, clave_modelo: str, mostrar_mapa: bool):
                     overlay = superponer(base, mapa)
                     texto += ("\n\n**Mapa de calor:** rojo indica mayor intensidad. Se superpone al "
                               "recorte que vio el modelo. Es una aproximación, no una segmentación de la fruta.")
-                    if DISPONIBLES[clave][0] in ("vit_small", "hybrid_vit_r26"):
+                    if DISPONIBLES[clave][0] in ("vit_small", "vit_base", "hybrid_vit_r26"):
                         texto += " En ViT muestra atención entre parches; no es específico de la clase predicha."
             except Exception as e:  # la demo no debe caerse por el mapa
                 print(f"[aviso] no se pudo generar el mapa: {e}")
@@ -154,10 +156,10 @@ def mapa_de_atencion(model, clave: str, x, class_idx: int | None = None):
     las activaciones convolucionales, asi que el mapa refleja lo que el modelo
     COMPLETO usa de la rama convolucional, no lo que usaria la ResNet sola.
     """
-    if clave.startswith("resnet50"):
+    if clave.startswith(("resnet50", "resnet101")):
         with GradCAM(model, resnet_target_layer(model)) as cam:
             return cam(x, class_idx=class_idx)[0]
-    if clave.startswith("vit_small"):
+    if clave.startswith(("vit_small", "vit_base")):
         return attention_rollout(model, x)[0]
     if clave == "hybrid_fusion":
         with GradCAM(model, model.cnn.layer4[-1]) as cam:

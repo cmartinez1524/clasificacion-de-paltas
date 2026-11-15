@@ -6,8 +6,9 @@ import zipfile
 import pytest
 
 
-@pytest.mark.parametrize('model', ['resnet50_app', 'resnet50_app_ce_v2'])
-def test_package_contains_weights_and_no_training_dataset(tmp_path, monkeypatch, model):
+@pytest.mark.parametrize('model,architecture', [('resnet50_app', 'resnet50'),
+    ('resnet50_app_ce_v2', 'resnet50'), ('resnet101_app_v3', 'resnet101'), ('vit_base_app_v3', 'vit_base')])
+def test_package_contains_weights_and_no_training_dataset(tmp_path, monkeypatch, model, architecture):
     source = Path(__file__).resolve().parents[1]
     spec = importlib.util.spec_from_file_location('package_app', source / 'scripts/empaquetar_app.py')
     mod = importlib.util.module_from_spec(spec)
@@ -24,7 +25,7 @@ def test_package_contains_weights_and_no_training_dataset(tmp_path, monkeypatch,
     (tmp_path / 'checkpoints' / f'{model}.pt').write_bytes(weights)
     (tmp_path / 'data/cache/example.jpg').write_bytes(b'image fixture')
     (tmp_path / 'reports/metrics' / f'{model}_test.json').write_text(json.dumps(
-        {'config': {'model': 'resnet50'}, 'best_epoch': 8, 'test': {'accuracy': .7, 'qwk': .9, 'mae': .3}}))
+        {'config': {'model': architecture}, 'best_epoch': 8, 'test': {'accuracy': .7, 'qwk': .9, 'mae': .3}}))
     (tmp_path / 'reports/metrics/resnet50_app_mapas.json').write_text(json.dumps([{'imagen': 'example.jpg'}]))
     mod.main(['--modelo', model])
     filename = 'PaltasDemo.zip' if model == 'resnet50_app' else f'PaltasDemo-{model}.zip'
@@ -34,7 +35,10 @@ def test_package_contains_weights_and_no_training_dataset(tmp_path, monkeypatch,
         assert info['experimento_origen'] == model
         assert ('Variante experimental' in archive.read('PaltasDemo/README.md').decode('utf-8')) == (model != 'resnet50_app')
         assert info['sha256'] == hashlib.sha256(weights).hexdigest()
-        assert archive.read('PaltasDemo/checkpoints/resnet50_app.pt') == weights
+        assert info['arquitectura'] == architecture
+        packaged_name = 'resnet50_app' if architecture == 'resnet50' else model
+        assert info['checkpoint'] == f'checkpoints/{packaged_name}.pt'
+        assert archive.read('PaltasDemo/' + info['checkpoint']) == weights
         assert 'PaltasDemo/app/ejemplos/example.jpg' in names
         assert 'PaltasDemo/INICIAR.cmd' in names
         assert not any('/data/' in p or '/reports/' in p or '/.venv/' in p for p in names)
