@@ -10,6 +10,17 @@ Para los dos ajustes adicionales de ResNet-101 en GPU:
 `python scripts/mejorar_modelo_app.py --ajustar-resnet101`.
 Detalles: [`reports/ajuste_resnet101_v4.md`](reports/ajuste_resnet101_v4.md).
 
+Para vigilar avance y resultados sin detener los entrenamientos:
+
+```powershell
+python scripts/vigilar_experimentos.py
+```
+
+Se actualiza cada 10 segundos, usa solo la biblioteca estándar y no requiere GPU.
+Muestra épocas completadas, mejores métricas de validación, test disponible y errores.
+`--una-vez` muestra una captura; `--intervalo 5` cambia la frecuencia.
+Ctrl+C cierra únicamente el monitor. Los resultados de test no participan en el orden.
+
 `scripts/mejorar_modelo_app.py` compara dos recetas nuevas de ResNet-50 (ajuste
 gradual sin pesos de clase y la misma receta con costo ordinal simétrico).
 Entrena con `--val-only`: **test no se evalúa durante la selección**. Se elige
