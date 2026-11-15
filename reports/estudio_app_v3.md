@@ -1,5 +1,20 @@
 # Modelos de mayor capacidad para la app
 
+## Resultados
+
+| Modelo | Accuracy val | QWK val | MAE val |
+|---|---:|---:|---:|
+| ResNet-50 s1 v2 | 76,16 % | 0,93968 | 0,24598 |
+| ResNet-101 v3 | 75,54 % | 0,93442 | 0,25625 |
+| ViT-Base v3 | 77,59 % | 0,93997 | 0,23304 |
+
+ViT-Base fue elegido por QWK de validacion. En test obtuvo 76,83 % de accuracy,
+QWK 0,93853 y MAE 0,23873. La ResNet-50 s1 v2 tenia QWK test 0,93917:
+el ganador de validacion no mejoro todas las metricas de test. ResNet-101 no se
+evaluo en test porque no fue elegido. Su mejor epoca fue la 11; paro en la 17.
+
+La nueva exploracion para ResNet-101 esta en [`ajuste_resnet101_v4.md`](ajuste_resnet101_v4.md).
+
 Se prueban ResNet-101 (`resnet101.a1_in1k`, 42,51 M de parámetros) y
 ViT-Base/16 (`deit_base_patch16_224.fb_in1k`, 85,80 M), ambos con pesos
 ImageNet-1k y salida de cinco clases. Esta exploración no modifica el estudio

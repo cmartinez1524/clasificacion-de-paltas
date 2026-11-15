@@ -1,0 +1,21 @@
+name: resnet101_app_regularizado_v4
+model: resnet101
+pretrained: true
+img_size: 224
+batch_size: 32
+num_workers: 4
+use_cache: true
+use_class_weights: true
+epochs: 25
+lr: 0.00005
+head_lr_mult: 5.0
+weight_decay: 0.1
+warmup_epochs: 2.0
+label_smoothing: 0.1
+drop_path_rate: 0.1
+grad_clip: 1.0
+amp: true
+seed: 42
+early_stop_patience: 7
+primary_metric: qwk
+notes: "Nuevo ajuste ResNet-101 desde ImageNet-1k: LR y multiplicador de cabeza menores, warmup mas largo y regularizacion mayor. Paquete de ajustes, no ablacion de cada factor."

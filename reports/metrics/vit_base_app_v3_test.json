@@ -1,0 +1,173 @@
+{
+  "config": {
+    "name": "vit_base_app_v3",
+    "model": "vit_base",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 20,
+    "lr": 5e-05,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 2.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.1,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 6,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Exploracion de capacidad para la app: DeiT-B/16 ImageNet-1k, seleccion solo en validacion; presupuesto distinto al estudio original."
+  },
+  "params_M": 85.803,
+  "params_entrenables_M": 85.803,
+  "gflops": 33.695,
+  "best_epoch": 14,
+  "train_minutes": 32.39,
+  "seed": 42,
+  "val": {
+    "accuracy": 0.7758928571428572,
+    "balanced_accuracy": 0.770003679238364,
+    "macro_f1": 0.7688083824749755,
+    "qwk": 0.9399698937156933,
+    "mae": 0.2330357142857143,
+    "asymmetric_mae": 0.3825892857142857,
+    "underestimation_rate": 0.14107142857142857,
+    "overestimation_rate": 0.08303571428571428,
+    "off_by_one": 0.9915178571428571,
+    "per_class_f1": [
+      0.9,
+      0.7381275440976933,
+      0.7127272727272728,
+      0.7003027245206862,
+      0.7928843710292249
+    ],
+    "confusion_matrix": [
+      [
+        513,
+        65,
+        0,
+        0,
+        0
+      ],
+      [
+        49,
+        272,
+        27,
+        0,
+        0
+      ],
+      [
+        0,
+        48,
+        294,
+        49,
+        1
+      ],
+      [
+        0,
+        3,
+        98,
+        347,
+        44
+      ],
+      [
+        0,
+        1,
+        14,
+        103,
+        312
+      ]
+    ]
+  },
+  "test": {
+    "accuracy": 0.7683465959328029,
+    "balanced_accuracy": 0.7617226459869479,
+    "macro_f1": 0.7636978080122279,
+    "qwk": 0.9385319662621892,
+    "mae": 0.23872679045092837,
+    "asymmetric_mae": 0.3850574712643678,
+    "underestimation_rate": 0.14058355437665782,
+    "overestimation_rate": 0.09106984969053934,
+    "off_by_one": 0.9929266136162688,
+    "per_class_f1": [
+      0.9029918404351768,
+      0.7348703170028819,
+      0.7142857142857143,
+      0.6856060606060606,
+      0.7807351077313055
+    ],
+    "confusion_matrix": [
+      [
+        498,
+        52,
+        0,
+        0,
+        0
+      ],
+      [
+        55,
+        255,
+        30,
+        2,
+        0
+      ],
+      [
+        0,
+        43,
+        315,
+        73,
+        1
+      ],
+      [
+        0,
+        2,
+        94,
+        362,
+        48
+      ],
+      [
+        0,
+        0,
+        11,
+        113,
+        308
+      ]
+    ]
+  },
+  "test_por_grupo": {
+    "T10": {
+      "n": 1350,
+      "accuracy": 0.7815,
+      "mae": 0.2237,
+      "asymmetric_mae": 0.3481,
+      "underestimation_rate": 0.12
+    },
+    "T20": {
+      "n": 466,
+      "accuracy": 0.7618,
+      "mae": 0.2489,
+      "asymmetric_mae": 0.4034,
+      "underestimation_rate": 0.1481
+    },
+    "Tam": {
+      "n": 446,
+      "accuracy": 0.7354,
+      "mae": 0.2735,
+      "asymmetric_mae": 0.4776,
+      "underestimation_rate": 0.1951
+    }
+  }
+}

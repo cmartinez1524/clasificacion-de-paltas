@@ -6,6 +6,10 @@ La exploración de mayor capacidad usa `python scripts/mejorar_modelo_app.py --g
 ResNet-101 y ViT-Base/16 con ImageNet-1k frente a la mejor ResNet-50 actual.
 Protocolo y límites: [`reports/estudio_app_v3.md`](reports/estudio_app_v3.md).
 
+Para los dos ajustes adicionales de ResNet-101 en GPU:
+`python scripts/mejorar_modelo_app.py --ajustar-resnet101`.
+Detalles: [`reports/ajuste_resnet101_v4.md`](reports/ajuste_resnet101_v4.md).
+
 `scripts/mejorar_modelo_app.py` compara dos recetas nuevas de ResNet-50 (ajuste
 gradual sin pesos de clase y la misma receta con costo ordinal simétrico).
 Entrena con `--val-only`: **test no se evalúa durante la selección**. Se elige

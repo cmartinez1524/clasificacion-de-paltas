@@ -1,0 +1,22 @@
+name: resnet101_app_refinado_v4
+model: resnet101
+pretrained: true
+init_checkpoint: checkpoints/resnet101_app_v3.pt
+img_size: 224
+batch_size: 32
+num_workers: 4
+use_cache: true
+use_class_weights: true
+epochs: 12
+lr: 0.00001
+head_lr_mult: 1.0
+weight_decay: 0.05
+warmup_epochs: 1.0
+label_smoothing: 0.05
+drop_path_rate: 0.0
+grad_clip: 1.0
+amp: true
+seed: 42
+early_stop_patience: 5
+primary_metric: qwk
+notes: "Refinar el mejor checkpoint ResNet-101 v3 con LR bajo y cabeza al mismo LR; sin cambiar perdida ni regularizacion. Seleccion solo por validacion."

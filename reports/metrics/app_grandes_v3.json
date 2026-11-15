@@ -1,0 +1,332 @@
+{
+  "baseline": "resnet50_app_s1_v2",
+  "baseline_semilla": 1,
+  "criterio": "Mayor QWK en validacion; desempate accuracy; baseline incluido. Test no participa.",
+  "candidatos": [
+    {
+      "name": "resnet101_app_v3",
+      "model": "resnet101",
+      "pretrained": true,
+      "init_checkpoint": null,
+      "img_size": 224,
+      "batch_size": 32,
+      "num_workers": 4,
+      "use_cache": true,
+      "use_class_weights": true,
+      "epochs": 20,
+      "lr": 0.00015,
+      "head_lr_mult": 10.0,
+      "weight_decay": 0.05,
+      "warmup_epochs": 1.0,
+      "label_smoothing": 0.05,
+      "drop_path_rate": 0.0,
+      "grad_clip": 1.0,
+      "amp": true,
+      "seed": 42,
+      "early_stop_patience": 6,
+      "eval_tta_hflip": false,
+      "asymmetric_loss_weight": 0.0,
+      "underripe_penalty": 2.0,
+      "overripe_penalty": 1.0,
+      "primary_metric": "qwk",
+      "use_bayes_risk_eval": false,
+      "freeze_backbones": false,
+      "cnn_ckpt": null,
+      "vit_ckpt": null,
+      "notes": "Exploracion de capacidad para la app: ResNet-101 a1 ImageNet-1k, seleccion solo en validacion; presupuesto distinto al estudio original."
+    },
+    {
+      "name": "vit_base_app_v3",
+      "model": "vit_base",
+      "pretrained": true,
+      "init_checkpoint": null,
+      "img_size": 224,
+      "batch_size": 32,
+      "num_workers": 4,
+      "use_cache": true,
+      "use_class_weights": true,
+      "epochs": 20,
+      "lr": 5e-05,
+      "head_lr_mult": 10.0,
+      "weight_decay": 0.05,
+      "warmup_epochs": 2.0,
+      "label_smoothing": 0.05,
+      "drop_path_rate": 0.1,
+      "grad_clip": 1.0,
+      "amp": true,
+      "seed": 42,
+      "early_stop_patience": 6,
+      "eval_tta_hflip": false,
+      "asymmetric_loss_weight": 0.0,
+      "underripe_penalty": 2.0,
+      "overripe_penalty": 1.0,
+      "primary_metric": "qwk",
+      "use_bayes_risk_eval": false,
+      "freeze_backbones": false,
+      "cnn_ckpt": null,
+      "vit_ckpt": null,
+      "notes": "Exploracion de capacidad para la app: DeiT-B/16 ImageNet-1k, seleccion solo en validacion; presupuesto distinto al estudio original."
+    }
+  ],
+  "splits_sha256": "34c65fee5b4e62361f6ccebcaeeb8ea508be2b914b65477f2169555cee0b20c9",
+  "limitacion": "Test solo del elegido; seleccionar un checkpoint no demuestra mejora de la receta ni generalizacion a camaras reales.",
+  "validacion": [
+    {
+      "nombre": "resnet50_app_s1_v2",
+      "val": {
+        "accuracy": 0.7616071428571428,
+        "balanced_accuracy": 0.7468728891024171,
+        "macro_f1": 0.7508075821520953,
+        "qwk": 0.9396843702981978,
+        "mae": 0.24598214285714284,
+        "asymmetric_mae": 0.37455357142857143,
+        "underestimation_rate": 0.12232142857142857,
+        "overestimation_rate": 0.11607142857142858,
+        "off_by_one": 0.9924107142857143,
+        "per_class_f1": [
+          0.8979591836734694,
+          0.7126099706744868,
+          0.6957708049113234,
+          0.6952469711090401,
+          0.7524509803921569
+        ],
+        "confusion_matrix": [
+          [
+            528,
+            50,
+            0,
+            0,
+            0
+          ],
+          [
+            70,
+            243,
+            35,
+            0,
+            0
+          ],
+          [
+            0,
+            38,
+            255,
+            96,
+            3
+          ],
+          [
+            0,
+            3,
+            40,
+            373,
+            76
+          ],
+          [
+            0,
+            0,
+            11,
+            112,
+            307
+          ]
+        ]
+      }
+    },
+    {
+      "nombre": "resnet101_app_v3",
+      "val": {
+        "accuracy": 0.7553571428571428,
+        "balanced_accuracy": 0.7493359319361662,
+        "macro_f1": 0.7479897449357031,
+        "qwk": 0.934421451471874,
+        "mae": 0.25625,
+        "asymmetric_mae": 0.37544642857142857,
+        "underestimation_rate": 0.11116071428571428,
+        "overestimation_rate": 0.13348214285714285,
+        "off_by_one": 0.9892857142857143,
+        "per_class_f1": [
+          0.8742194469223907,
+          0.6961325966850829,
+          0.7224334600760456,
+          0.6808080808080809,
+          0.7663551401869159
+        ],
+        "confusion_matrix": [
+          [
+            490,
+            88,
+            0,
+            0,
+            0
+          ],
+          [
+            53,
+            252,
+            43,
+            0,
+            0
+          ],
+          [
+            0,
+            29,
+            285,
+            70,
+            8
+          ],
+          [
+            0,
+            5,
+            60,
+            337,
+            90
+          ],
+          [
+            0,
+            2,
+            9,
+            91,
+            328
+          ]
+        ]
+      }
+    },
+    {
+      "nombre": "vit_base_app_v3",
+      "val": {
+        "accuracy": 0.7758928571428572,
+        "balanced_accuracy": 0.770003679238364,
+        "macro_f1": 0.7688083824749755,
+        "qwk": 0.9399698937156933,
+        "mae": 0.2330357142857143,
+        "asymmetric_mae": 0.3825892857142857,
+        "underestimation_rate": 0.14107142857142857,
+        "overestimation_rate": 0.08303571428571428,
+        "off_by_one": 0.9915178571428571,
+        "per_class_f1": [
+          0.9,
+          0.7381275440976933,
+          0.7127272727272728,
+          0.7003027245206862,
+          0.7928843710292249
+        ],
+        "confusion_matrix": [
+          [
+            513,
+            65,
+            0,
+            0,
+            0
+          ],
+          [
+            49,
+            272,
+            27,
+            0,
+            0
+          ],
+          [
+            0,
+            48,
+            294,
+            49,
+            1
+          ],
+          [
+            0,
+            3,
+            98,
+            347,
+            44
+          ],
+          [
+            0,
+            1,
+            14,
+            103,
+            312
+          ]
+        ]
+      }
+    }
+  ],
+  "elegido_en_validacion": "vit_base_app_v3",
+  "test": {
+    "accuracy": 0.7683465959328029,
+    "balanced_accuracy": 0.7617226459869479,
+    "macro_f1": 0.7636978080122279,
+    "qwk": 0.9385319662621892,
+    "mae": 0.23872679045092837,
+    "asymmetric_mae": 0.3850574712643678,
+    "underestimation_rate": 0.14058355437665782,
+    "overestimation_rate": 0.09106984969053934,
+    "off_by_one": 0.9929266136162688,
+    "per_class_f1": [
+      0.9029918404351768,
+      0.7348703170028819,
+      0.7142857142857143,
+      0.6856060606060606,
+      0.7807351077313055
+    ],
+    "confusion_matrix": [
+      [
+        498,
+        52,
+        0,
+        0,
+        0
+      ],
+      [
+        55,
+        255,
+        30,
+        2,
+        0
+      ],
+      [
+        0,
+        43,
+        315,
+        73,
+        1
+      ],
+      [
+        0,
+        2,
+        94,
+        362,
+        48
+      ],
+      [
+        0,
+        0,
+        11,
+        113,
+        308
+      ]
+    ]
+  },
+  "costo_reportado": {
+    "subestimacion": 2.0,
+    "sobreestimacion": 1.0
+  },
+  "diferencias_test_vs_baseline": {
+    "qwk": {
+      "diff": -0.0006423071792999169,
+      "ci_low": -0.007838812189126076,
+      "ci_high": 0.0056127148726007065,
+      "p_value": 0.88,
+      "significativo": false
+    },
+    "accuracy": {
+      "diff": 0.012820512820512886,
+      "ci_low": -0.007570141616681283,
+      "ci_high": 0.03172690995922299,
+      "p_value": 0.215,
+      "significativo": false
+    },
+    "mae": {
+      "diff": -0.011936339522546413,
+      "ci_low": -0.03253116527021796,
+      "ci_high": 0.010056416536224575,
+      "p_value": 0.269,
+      "significativo": false
+    }
+  }
+}

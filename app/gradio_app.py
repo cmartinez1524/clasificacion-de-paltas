@@ -43,6 +43,8 @@ DISPONIBLES = {
     "resnet50_app": ("resnet50", "ResNet-50 · nueva app"),
     "resnet50_app_s1_v2": ("resnet50", "ResNet-50 · v2 experimental (semilla 1)"),
     "resnet101_app_v3": ("resnet101", "ResNet-101 · v3 experimental"),
+    "resnet101_app_refinado_v4": ("resnet101", "ResNet-101 · v4 refinada experimental"),
+    "resnet101_app_regularizado_v4": ("resnet101", "ResNet-101 · v4 regularizada experimental"),
     "vit_base_app_v3": ("vit_base", "ViT-Base/16 · v3 experimental"),
     "resnet50": ("resnet50", "ResNet-50"),
     "vit_small": ("vit_small", "ViT-S/16"),

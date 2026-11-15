@@ -7,7 +7,8 @@ import pytest
 
 
 @pytest.mark.parametrize('model,architecture', [('resnet50_app', 'resnet50'),
-    ('resnet50_app_ce_v2', 'resnet50'), ('resnet101_app_v3', 'resnet101'), ('vit_base_app_v3', 'vit_base')])
+    ('resnet50_app_ce_v2', 'resnet50'), ('resnet101_app_v3', 'resnet101'), ('vit_base_app_v3', 'vit_base'),
+    ('resnet101_app_refinado_v4', 'resnet101'), ('resnet101_app_regularizado_v4', 'resnet101')])
 def test_package_contains_weights_and_no_training_dataset(tmp_path, monkeypatch, model, architecture):
     source = Path(__file__).resolve().parents[1]
     spec = importlib.util.spec_from_file_location('package_app', source / 'scripts/empaquetar_app.py')

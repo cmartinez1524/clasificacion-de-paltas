@@ -22,7 +22,8 @@ def main(argv=None):
         raise SystemExit(f'Falta {checkpoint}. Copia el checkpoint entrenado antes de empaquetar.')
     metrics = json.loads((ROOT / 'reports/metrics' / f'{experiment}_test.json').read_text(encoding='utf-8'))
     architecture = metrics['config']['model']
-    supported = {'resnet101_app_v3': 'resnet101', 'vit_base_app_v3': 'vit_base'}
+    supported = {'resnet101_app_v3': 'resnet101', 'vit_base_app_v3': 'vit_base',
+                 'resnet101_app_refinado_v4': 'resnet101', 'resnet101_app_regularizado_v4': 'resnet101'}
     if architecture != 'resnet50' and supported.get(experiment) != architecture:
         raise SystemExit('Arquitectura o experimento no registrado en la app local.')
     packaged_name = 'resnet50_app' if architecture == 'resnet50' else experiment

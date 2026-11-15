@@ -69,6 +69,7 @@ def main() -> None:
     ap.add_argument("--eval-only", action="store_true",
                     help="no entrenar: evaluar el checkpoint existente")
     ap.add_argument("--val-only", action="store_true", help="evaluar solo validacion; no usar test")
+    ap.add_argument("--require-cuda", action="store_true", help="fallar si no hay GPU CUDA; no usar CPU")
     args = ap.parse_args()
 
     ensure_dirs()
@@ -78,6 +79,8 @@ def main() -> None:
     )
     set_seed(cfg.seed)
 
+    if args.require_cuda and not torch.cuda.is_available():
+        raise SystemExit('Se requiere CUDA para este experimento; no se entrena en CPU.')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     images_dir = CACHE_DIR if cfg.use_cache and any(CACHE_DIR.glob("*.jpg")) else IMAGES_DIR
 

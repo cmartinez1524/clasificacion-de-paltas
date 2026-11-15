@@ -1,0 +1,92 @@
+{
+  "config": {
+    "name": "resnet101_app_v3",
+    "model": "resnet101",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 20,
+    "lr": 0.00015,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 6,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Exploracion de capacidad para la app: ResNet-101 a1 ImageNet-1k, seleccion solo en validacion; presupuesto distinto al estudio original."
+  },
+  "best_epoch": 11,
+  "train_minutes": 31.9,
+  "seed": 42,
+  "val": {
+    "accuracy": 0.7553571428571428,
+    "balanced_accuracy": 0.7493359319361662,
+    "macro_f1": 0.7479897449357031,
+    "qwk": 0.934421451471874,
+    "mae": 0.25625,
+    "asymmetric_mae": 0.37544642857142857,
+    "underestimation_rate": 0.11116071428571428,
+    "overestimation_rate": 0.13348214285714285,
+    "off_by_one": 0.9892857142857143,
+    "per_class_f1": [
+      0.8742194469223907,
+      0.6961325966850829,
+      0.7224334600760456,
+      0.6808080808080809,
+      0.7663551401869159
+    ],
+    "confusion_matrix": [
+      [
+        490,
+        88,
+        0,
+        0,
+        0
+      ],
+      [
+        53,
+        252,
+        43,
+        0,
+        0
+      ],
+      [
+        0,
+        29,
+        285,
+        70,
+        8
+      ],
+      [
+        0,
+        5,
+        60,
+        337,
+        90
+      ],
+      [
+        0,
+        2,
+        9,
+        91,
+        328
+      ]
+    ]
+  }
+}
