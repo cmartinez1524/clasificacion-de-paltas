@@ -45,6 +45,7 @@ use_utf8()
 
 AUTOR = ("Cristóbal Martínez, Benjamín Espinoza, Felipe Alvarez, "
          "Felipe Torres, Felipe Rojo")
+AUTOR_FINAL = "Cristóbal Martínez, Benjamín Espinoza, Felipe Torres, Felipe Rojo"
 FECHA_AVANCE = "Avance, 21 de septiembre de 2026"
 FECHA_FINAL = "Entrega final, 23 de noviembre de 2026"
 REPO = r"\texttt{github.com/cmartinez1524/clasificacion-de-paltas}"
@@ -888,7 +889,7 @@ def construir_final_extendida(res: dict, comp: dict | None, s: dict | None = Non
     cuerpo = portada(
         "Clasificación del estado de\\\\madurez de paltas Hass",
         "ResNet-50, ViT-S/16 e híbridos con presupuesto equiparado",
-        AUTOR, FECHA_FINAL,
+        AUTOR_FINAL, FECHA_FINAL,
         "14.710 fotografías, 478 frutas, índice ordinal de 5 niveles")
 
     cuerpo += frame_problema("")
@@ -1143,7 +1144,7 @@ def construir_final(res: dict, comp: dict | None, s: dict | None = None) -> str:
     cuerpo = portada(
         "Clasificación del estado de\\\\madurez de paltas Hass",
         "ResNet-50 frente a ViT-S/16 con presupuesto equiparado",
-        AUTOR, FECHA_FINAL,
+        AUTOR_FINAL, FECHA_FINAL,
         "14.710 fotografías, 478 frutas, índice ordinal de 5 niveles")
 
     # 1. Problema
@@ -1565,7 +1566,8 @@ def main() -> None:
         destino = ROOT / "entregables" / carpeta
         n_figs = copiar_figuras(cuerpo, destino / "figuras")
         tex = documento(
-            "", f"Clasificación de madurez de paltas Hass --- {etiqueta}", AUTOR, cuerpo)
+            "", f"Clasificación de madurez de paltas Hass --- {etiqueta}",
+            AUTOR if carpeta == "avance" else AUTOR_FINAL, cuerpo)
         (destino / archivo).write_text(tex, encoding="utf-8")
         salidas.append((destino / archivo, cuerpo, n_figs))
 
