@@ -475,7 +475,7 @@ ResNet-50 + temp. y día (nuestro) & 79{,}2\,$\pm$\,1{,}3\,\% & --- \\
 }
 \end{frame}
 
-\begin{frame}{Anexo: híbridos y modelos más grandes}{Semilla 42}
+\begin{frame}{Anexo: híbridos y modelos más grandes}\relax
 {\footnotesize
 \centering
 \begin{tabular}{lccccc}
@@ -493,7 +493,8 @@ ViT-Hybrid R26+S/32 & 0{,}943 & 78{,}0\,\% & 0{,}941 & 76{,}2\,\% & 0{,}84$\time
 \setlength{\itemsep}{0.3em}
 \begin{itemize}
   \item En validación, que es donde se decide, ningún híbrido supera a la ResNet-50. Tienen una sola semilla.
-  \item Exploratorio: un ViT-Base de 85,8 millones de parámetros empata en validación con la ResNet-50 (QWK 0{,}940 frente a 0{,}940).
+  \item Exploratorio, 5 semillas, QWK de validación: ViT-Base (85,8 M de parámetros) 0{,}938 $\pm$ 0{,}008, ResNet-50 0{,}936 $\pm$ 0{,}003, ResNet-101 0{,}932 $\pm$ 0{,}002.
+  \item Más parámetros no mejoran: las diferencias caben dentro de la variación entre semillas.
 \end{itemize}
 }
 \end{frame}

@@ -495,8 +495,11 @@ a las redes que solo miran la foto. No entrenamos modelos clásicos sobre el col
 **"¿Por qué no usaron un modelo más grande?"**
 Porque la pregunta del proyecto es la comparación controlada entre arquitecturas, no maximizar
 la métrica. Un modelo más grande contamina la comparación. Como exploración aparte para la
-demo se probó un ViT-Base (85,8 M de parámetros, una semilla): empata con la ResNet-50 en
-validación (QWK 0,940 en ambos), así que el tamaño no es lo que limita.
+demo se probaron un ViT-Base (85,8 M de parámetros) y una ResNet-101 con cinco semillas cada
+uno: en validación el ViT-Base da QWK 0,938 ± 0,008, la ResNet-50 0,936 ± 0,003 y la
+ResNet-101 0,932 ± 0,002. Las diferencias caben dentro de la variación entre semillas, así que
+el tamaño no es lo que limita. Es exploratorio: sin prueba de significancia y con presupuestos
+de entrenamiento distintos (`reports/resultados_semillas_v6.md`).
 
 **"¿El ViT perdió, entonces?"**
 No claramente. Con tres semillas, la ResNet acierta 74,8 ± 0,3 % y el ViT 73,1 ± 2,6 %; la

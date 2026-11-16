@@ -1440,14 +1440,27 @@ def frames_anexo_final(res: dict, comp: dict | None, s: dict,
             "En validación, que es donde se decide, ningún híbrido supera a la "
             "ResNet-50. Tienen una sola semilla.",
         ]
+        v6 = cargar_comp("semillas_v6/app_semillas_v6")
         grande, base = cargar_comp("vit_base_app_v3_val"), cargar_comp("resnet50_app_s1_v2_val")
-        if grande and base:
+        if v6 and v6.get("resumen_por_receta"):
+            rr = v6["resumen_por_receta"]
+
+            def qwk5(k):
+                return (rf"{num(rr[k]['qwk']['media'], 3)} $\pm$ "
+                        rf"{num(rr[k]['qwk']['desviacion'], 3)}")
+            puntos.append(
+                "Exploratorio, 5 semillas, QWK de validación: ViT-Base (85,8 M de "
+                f"parámetros) {qwk5('vit_base')}, ResNet-50 {qwk5('resnet50')}, "
+                f"ResNet-101 {qwk5('resnet101_refinada')}.")
+            puntos.append("Más parámetros no mejoran: las diferencias caben dentro "
+                          "de la variación entre semillas.")
+        elif grande and base:
             puntos.append(
                 "Exploratorio: un ViT-Base de 85,8 millones de parámetros empata en "
                 f"validación con la ResNet-50 (QWK {num(grande['val']['qwk'], 3)} "
                 f"frente a {num(base['val']['qwk'], 3)}).")
         salida += frame(
-            "Anexo: híbridos y modelos más grandes", "Semilla 42",
+            "Anexo: híbridos y modelos más grandes", "",
             tabla(["Modelo", "QWK val.", "Exacta val.", "QWK prueba", "Exacta prueba",
                    "Costo"], filas_h, spec="lccccc", tam=r"\footnotesize")
             + "\n\\vspace{0.6em}\n" + items(puntos, tam=r"\small", sep="0.3em"))
