@@ -388,7 +388,12 @@ python -m pytest -q                         # tests (sin GPU)
 python scripts/08_figuras_didacticas.py   # figuras explicativas de las redes
 python scripts/07_deck_latex.py           # presentación final en LaTeX (Beamer)
 python scripts/07_deck_latex.py --avance  # también la del avance (ya entregada)
+python scripts/07_deck_latex.py --extendida  # también la versión larga anterior
 ```
+
+La presentación final (`entregables/final/presentacion_final.pdf`) es la versión de 15
+minutos: 17 láminas de contenido más anexo. La versión larga anterior (35 láminas) se
+conserva en `entregables/final/version_extendida/`.
 
 ### Demo
 

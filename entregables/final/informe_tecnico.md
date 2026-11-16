@@ -446,6 +446,29 @@ Asimétrico que los dos modelos asimétricos (0,3532 y 0,3563).
 La reducción del riesgo de etileno es una interpretación del costo elegido: no se midió
 etileno ni daño en lotes reales. La tabla describe resultados; no selecciona modelos en test.
 
+### 4.11 Comparación con resultados publicados
+
+El único resultado publicado que encontramos sobre este dataset es el de sus propios autores
+(Xavier, Rodrigues & Silva, 2024, *Foods* 13(8):1150). Afinan AlexNet y ResNet-18
+pre-entrenadas sobre el mismo índice de 5 niveles, con reparto 70/15/15 **por fruta**, igual
+que el nuestro:
+
+| Modelo | Accuracy | Accuracy ±1 clase |
+|---|--:|--:|
+| AlexNet (publicado) | 76,9 % | 99,4 % |
+| ResNet-18 (publicado) | 78,4 % | 99,7 % |
+| ResNet-50 (nuestro, 3 semillas) | 74,8 ± 0,3 % | 99,4 % |
+| ResNet-50 + temp. y día (nuestro, 3 semillas) | 79,2 ± 1,3 % | — |
+
+La comparación es orientativa: el artículo reporta el promedio de los tres grupos de
+almacenamiento, usa otra partición de frutas, no repite semillas y no informa QWK ni macro-F1.
+Con esas salvedades, sus cifras quedan en el mismo rango que las nuestras, y su accuracy ±1
+clase también supera el 99 %, lo que confirma que esa métrica no distingue entre modelos. El
+artículo no compara contra una regla sin imagen. Encontramos además un trabajo posterior que
+usa el dataset para estudiar pérdidas robustas a etiquetas ruidosas (*Hybrid Loss for Robust
+Ripeness Classification under Noisy Labels*, 2026), pero no pudimos acceder a su texto
+completo para verificar sus cifras, así que no lo incluimos en la tabla.
+
 ## 5. Discusión
 
 **El calendario explica la mayor parte de la madurez en este dataset.** Es la observación más
@@ -532,3 +555,7 @@ https://github.com/huggingface/pytorch-image-models
 
 Xavier, P., Rodrigues, P. & Silva, C. L. M. (2024). *"Hass" Avocado Ripening Photographic
 Dataset.* Mendeley Data, V1. https://doi.org/10.17632/3xd9n945v8.1
+
+Xavier, P., Rodrigues, P. M. & Silva, C. L. M. (2024). *Shelf-Life Management and Ripening
+Assessment of 'Hass' Avocado (Persea americana) Using Deep Learning Approaches.* Foods,
+13(8), 1150. https://www.mdpi.com/2304-8158/13/8/1150

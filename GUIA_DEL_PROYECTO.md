@@ -355,7 +355,7 @@ difíciles) se cancele.
 | **`train.py --config ...`** | **Entrena un modelo** | `checkpoints/*.pt`, `reports/metrics/*` |
 | `compare_models.py --models ...` | Tabla comparativa, tests estadísticos, figuras | `reports/metrics/<tag>.json` |
 | `04_interpretability.py` | Grad-CAM + attention rollout | `reports/figures/20_*.png` |
-| `07_deck_latex.py` | Presentación final en Beamer (`--avance` regenera también la del avance) | `entregables/*/` |
+| `07_deck_latex.py` | Presentación final de 15 minutos en Beamer (`--avance` regenera el avance; `--extendida`, la versión larga) | `entregables/*/` |
 | `08_figuras_didacticas.py` | Figuras explicativas de las arquitecturas | `reports/figures/3*.png` |
 | `09_mejoras_inferencia.py` | Fusión de caras a/b y TTA, **elegidas en validación** | `reports/metrics/mejoras_inferencia.json` |
 | `10_referencia_metadatos.py` | Regla sin imagen: madurez más común por temperatura y día | `reports/metrics/referencia_metadatos*` |
@@ -473,9 +473,30 @@ la fruta. Foto + temperatura + día llega a 79,2 %, empatando con tendencia a fa
 Tres (semillas 42, 1 y 2) para ResNet-50, ViT-S/16 y sus versiones con metadatos. Los modelos
 desde cero y los híbridos, una sola vez, y lo decimos.
 
+**"¿Hay resultados publicados para este dataset? ¿Cómo se comparan?"**
+Sí: los propios autores (Xavier, Rodrigues y Silva, 2024, *Foods* 13(8):1150) afinaron
+AlexNet y ResNet-18 sobre el mismo índice de 5 niveles, también repartiendo por fruta:
+76,9 % y 78,4 % de accuracy. Nuestra ResNet-50 obtiene 74,8 ± 0,3 % y con temperatura y día
+79,2 ± 1,3 %. Es el mismo rango, pero la comparación es orientativa: ellos promedian los tres
+grupos de almacenamiento, usan otra partición y no repiten semillas. Está en el anexo de la
+presentación y en la sección 4.11 del informe.
+
+**"¿Es cierta la hipótesis de que la ResNet usa lo local y el ViT lo global?"**
+No la probamos directamente y hay que decirlo así. Lo que tenemos es coherente con ella: los
+mapas (Grad-CAM en la ResNet marca puntos chicos; attention rollout en el ViT marca zonas
+amplias) y la ablación (sin ImageNet el ViT pierde el doble). La prueba sería tapar o
+desordenar bloques de la foto y medir cuál red cae más; quedó como trabajo futuro.
+
+**"¿Probaron un piso simple, sin deep learning?"**
+El piso que usamos es la regla del calendario (temperatura y día), que acierta 78,0 % y supera
+a las redes que solo miran la foto. No entrenamos modelos clásicos sobre el color de la piel
+(regresión logística, random forest): queda pendiente.
+
 **"¿Por qué no usaron un modelo más grande?"**
 Porque la pregunta del proyecto es la comparación controlada entre arquitecturas, no maximizar
-la métrica. Un modelo más grande contamina la comparación.
+la métrica. Un modelo más grande contamina la comparación. Como exploración aparte para la
+demo se probó un ViT-Base (85,8 M de parámetros, una semilla): empata con la ResNet-50 en
+validación (QWK 0,940 en ambos), así que el tamaño no es lo que limita.
 
 **"¿El ViT perdió, entonces?"**
 No claramente. Con tres semillas, la ResNet acierta 74,8 ± 0,3 % y el ViT 73,1 ± 2,6 %; la
