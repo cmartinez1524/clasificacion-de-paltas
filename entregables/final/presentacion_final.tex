@@ -119,7 +119,7 @@
   {\color{verdecla}\rule{\textwidth}{1.6pt}}
 
   \vspace{0.55cm}
-  {\color{white!85!verdecla}\large ResNet-50, ViT-S/16 e híbridos con presupuesto equiparado}
+  {\color{white!85!verdecla}\large ResNet-50 frente a ViT-S/16 con presupuesto equiparado}
 
   \vfill
   % autor y fecha en lineas separadas: con varios autores la linea envuelve y
@@ -135,22 +135,20 @@
 \end{frame}
 }
 
-\begin{frame}{El problema}
+\begin{frame}{El problema}\relax
 \begin{columns}[T]
-\begin{column}{0.58\textwidth}
-{\scriptsize
-\setlength{\itemsep}{0.28em}
+\begin{column}{0.50\textwidth}
+{\small
+\setlength{\itemsep}{0.5em}
 \begin{itemize}
-  \item {\bfseries Chile es uno de los mayores exportadores de palta Hass del mundo.}
-  \item La clasificación por madurez se hace hoy a ojo y al tacto, operario por operario, sin criterio homogéneo ni trazabilidad.
-  \item {\bfseries La tarea es \emph{ordinal} y asimétrica: $1<2<3<4<5$.}
-  \item La palta es climatérica (libera etileno). Clasificar una fruta madura como inmadura ($\hat{y} < y$) mete fruta madura al lote verde y echa a perder las demás.
-  \item Clasificar una verde como madura ($\hat{y} > y$) solo adelanta su salida: es un error mucho menos costoso.
+  \item {\bfseries Hoy la madurez de la palta se clasifica a ojo y al tacto.}
+  \item Son 5 niveles ordenados: equivocarse por un nivel no es lo mismo que equivocarse por cuatro.
+  \item Queremos estimar el nivel desde una foto y saber si una red convolucional y un transformer lo resuelven distinto.
 \end{itemize}
 }
 \end{column}
-\begin{column}{0.38\textwidth}
-{\tiny
+\begin{column}{0.46\textwidth}
+{\small
 \centering
 \begin{tabular}{cll}
 \toprule
@@ -166,44 +164,338 @@
 }
 \end{column}
 \end{columns}
-\cierre{Medimos distancia (QWK) y dirección del error: MAE Asimétrico con castigo $2\times$ al falso inmaduro.}
 \end{frame}
 
-\begin{frame}{Los datos en imágenes: 5 etapas de madurez}{Hass Avocado Ripening Photographic Dataset (Mendeley, CC BY 4.0)}
+\begin{frame}{Los datos: 5 etapas de madurez}{Xavier, Rodrigues y Silva (2024), Mendeley Data, CC BY 4.0}
 \begin{columns}[T]
-\begin{column}{0.43\textwidth}
+\begin{column}{0.46\textwidth}
 \begin{center}
-  \includegraphics[width=\textwidth,height=5.35cm,keepaspectratio]{03-ejemplos-por-clase}
+  \includegraphics[width=\textwidth,height=5.3cm,keepaspectratio]{03-ejemplos-por-clase}
 \end{center}
 \end{column}
-\begin{column}{0.53\textwidth}
-{\tiny
-\centering
-\begin{tabular}{cll}
-\toprule
-\rowcolor{verdeosc}\color{white}\bfseries Índ. & \color{white}\bfseries Estado & \color{white}\bfseries Decisión \\
-\midrule
-1 & Verde & Dejar madurar \\
-2 & Iniciando & Lista en 2--3 días \\
-3 & Maduro I & Venta inmediata \\
-4 & Maduro II & Último día \\
-5 & Sobremaduro & Fuera de punto \\
-\bottomrule
-\end{tabular}
-}
-\vspace{0.35em}
-{\tiny
-\setlength{\itemsep}{0.16em}
+\begin{column}{0.50\textwidth}
+{\small
+\setlength{\itemsep}{0.45em}
 \begin{itemize}
-  \item {\bfseries 14.710 fotos JPEG de 800$\times$800 px de 478 paltas Hass.}
-  \item Adquiridas 3 días tras la cosecha (abril 2022, Portugal) y fotografiadas \textbf{a diario por ambas caras} (\texttt{a} y \texttt{b}) durante hasta 26 días.
-  \item \textbf{Captura estandarizada:} fondo blanco uniforme, luz difusa fija y una sola fruta centrada por foto.
-  \item \textbf{Integridad verificada:} descartamos 12 filas de la planilla sin imagen; 0 discrepancias entre Excel y archivo.
-  \item \textbf{Etiquetado visual experto:} sin penetrómetro ni doble evaluador (fronteras como 3$\leftrightarrow$4 son continuas).
+  \item {\bfseries 14.710 fotos de 478 paltas Hass.}
+  \item Una foto diaria por cada cara, hasta 26 días.
+  \item Tres condiciones de guarda: 10\,\textdegree C, 20\,\textdegree C y ambiente.
+  \item Etiqueta: índice de madurez de 1 a 5, asignado por un experto.
+  \item Fotos de laboratorio: fondo blanco y una fruta centrada.
 \end{itemize}
 }
 \end{column}
 \end{columns}
+\end{frame}
+
+\begin{frame}{El riesgo de que la IA haga trampa}\relax
+\begin{columns}[T]
+\begin{column}{0.50\textwidth}
+{\small
+\setlength{\itemsep}{0.5em}
+\begin{itemize}
+  \item {\bfseries La misma palta aparece en fotos de días seguidos, casi idénticas.}
+  \item Si se reparten las fotos al azar, el modelo reconoce la palta en vez de juzgar su madurez.
+  \item {\bfseries Repartimos las 478 paltas, no las fotos: 334 / 72 / 72.}
+  \item Un chequeo automático falla si una palta queda en dos grupos.
+\end{itemize}
+}
+\end{column}
+\begin{column}{0.46\textwidth}
+\begin{center}
+  \includegraphics[width=\textwidth,height=4.6cm,keepaspectratio]{04-particiones}
+\end{center}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Las dos redes}\relax
+\begin{center}
+  \includegraphics[width=0.95\textwidth,height=5.0cm,keepaspectratio]{30-como-mira-cada-red}
+\end{center}
+\vfill
+{\normalsize\bfseries\color{verdeosc}ResNet mira de cerca, por pedazos. ViT compara todos los pedazos entre sí.}
+\end{frame}
+
+\begin{frame}{Una comparación justa}\relax
+{\small
+\centering
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Qué igualamos & \color{white}\bfseries ResNet-50 & \color{white}\bfseries ViT-S/16 \\
+\midrule
+Parámetros & 23{,}5 millones & 21{,}7 millones \\
+Cómputo por foto (GFLOPs) & 8{,}2 & 8{,}5 \\
+Pre-entrenamiento & ImageNet-1k & ImageNet-1k \\
+\bottomrule
+\end{tabular}
+}
+\vspace{0.8em}
+{\small
+\setlength{\itemsep}{0.45em}
+\begin{itemize}
+  \item Misma receta de entrenamiento; en el ViT solo cambian el learning rate y el warmup.
+  \item Cada modelo se entrenó 3 veces (semillas 42, 1 y 2).
+  \item Todo se elige en validación; la prueba se mira una sola vez.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{La vara que hay que superar: el calendario}\relax
+\caja[grisSuave]{0.465\textwidth}{La regla}{\small Para cada temperatura y día de guarda, responder el estado más común en las paltas de entrenamiento. No mira la foto.}\hfill
+\caja[verdeosc]{0.465\textwidth}{Lo que logra}{\small Acierta la clase exacta en el \textbf{78{,}0\,\%} de las fotos de prueba, con QWK 0{,}942.}
+\vspace{0.9em}
+{\small
+\setlength{\itemsep}{0.4em}
+\begin{itemize}
+  \item Las paltas se cosecharon juntas y maduran casi al mismo ritmo: los días de guarda ya dicen casi todo.
+\end{itemize}
+}
+\vfill
+{\normalsize\bfseries\color{verdeosc}Todos los modelos se comparan contra esta regla.}
+\end{frame}
+
+\begin{frame}{Resultados}{Prueba: 2.262 fotos de 72 paltas nunca vistas; media $\pm$ desviación de 3 semillas}
+{\small
+\centering
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Clase exacta & \color{white}\bfseries QWK \\
+\midrule
+Solo temperatura y día (sin foto) & 78{,}0\,\% & 0{,}942 \\
+ResNet-50 & 74{,}8\,$\pm$\,0{,}3\,\% & 0{,}936 \\
+ViT-S/16 & 73{,}1\,$\pm$\,2{,}6\,\% & 0{,}933 \\
+\rowcolor{verdecla!22}ResNet-50 + temperatura y día & 79{,}2\,$\pm$\,1{,}3\,\% & 0{,}950 \\
+ViT-S/16 + temperatura y día & 78{,}5\,$\pm$\,0{,}7\,\% & 0{,}948 \\
+\textit{Publicado (Xavier et al., 2024): ResNet-18} & 78{,}4\,\% & --- \\
+\textit{Publicado (Xavier et al., 2024): AlexNet} & 76{,}9\,\% & --- \\
+\bottomrule
+\end{tabular}
+}
+\vspace{0.4em}
+{\small
+\setlength{\itemsep}{0.25em}
+\begin{itemize}
+  \item La foto sola no supera al calendario; foto + temperatura + día queda arriba, sin diferencia concluyente.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{ResNet-50 frente a ViT-S/16}\relax
+\begin{center}
+  \includegraphics[width=0.95\textwidth,height=3.6cm,keepaspectratio]{35-semillas}
+\end{center}
+\vspace{0.3em}
+{\small
+\setlength{\itemsep}{0.3em}
+\begin{itemize}
+  \item {\bfseries ResNet 74{,}8\,$\pm$\,0{,}3\,\%, ViT 73{,}1\,$\pm$\,2{,}6\,\%: la ResNet gana con claridad en 2 de 3 semillas.}
+  \item La ResNet da casi lo mismo cada vez; el ViT sale entre 71{,}0\,\% y 76{,}0\,\%.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{\textquestiondown{}Qué aporta la foto?}\relax
+\begin{center}
+  \includegraphics[width=0.90\textwidth,height=3.9cm,keepaspectratio]{36b-calendario}
+\end{center}
+\vspace{0.3em}
+{\small
+\setlength{\itemsep}{0.3em}
+\begin{itemize}
+  \item {\bfseries En las 498 fotos de paltas fuera de ritmo la regla falla siempre; la foto sola acierta 52{,}9\,\%.}
+  \item Con temperatura y día la ResNet baja ahí a 45{,}5\,\%: confía en el calendario y mira menos la foto.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{Por temperatura de almacenamiento}\relax
+\begin{center}
+  \includegraphics[width=0.90\textwidth,height=4.1cm,keepaspectratio]{36a-por-temperatura}
+\end{center}
+\vspace{0.3em}
+{\small
+\setlength{\itemsep}{0.3em}
+\begin{itemize}
+  \item {\bfseries El ViT baja de 74{,}5\,\% a 10\,\textdegree C a 70{,}0\,\% a 20\,\textdegree C; la ResNet es más pareja.}
+  \item A temperatura ambiente el calendario cae a 68{,}6\,\% y la foto sola lo supera.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{Cómo se equivoca}\relax
+\begin{center}
+  \includegraphics[width=0.74\textwidth,height=5.2cm,keepaspectratio]{37-ejemplos-errores}
+\end{center}
+\vfill
+{\normalsize\bfseries\color{verdeosc}557 de 574 errores son de un nivel. Los estados 3, 4 y 5 se ven igual de oscuros.}
+\end{frame}
+
+\begin{frame}{Sin ImageNet, la diferencia aparece}\relax
+\begin{center}
+  \includegraphics[width=0.90\textwidth,height=4.0cm,keepaspectratio]{32-dependencia-pretraining}
+\end{center}
+\vspace{0.3em}
+{\small
+\setlength{\itemsep}{0.3em}
+\begin{itemize}
+  \item {\bfseries Entrenando desde cero, el ViT pierde 2{,}1 veces más QWK que la ResNet.}
+  \item La ResNet trae incorporado cómo mirar una imagen; el ViT lo aprende de los datos, y 10.208 fotos no alcanzan.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{\textquestiondown{}Dónde mira cada red?}\relax
+\begin{columns}[T]
+\begin{column}{0.44\textwidth}
+\begin{center}
+  \includegraphics[width=\textwidth,height=5.8cm,keepaspectratio]{20-interpretabilidad-desacuerdo}
+\end{center}
+\end{column}
+\begin{column}{0.52\textwidth}
+{\small
+\setlength{\itemsep}{0.5em}
+\begin{itemize}
+  \item ResNet (Grad-CAM): puntos chicos, como manchas y arrugas.
+  \item ViT (attention rollout): zonas amplias de la cáscara.
+  \item En varios desacuerdos la ResNet mira el fondo, y se equivoca.
+  \item {\bfseries Hipótesis local frente a global: coherente con estos mapas y con la ablación, pero no la probamos con oclusión.}
+\end{itemize}
+}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Castigar más el falso inmaduro}\relax
+{\small
+\centering
+\begin{tabular}{lccc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Clase exacta & \color{white}\bfseries Subestima & \color{white}\bfseries Sobreestima \\
+\midrule
+Solo temp. y día & 78{,}0\,\% & 11{,}0\,\% & 11{,}1\,\% \\
+ResNet-50 (3 semillas) & 74{,}6\,\%--75{,}2\,\% & 11{,}1\,\%--13{,}2\,\% & 11{,}6\,\%--14{,}3\,\% \\
+ResNet asim. (1 semilla) & 72{,}2\,\% & 6{,}5\,\% & 21{,}2\,\% \\
+ViT-S/16 (3 semillas) & 71{,}0\,\%--76{,}0\,\% & 10{,}9\,\%--14{,}6\,\% & 9{,}3\,\%--18{,}1\,\% \\
+ViT asim. (1 semilla) & 74{,}8\,\% & 9{,}8\,\% & 15{,}5\,\% \\
+\bottomrule
+\end{tabular}
+}
+\vspace{0.6em}
+{\small
+\setlength{\itemsep}{0.3em}
+\begin{itemize}
+  \item {\bfseries En la ResNet el falso inmaduro baja a la mitad, a cambio de más falsos maduros y menos aciertos.}
+  \item Los modelos asimétricos tienen una sola semilla: resultado preliminar.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{\textquestiondown{}Cuál llevaríamos a una planta?}\relax
+{\small
+\centering
+\begin{tabular}{llc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Si la planta\ldots{} & \color{white}\bfseries Modelo & \color{white}\bfseries Clase exacta \\
+\midrule
+\rowcolor{verdecla!22}registra temperatura y fecha & ResNet-50 + temp. y día & 79{,}2\,$\pm$\,1{,}3\,\% \\
+no conoce la historia de la fruta & ResNet-50 & 74{,}8\,$\pm$\,0{,}3\,\% \\
+busca paltas fuera de ritmo & ResNet-50, solo foto & 52{,}9\,\% (en esas) \\
+\bottomrule
+\end{tabular}
+}
+\vspace{0.8em}
+{\small
+\setlength{\itemsep}{0.4em}
+\begin{itemize}
+  \item Entre ResNet y ViT preferimos la ResNet: rinde parecido y es más estable.
+  \item Clasificar con las dos caras de la fruta mejora a todos los modelos.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{Demo}\relax
+{\large
+\setlength{\itemsep}{0.9em}
+\begin{itemize}
+  \item Se sube una foto o se usa la cámara.
+  \item Responde el nivel de madurez y qué tan seguro está.
+  \item Muestra en qué zona de la foto se fijó.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{Conclusiones}\relax
+{\small
+\setlength{\itemsep}{0.55em}
+\begin{itemize}
+  \item {\bfseries El calendario explica la mayor parte de la madurez en este dataset.}
+  \item La foto aporta en las paltas fuera de ritmo y cuando no se conoce su historia.
+  \item {\bfseries ResNet y ViT rinden parecido; la ResNet es más estable y depende menos de ImageNet.}
+  \item No aportaron: los híbridos ni un modelo casi cuatro veces más grande.
+  \item {\bfseries Pendiente: fotos de celular, pérdida ordinal y prueba de oclusión.}
+\end{itemize}
+}
+\vfill
+{\normalsize\bfseries\color{verdeosc}\texttt{github.com/cmartinez1524/clasificacion-de-paltas}}
+\end{frame}
+
+{
+\setbeamercolor{background canvas}{bg=grisFondo}
+\begin{frame}[plain]
+  \vfill
+  \hspace{0.6cm}{\color{verdecla}\fontsize{54}{58}\selectfont\bfseries A}%
+  \hspace{0.5cm}{\color{verdeosc}\Huge\bfseries Anexo}
+  \vfill
+\end{frame}
+}
+
+\begin{frame}{Anexo: resultados publicados sobre este dataset}{Xavier, Rodrigues y Silva (2024), Foods 13(8):1150}
+{\small
+\centering
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Clase exacta & \color{white}\bfseries Clase exacta o vecina \\
+\midrule
+AlexNet (publicado) & 76{,}9\,\% & 99{,}4\,\% \\
+ResNet-18 (publicado) & 78{,}4\,\% & 99{,}7\,\% \\
+ResNet-50 (nuestro, 3 semillas) & 74{,}8\,$\pm$\,0{,}3\,\% & 99{,}4\,\% \\
+ResNet-50 + temp. y día (nuestro) & 79{,}2\,$\pm$\,1{,}3\,\% & --- \\
+\bottomrule
+\end{tabular}
+}
+\vspace{0.6em}
+{\small
+\setlength{\itemsep}{0.3em}
+\begin{itemize}
+  \item Son los autores del dataset: mismo índice de 5 niveles y también reparten 70/15/15 por fruta.
+  \item Reportan el promedio de los tres grupos de almacenamiento, con otra partición y sin repetir semillas: la comparación es orientativa.
+  \item Sus cifras quedan en el mismo rango que las nuestras.
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}{Anexo: híbridos y modelos más grandes}{Semilla 42}
+{\footnotesize
+\centering
+\begin{tabular}{lccccc}
+\toprule
+\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries QWK val. & \color{white}\bfseries Exacta val. & \color{white}\bfseries QWK prueba & \color{white}\bfseries Exacta prueba & \color{white}\bfseries Costo \\
+\midrule
+ResNet-50 & 0{,}945 & 78{,}8\,\% & 0{,}936 & 74{,}6\,\% & 1{,}00$\times$ \\
+Híbrido: fusión tardía & 0{,}939 & 77{,}4\,\% & 0{,}941 & 76{,}7\,\% & 2{,}04$\times$ \\
+ViT-Hybrid R26+S/32 & 0{,}943 & 78{,}0\,\% & 0{,}941 & 76{,}2\,\% & 0{,}84$\times$ \\
+\bottomrule
+\end{tabular}
+}
+\vspace{0.6em}
+{\small
+\setlength{\itemsep}{0.3em}
+\begin{itemize}
+  \item En validación, que es donde se decide, ningún híbrido supera a la ResNet-50. Tienen una sola semilla.
+  \item Exploratorio: un ViT-Base de 85,8 millones de parámetros empata en validación con la ResNet-50 (QWK 0{,}940 frente a 0{,}940).
+\end{itemize}
+}
 \end{frame}
 
 \begin{frame}{Diseño experimental: 3 temperaturas y evolución temporal}{Cómo se distribuyen las clases y cómo madura cada grupo}
@@ -236,74 +528,6 @@
 \end{column}
 \end{columns}
 \cierre{Dos paltas del mismo día a distinta temperatura tienen madurez opuesta, y dentro de cada grupo hay frutas fuera de ritmo.}
-\end{frame}
-
-\begin{frame}{El riesgo de que la IA haga trampa}
-\begin{columns}[T]
-\begin{column}{0.52\textwidth}
-{\tiny
-\setlength{\itemsep}{0.2em}
-\begin{itemize}
-  \item {\bfseries A cada palta le sacaron una foto por día, hasta 26 días seguidos.}
-  \item La foto del día 5 y la del día 6 de la misma palta son casi idénticas: misma piel, mismas manchas, misma forma.
-  \item {\bfseries Si repartimos las fotos al azar, la trampa es inevitable.}
-  \item El día 5 queda en el material de estudio y el día 6 en la prueba. El modelo \emph{reconoce esa palta} en vez de juzgar su madurez, como un alumno que vio las respuestas antes del examen.
-  \item El resultado saldría altísimo y sería completamente falso.
-  \item {\bfseries Por eso repartimos las 478 paltas, no las 14.710 fotos.}
-  \item Todas las fotos de una misma palta van juntas: o están en el estudio, o están en la prueba. Nunca en las dos.
-\end{itemize}
-}
-\end{column}
-\begin{column}{0.44\textwidth}
-\begin{center}
-  \includegraphics[width=\textwidth,height=2.9cm,keepaspectratio]{04-particiones}
-\end{center}
-\end{column}
-\end{columns}
-\cierre{Implementamos un chequeo automático que falla si alguna palta llegara a aparecer en los dos lados.}
-\end{frame}
-
-\begin{frame}{Limitaciones conocidas de los datos}{Lo que declaramos antes de pensar en llevar esto a una planta}
-{\scriptsize
-\setlength{\itemsep}{0.28em}
-\begin{itemize}
-  \item {\bfseries El choque con la vida real (domain gap): no resuelto, declarado.}
-  \item Fondo blanco, luz perfecta y una sola fruta centrada. Una foto de celular en una feria o packing ---con sombras, cajones y varias paltas--- está fuera de la distribución de entrenamiento.
-  \item {\bfseries Un solo lote, una sola cosecha, una sola variedad.}
-  \item 478 paltas portuguesas de 2022, todas Hass. No cubre Fuerte ni Edranol ni posibles variaciones de pigmentación en fruta chilena.
-  \item {\bfseries Solo apariencia externa y sin doble evaluador.}
-  \item Las etiquetas las puso una persona mirando la cáscara; defectos internos de pulpa no se ven y no conocemos el techo humano.
-\end{itemize}
-}
-\cierre{Detalle completo en la data card (\texttt{entregables/final/data\_card.md}).}
-\end{frame}
-
-\begin{frame}{Las dos redes, en una imagen}{La diferencia es CÓMO miran la foto}
-\begin{center}
-  \includegraphics[width=0.95\textwidth,height=4.25cm,keepaspectratio]{30-como-mira-cada-red}
-\end{center}
-\vspace{0.25em}
-\begin{columns}[T]
-\begin{column}{0.47\textwidth}
-{\tiny
-\setlength{\itemsep}{0.12em}
-\begin{itemize}
-  \item Va de a pedacitos y reutiliza el mismo detector en toda la foto \textit{(convolución)}.
-  \item Buena para detalles: manchas, arrugas, tono.
-\end{itemize}
-}
-\end{column}
-\begin{column}{0.47\textwidth}
-{\tiny
-\setlength{\itemsep}{0.12em}
-\begin{itemize}
-  \item Parte la foto en 196 cuadraditos y los compara todos contra todos \textit{(auto-atención)}.
-  \item Buena para relacionar zonas distantes.
-\end{itemize}
-}
-\end{column}
-\end{columns}
-\cierre{Ninguna se programó desde cero: las dos vienen de \texttt{timm}, la biblioteca estándar de modelos de visión.}
 \end{frame}
 
 \begin{frame}{Por qué entrenan tan distinto}{Todo se explica por lo que cada red ya sabe antes de empezar}
@@ -367,32 +591,7 @@
 \cierre{Ninguno de los dos es equiparable a los baselines, y hay que decirlo: van como referencia, no como competidores.}
 \end{frame}
 
-\begin{frame}{Cómo hacemos que la comparación sea justa}{Igualar tres cosas, no solo el tamaño}
-{\scriptsize
-\centering
-\begin{tabular}{lccc}
-\toprule
-\rowcolor{verdeosc}\color{white}\bfseries Qué igualamos & \color{white}\bfseries ResNet-50 & \color{white}\bfseries ViT-S/16 & \color{white}\bfseries Diferencia \\
-\midrule
-Tamaño del \guillemotleft{}cerebro\guillemotright{} (conexiones) & 23{,}5 millones & 21{,}7 millones & 7{,}9\,\% \\
-Esfuerzo que hace por foto & 8{,}2 mil millones & 8{,}5 mil millones & 3{,}6\,\% \\
-Fotos que vio antes de empezar & 1,3 millones & 1,3 millones & ninguna \\
-\bottomrule
-\end{tabular}
-}
-\vspace{0.5em}
-{\scriptsize
-\setlength{\itemsep}{0.25em}
-\begin{itemize}
-  \item {\bfseries Si una red es más grande y gana, no aprendimos nada: ganó por grande.}
-  \item Por eso igualamos el tamaño (parámetros), el trabajo que hace por foto (GFLOPs) y cuántas fotos vio antes.
-  \item El ViT que usa todo el mundo viene entrenado con 14 millones de fotos; la ResNet, con 1,3 millones. Comparándolos así estaríamos midiendo quién estudió más, no qué arquitectura es mejor.
-  \item Usamos una versión del ViT llamada \textbf{DeiT-S}: es exactamente la misma red, pero entrenada con las mismas 1,3 millones de fotos que la ResNet. Ahí sí la comparación es limpia.
-\end{itemize}
-}
-\end{frame}
-
-\begin{frame}{Cómo las entrenamos}
+\begin{frame}{Cómo las entrenamos}\relax
 \begin{columns}[T]
 \begin{column}{0.47\textwidth}
 {\small\textbf{Idéntico para ambas}}
@@ -425,231 +624,11 @@ Fotos que vio antes de empezar & 1,3 millones & 1,3 millones & ninguna \\
 \cierre{Igualar el learning rate \guillemotleft{}por justicia\guillemotright{} no sería más justo: sería solo peor para el ViT.}
 \end{frame}
 
-{
-\setbeamercolor{background canvas}{bg=grisFondo}
-\begin{frame}[plain]
-  \vfill
-  \hspace{0.6cm}{\color{verdecla}\fontsize{54}{58}\selectfont\bfseries 01}%
-  \hspace{0.5cm}{\color{verdeosc}\Huge\bfseries Resultados}
-  \vfill
-\end{frame}
-}
-
-\begin{frame}{La vara que hay que superar: el calendario}{Una regla que no mira la foto: solo la temperatura y el día de almacenamiento}
-\caja[grisSuave]{0.465\textwidth}{La regla}{\scriptsize Para cada temperatura y cada día, mirar en las paltas de estudio cuál fue el estado más común, y responder eso. No ve la foto.}\hfill
-\caja[verdeosc]{0.465\textwidth}{Lo que logra}{\scriptsize Acierta la clase exacta en el \textbf{78{,}0\,\%} de las fotos de prueba, QWK 0{,}942. Más que cualquiera de las dos redes mirando solo la foto.}
-\vspace{0.6em}
-{\scriptsize
-\setlength{\itemsep}{0.25em}
-\begin{itemize}
-  \item {\bfseries \textquestiondown{}Por qué funciona tan bien?}
-  \item En este experimento las paltas se cosecharon juntas y se guardaron en condiciones controladas: maduran casi al mismo ritmo. Saber cuántos días lleva guardada una palta ya dice casi todo.
-  \item {\bfseries Entonces, \textquestiondown{}para qué la foto?}
-  \item Para las paltas que no siguen el ritmo del grupo, y para cuando no se sabe la historia de la fruta. Eso es lo que medimos a continuación.
-\end{itemize}
-}
-\cierre{Esta comparación la pidió el profesor en el avance. Toda la sección de resultados se mide contra esta regla.}
-\end{frame}
-
-\begin{frame}{Todos los modelos, lado a lado}{2.262 fotos de 72 paltas que ningún modelo vio; incluye entrenamiento asimétrico}
-{\tiny
-\centering
-\begin{tabular}{lccccc}
-\toprule
-\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Sem. & \color{white}\bfseries Clase exacta & \color{white}\bfseries QWK & \color{white}\bfseries MAE & \color{white}\bfseries MAE Asim. \\
-\midrule
-Solo temperatura y día (sin foto) & 1 & 78{,}0\,\% & 0{,}942 & 0{,}23 & 0{,}343 \\
-ResNet-50 & 3 & 74{,}8\,$\pm$\,0{,}3\,\% & 0{,}936 & 0{,}26 & 0{,}383 \\
-ViT-S/16 & 3 & 73{,}1\,$\pm$\,2{,}6\,\% & 0{,}933 & 0{,}28 & 0{,}412 \\
-\rowcolor{verdecla!22}ResNet-50 + temp. y día & 3 & 79{,}2\,$\pm$\,1{,}3\,\% & 0{,}950 & 0{,}21 & 0{,}308 \\
-ViT-S/16 + temp. y día & 3 & 78{,}5\,$\pm$\,0{,}7\,\% & 0{,}948 & 0{,}22 & 0{,}328 \\
-ResNet-50 (asim.) & 1 & 72{,}2\,\% & 0{,}930 & 0{,}29 & 0{,}353 \\
-ViT-S/16 (asim.) & 1 & 74{,}8\,\% & 0{,}938 & 0{,}26 & 0{,}356 \\
-\bottomrule
-\end{tabular}
-}
-\vspace{0.3em}
-{\tiny
-\setlength{\itemsep}{0.12em}
-\begin{itemize}
-  \item {\bfseries La foto sola queda bajo la regla del calendario en promedio global.}
-  \item Pero en las paltas que maduran fuera de ritmo, la regla del calendario falla siempre.
-  \item {\bfseries El entrenamiento asimétrico logra el menor MAE Asimétrico sin metadatos.}
-  \item \textbf{ResNet-50 (asim.)} baja el MAE Asimétrico a 0,353 (reduciendo los falsos inmaduros a 6,5\,\%) y \textbf{ViT-S/16 (asim.)} alcanza 74,8\,\% de exactitud y QWK 0,938.
-  \item {\bfseries El $\pm$ es lo que cambia el resultado al repetir el entrenamiento.}
-  \item El ViT varía cerca de 9 veces más que la ResNet entre un entrenamiento y otro.
-\end{itemize}
-}
-\cierre{Los modelos desde cero y los híbridos (2 híbridos) van más adelante y en el anexo.}
-\end{frame}
-
-\begin{frame}{ResNet-50 frente a ViT-S/16}{Tres entrenamientos de cada una: cada punto es uno, la raya es el promedio}
-\begin{center}
-  \includegraphics[width=0.92\textwidth,height=3.25cm,keepaspectratio]{35-semillas}
-\end{center}
-\vspace{0.2em}
-{\scriptsize
-\setlength{\itemsep}{0.12em}
-\begin{itemize}
-  \item {\bfseries En promedio la ResNet acierta un poco más: 74{,}8\,$\pm$\,0{,}3\,\% contra 73{,}1\,$\pm$\,2{,}6\,\%.}
-  \item Gana con claridad en 2 de 3 semillas en clase exacta y en 1 de 3 en QWK. En la otra semilla el ViT queda arriba, sin diferencia clara.
-  \item {\bfseries La diferencia más clara es la estabilidad.}
-  \item La ResNet da casi lo mismo cada vez; el ViT sale entre 71{,}0\,\% y 76{,}0\,\% según la semilla.
-\end{itemize}
-}
-\cierre{En el avance dijimos \guillemotleft{}ResNet gana en clase exacta\guillemotright{} con un solo entrenamiento. Con tres, la conclusión se matiza.}
-\end{frame}
-
 \begin{frame}{Dos direcciones del error, dos costos distintos}{Semilla 42 de cada modelo; el costo elegido no mide etileno}
 \begin{center}
   \includegraphics[width=0.95\textwidth,height=4.1cm,keepaspectratio]{14-asimetria-errores}
 \end{center}
 \cierre{Menos falsos inmaduros puede significar más falsos maduros. La tabla siguiente compara con la variación entre semillas.}
-\end{frame}
-
-\begin{frame}{Asimetría: menos falsos inmaduros, más falsos maduros}{Costo elegido: subestimar pesa el doble; el etileno no se midió}
-{\scriptsize
-\centering
-\begin{tabular}{lrrrr}
-\toprule
-\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Clase exacta & \color{white}\bfseries Subestim. & \color{white}\bfseries Sobreestim. & \color{white}\bfseries MAE asim. \\
-\midrule
-Solo temp. y día & 78{,}0\,\% & 11{,}0\,\% & 11{,}1\,\% & 0{,}343 \\
-ResNet-50 (3 semillas) & 74{,}6\,\%--75{,}2\,\% & 11{,}1\,\%--13{,}2\,\% & 11{,}6\,\%--14{,}3\,\% & 0{,}373--0{,}390 \\
-ResNet asim. (1 semilla) & 72{,}2\,\% & 6{,}5\,\% & 21{,}2\,\% & 0{,}353 \\
-ViT-S/16 (3 semillas) & 71{,}0\,\%--76{,}0\,\% & 10{,}9\,\%--14{,}6\,\% & 9{,}3\,\%--18{,}1\,\% & 0{,}392--0{,}429 \\
-ViT asim. (1 semilla) & 74{,}8\,\% & 9{,}8\,\% & 15{,}5\,\% & 0{,}356 \\
-\bottomrule
-\end{tabular}
-}
-{\tiny
-\setlength{\itemsep}{0.1em}
-\begin{itemize}
-  \item Tabla: rango de tres semillas en baselines; asimétricos: solo 42. El ViT asimétrico queda dentro del rango de accuracy y QWK del ViT normal.
-\end{itemize}
-}
-\cierre{Castigar el falso inmaduro lo reduce casi a la mitad en ResNet, a cambio de más falsos maduros y menos aciertos exactos. Una semilla: resultado preliminar.}
-\end{frame}
-
-\begin{frame}{\textquestiondown{}Qué aporta realmente la foto?}{Separando las paltas según si maduran al ritmo de su grupo}
-\begin{center}
-  \includegraphics[width=0.86\textwidth,height=3.5cm,keepaspectratio]{36b-calendario}
-\end{center}
-\vspace{0.2em}
-{\scriptsize
-\setlength{\itemsep}{0.12em}
-\begin{itemize}
-  \item {\bfseries 498 de 2.262 fotos son de paltas que van fuera de ritmo. Ahí la regla del calendario falla siempre; la foto sola acierta cerca de la mitad.}
-  \item Al darle también temperatura y día, la ResNet baja de 52{,}9\,\% a 45{,}5\,\% en esos casos: aprende a confiar en el calendario y mira menos la foto justo donde más se necesitaba.
-\end{itemize}
-}
-\cierre{Lo que gana el modelo combinado lo gana en las paltas normales; en las raras, la foto sola sigue siendo mejor.}
-\end{frame}
-
-\begin{frame}{Por temperatura de almacenamiento}{Corrección del avance: los modelos no rinden igual en las tres}
-\begin{center}
-  \includegraphics[width=0.86\textwidth,height=4.1cm,keepaspectratio]{36a-por-temperatura}
-\end{center}
-\vspace{0.2em}
-{\scriptsize
-\setlength{\itemsep}{0.12em}
-\begin{itemize}
-  \item {\bfseries A temperatura ambiente el calendario es el que más se equivoca.}
-  \item La regla baja a 68{,}6\,\%; la ResNet con foto sola llega a 72{,}8\,\%. Sin refrigeración las paltas maduran más dispares y la foto aporta más.
-  \item {\bfseries En el avance dijimos que andaba igual de bien en las tres. No es así.}
-  \item El ViT baja de 74{,}5\,\% a 10\,\textdegree C a 70{,}0\,\% a 20\,\textdegree C. La ResNet es más pareja.
-\end{itemize}
-}
-\end{frame}
-
-\begin{frame}{Cómo se equivoca}{Fotos reales de la prueba, elegidas al azar entre los errores}
-\begin{center}
-  \includegraphics[width=0.70\textwidth,height=5.0cm,keepaspectratio]{37-ejemplos-errores}
-\end{center}
-\cierre{557 de los 574 errores de la ResNet son de un escalón. Los estados 3, 4 y 5 se ven igual de oscuros: los separa la firmeza, que la foto no muestra. Las manchas claras de daño también confunden.}
-\end{frame}
-
-\begin{frame}{El experimento que lo demuestra}{Reentrenamos las dos redes SIN ImageNet, solo con las fotos de paltas}
-\begin{center}
-  \includegraphics[width=0.84\textwidth,height=3.25cm,keepaspectratio]{32-dependencia-pretraining}
-\end{center}
-\vspace{0.3em}
-{\tiny
-\setlength{\itemsep}{0.22em}
-\begin{itemize}
-  \item {\bfseries El ViT pierde 2{,}1$\times$ más QWK y 1{,}5$\times$ más accuracy que la ResNet.}
-  \item Es lo que predice la idea de las \guillemotleft{}reglas de fábrica\guillemotright{}: la ResNet ya sabía mirar imágenes, el ViT tenía que aprenderlo, y 10.208 fotos de paltas no alcanzan para eso.
-  \item Las cuatro caídas son estadísticamente sólidas ($p<0{,}0001$), y cada red se compara contra \emph{su propia} versión con ImageNet.
-  \item Limitación: los modelos desde cero se entrenaron una sola vez. La caída es tan grande (7 y 11 puntos) que la variación entre semillas no alcanza a explicarla, pero el cociente exacto es aproximado.
-\end{itemize}
-}
-\cierre{Con ImageNet las dos quedan cerca. Sin ImageNet, no. La diferencia real entre ellas no es el techo, es cuántos datos necesitan para llegar.}
-\end{frame}
-
-\begin{frame}{Una hipótesis para explicarlo}{Creemos que esta tarea juega en la cancha de la convolución}
-{\footnotesize
-\setlength{\itemsep}{0.3em}
-\begin{itemize}
-  \item {\bfseries El estado de madurez se lee en detalles pequeños y locales.}
-  \item El color de la cáscara, las manchas, el arrugamiento. Todo eso está repartido por la superficie de la fruta y se ve de cerca.
-  \item {\bfseries Justo lo que la ResNet hace bien con su lupa.}
-  \item La gran ventaja del ViT es relacionar zonas lejanas de una imagen. Acá hay poco lejano que relacionar: todas las paltas tienen la misma forma, están centradas y sobre el mismo fondo.
-  \item {\bfseries Es una hipótesis, no un resultado.}
-  \item Es coherente con la ablación y con los mapas de atención, pero no la probamos directamente. La prueba sería tapar o desordenar partes de la foto y ver cuál de las dos redes sufre más: queda como trabajo futuro.
-\end{itemize}
-}
-\cierre{Lo que sí podemos afirmar: con el mismo estudio previo quedan cerca, y sin él la ResNet resiste mucho mejor.}
-\end{frame}
-
-\begin{frame}{Los híbridos}{\textquestiondown{}Suma combinar ambos enfoques?}
-{\scriptsize
-\centering
-\begin{tabular}{lccccc}
-\toprule
-\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries QWK val. & \color{white}\bfseries Exacta val. & \color{white}\bfseries QWK prueba & \color{white}\bfseries Exacta prueba & \color{white}\bfseries Cuesta \\
-\midrule
-ResNet-50 & 0{,}945 & 78{,}8\,\% & 0{,}936 & 74{,}6\,\% & 1{,}00$\times$ \\
-Híbrido: fusión tardía & 0{,}939 & 77{,}4\,\% & 0{,}941 & 76{,}7\,\% & 2{,}04$\times$ \\
-ViT-Hybrid R26+S/32 & 0{,}943 & 78{,}0\,\% & 0{,}941 & 76{,}2\,\% & 0{,}84$\times$ \\
-\bottomrule
-\end{tabular}
-}
-\vspace{0.5em}
-{\tiny
-\setlength{\itemsep}{0.2em}
-\begin{itemize}
-  \item {\bfseries En la prueba parecían mejores. En validación, no.}
-  \item Con la semilla 42 ambos superan a la ResNet en la prueba. Pero la decisión se toma en validación, y ahí ninguno le gana a la ResNet en QWK. Elegirlos mirando la prueba habría sido el mismo error que nos señalaron en el avance.
-  \item {\bfseries Además se entrenaron una sola vez.}
-  \item La ResNet sola ya varía $\pm$0{,}3 puntos entre semillas, y el ViT $\pm$2{,}6: una ventaja de un punto con una sola semilla no alcanza para afirmar nada.
-  \item {\bfseries Y la fusión tardía cuesta el doble por foto.}
-  \item El ViT-Hybrid R26 es más barato, pero estudió con 14 millones de fotos en vez de 1,3: no es una comparación limpia.
-\end{itemize}
-}
-\cierre{Conclusión: con esta evidencia, combinar las dos redes no demostró valer la pena. Agregar temperatura y día o pérdida asimétrica aportó más.}
-\end{frame}
-
-\begin{frame}{\textquestiondown{}En qué se fijó el modelo para decidir?}{Pintamos sobre la foto las zonas que más pesaron en la respuesta}
-\begin{columns}[T]
-\begin{column}{0.30\textwidth}
-\begin{center}
-  \includegraphics[width=\textwidth,height=5.4cm,keepaspectratio]{20-interpretabilidad-desacuerdo}
-\end{center}
-\end{column}
-\begin{column}{0.66\textwidth}
-{\tiny
-\setlength{\itemsep}{0.25em}
-\begin{itemize}
-  \item Rojo = la zona que más influyó en la decisión; azul = la que casi no se usó.
-  \item Cada red se abre con una técnica distinta, porque por dentro funcionan distinto. Las dos responden la misma pregunta.
-  \item {\bfseries La ResNet se concentra en puntos chicos: una mancha, una arruga, una zona oscura.}
-  \item {\bfseries El ViT reparte la mirada por áreas más grandes de la cáscara.}
-  \item {\bfseries Un hallazgo incómodo y honesto:}
-  \item En varios de los casos en que las dos redes discrepan, la ResNet está mirando el \emph{fondo}, fuera de la fruta. Y son justamente esos los casos en que se equivoca. Sin esta figura no lo habríamos notado.
-\end{itemize}
-}
-\end{column}
-\end{columns}
 \end{frame}
 
 \begin{frame}{Dos mejoras que salieron gratis}{Sin reentrenar: se eligen en validación y recién después se miden en la prueba}
@@ -668,80 +647,6 @@ ViT-Hybrid R26+S/32 & 0{,}943 & 78{,}0\,\% & 0{,}941 & 76{,}2\,\% & 0{,}84$\time
 }
 \cierre{Corrección respecto del avance: antes estas variantes se comparaban directo en la prueba. Ahora la prueba se mira una sola vez.}
 \end{frame}
-
-\begin{frame}{\textquestiondown{}Cuál llevaríamos a una planta empacadora?}{Depende de qué información se tenga y del costo de infiltrar fruta madura}
-{\tiny
-\centering
-\begin{tabular}{l c c >{\raggedright\arraybackslash}p{0.40\textwidth}}
-\toprule
-\rowcolor{verdeosc}\color{white}\bfseries Modelo & \color{white}\bfseries Clase exacta & \color{white}\bfseries Cuesta & \color{white}\bfseries Veredicto \\
-\midrule
-\rowcolor{verdecla!22}ResNet-50 + temp. y día & 79{,}2\,$\pm$\,1{,}3\,\% & 1,00$\times$ & La que recomendamos si se conoce la historia del lote. \\
-Solo temperatura y día & 78{,}0\,\% & casi 0 & Empata en promedio. Pero falla siempre con las paltas fuera de ritmo. \\
-ResNet-50 & 74{,}8\,$\pm$\,0{,}3\,\% & 1,00$\times$ & La opción estándar si no se sabe cuántos días lleva guardada la fruta. \\
-ViT-S/16 & 73{,}1\,$\pm$\,2{,}6\,\% & 1{,}04$\times$ & Cerca en promedio, pero menos estable entre entrenamientos. \\
-ResNet-50 (asim.) & 72{,}2\,\% & 1,00$\times$ & Preliminar (1 semilla): subest. 6{,}5\,\%, sobreest. 21{,}2\,\%; menos aciertos exactos. \\
-ViT-S/16 (asim.) & 74{,}8\,\% & 1{,}04$\times$ & Preliminar (1 semilla): dentro del rango del ViT normal; sobreest. 15{,}5\,\%. \\
-\bottomrule
-\end{tabular}
-}
-\vspace{0.35em}
-{\tiny
-\setlength{\itemsep}{0.18em}
-\begin{itemize}
-  \item {\bfseries Si la planta registra temperatura y fecha de ingreso, hay que usarlas.}
-  \item Mejoran a las dos redes en las 3 semillas; en QWK la mejora es significativa en todas. No cuesta nada: son dos números más.
-  \item {\bfseries La pérdida asimétrica requiere más semillas antes de recomendar su uso.}
-  \item Reduce falsos inmaduros a cambio de más falsos maduros; el riesgo de etileno no fue medido.
-  \item {\bfseries Entre ResNet y ViT, preferimos la ResNet.}
-  \item No porque sea claramente más precisa, sino porque da lo mismo cada vez que se entrena. En producción eso importa.
-\end{itemize}
-}
-\end{frame}
-
-\begin{frame}{Demo}{Subir una foto y ver qué responde el modelo}
-{\small
-\setlength{\itemsep}{0.35em}
-\begin{itemize}
-  \item {\bfseries Se elige el modelo, se sube la foto y aparece la respuesta.}
-  \item Muestra qué tan seguro está de cada uno de los 5 estados, y qué hacer con esa palta: dejarla madurar, venderla hoy o descartarla.
-  \item {\bfseries Muestra también dónde miró para decidir.}
-  \item No es una caja negra: se ve pintada sobre la foto la zona que usó.
-  \item {\bfseries Avisa cuando no está seguro.}
-  \item Si duda entre dos estados vecinos lo dice, en vez de responder con falsa confianza. Ahí conviene que mire una persona.
-  \item {\bfseries Los ejemplos que trae cargados son paltas que ningún modelo vio nunca.}
-  \item Y advierte en pantalla que fue entrenado con fotos de laboratorio.
-\end{itemize}
-}
-\cierre{\texttt{python app/gradio\_app.py} $\rightarrow$ \texttt{http://localhost:7860}}
-\end{frame}
-
-\begin{frame}{Conclusiones y trabajo futuro}{Qué aprendimos y qué sigue}
-{\scriptsize
-\setlength{\itemsep}{0.22em}
-\begin{itemize}
-  \item {\bfseries En este dataset, el calendario explica la mayor parte de la madurez.}
-  \item Una regla con solo temperatura y día acierta el 78\,\%; la foto aporta donde el calendario falla siempre: en las 498 fotos de paltas fuera de ritmo.
-  \item {\bfseries ResNet y ViT quedan cerca; la ResNet es más estable y depende menos de ImageNet.}
-  \item Con tres entrenamientos, la ventaja de la ResNet en clase exacta aparece en dos de tres. Sin ImageNet, el ViT pierde el doble.
-  \item {\bfseries Penalización ordinal asimétrica: resultado preliminar, una semilla.}
-  \item Menor MAE Asimétrico contra la semilla 42 del baseline ($p=0{,}006$ ResNet; $p=0{,}030$ ViT), con más sobreestimación. El efecto entre semillas y el riesgo de etileno no fueron medidos.
-  \item {\bfseries Qué haríamos ahora:}
-  \item 1) Fotos de celular en un packing chileno, sin historia del lote (o reemplazo de fondos). 2) Combinar \texttt{AsymmetricOrdinalLoss} con el modelo de metadatos y 3 semillas. 3) Tapar partes de la foto para probar la hipótesis local vs. global.
-\end{itemize}
-}
-\cierre{\texttt{github.com/cmartinez1524/clasificacion-de-paltas}}
-\end{frame}
-
-{
-\setbeamercolor{background canvas}{bg=grisFondo}
-\begin{frame}[plain]
-  \vfill
-  \hspace{0.6cm}{\color{verdecla}\fontsize{54}{58}\selectfont\bfseries A}%
-  \hspace{0.5cm}{\color{verdeosc}\Huge\bfseries Anexo}
-  \vfill
-\end{frame}
-}
 
 \begin{frame}{Anexo: todas las métricas}{Test, semilla 42: 2.262 imágenes de 72 frutas nunca vistas}
 {\tiny

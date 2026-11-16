@@ -7,6 +7,7 @@ sin tocar nada.
 Uso:
     python scripts/07_deck_latex.py            # solo la presentacion final
     python scripts/07_deck_latex.py --avance   # tambien regenera el avance
+    python scripts/07_deck_latex.py --extendida  # tambien la version larga anterior
 """
 
 from __future__ import annotations
@@ -137,7 +138,7 @@ def frame_problema(fecha_nota: str) -> str:
         nota=fecha_nota)
 
 
-def frames_datos(incluir_limitaciones: bool = False) -> str:
+def frames_datos(incluir_limitaciones: bool = False, solo_anexo: bool = False) -> str:
     """Tres laminas claras para explicar el dataset: imagenes, temperaturas y split."""
     s1 = frame(
         "Los datos en imágenes: 5 etapas de madurez",
@@ -184,6 +185,8 @@ def frames_datos(incluir_limitaciones: bool = False) -> str:
         + "\n" + r"\cierre{Dos paltas del mismo día a distinta temperatura tienen "
                  r"madurez opuesta, y dentro de cada grupo hay frutas fuera de ritmo.}")
 
+    if solo_anexo:
+        return s2
     out = s1 + s2 + FRAME_TRAMPA
     if incluir_limitaciones:
         out += frame(
@@ -433,8 +436,8 @@ def frame_empate(r: dict, v: dict, comp: dict | None) -> str:
                  r"en el anexo.}")
 
 
-def frame_asimetria(res: dict) -> str:
-    """Muestra ambas direcciones del error, recalculadas desde los CSV."""
+def filas_asimetria() -> list[list[str]]:
+    """Filas de la tabla de asimetria, recalculadas desde los CSV de predicciones."""
     filas = []
     for nombre, etiqueta, semillas in (
         ("referencia_metadatos", "Solo temp. y día", False),
@@ -453,12 +456,22 @@ def frame_asimetria(res: dict) -> str:
             valores.append(formato(min(xs)) + "--" + formato(max(xs))
                            if semillas else formato(xs[0]))
         filas.append([etiqueta, *valores])
+    return filas
+
+
+def frame_asimetria_figura() -> str:
     return frame(
         "Dos direcciones del error, dos costos distintos",
         "Semilla 42 de cada modelo; el costo elegido no mide etileno",
         figura("14_asimetria_errores", r"0.95\textwidth", "4.1cm")
         + "\n" + r"\cierre{Menos falsos inmaduros puede significar más falsos maduros. "
-        r"La tabla siguiente compara con la variación entre semillas.}") + frame(
+        r"La tabla siguiente compara con la variación entre semillas.}")
+
+
+def frame_asimetria(res: dict) -> str:
+    """Muestra ambas direcciones del error (version extendida: figura + tabla)."""
+    filas = filas_asimetria()
+    return frame_asimetria_figura() + frame(
         "Asimetría: menos falsos inmaduros, más falsos maduros",
         "Costo elegido: subestimar pesa el doble; el etileno no se midió",
         tabla(
@@ -865,7 +878,8 @@ def construir_avance(arg1: dict, arg2: dict | None = None, arg3: dict | None = N
 # --------------------------------------------------------------------------- #
 # Deck final
 # --------------------------------------------------------------------------- #
-def construir_final(res: dict, comp: dict | None, s: dict | None = None) -> str:
+def construir_final_extendida(res: dict, comp: dict | None, s: dict | None = None) -> str:
+    """Version larga (35 laminas) previa a la de 15 minutos. Se genera con --extendida."""
     if s is None:
         s = cargar_comp("semillas")
     r, v = res["resnet50"], res["vit_small"]
@@ -1092,6 +1106,364 @@ def construir_final(res: dict, comp: dict | None, s: dict | None = None) -> str:
     return cuerpo
 
 
+# --------------------------------------------------------------------------- #
+# Deck final de 15 minutos
+#
+# Reglas de esta version (feedback del avance): una idea y una figura grande por
+# lamina, texto en tamano \small o mayor, sin notas al pie en letra chica. Todo
+# el detalle que se saca del cuerpo queda en el anexo, a una lamina de distancia
+# si alguien pregunta.
+# --------------------------------------------------------------------------- #
+PUBLICADO = [
+    # Xavier, Rodrigues y Silva (2024), Foods 13(8):1150, tabla 3: indice de 5
+    # niveles, split 70/15/15 por fruta, promedio de los tres grupos.
+    ("ResNet-18", 0.784),
+    ("AlexNet", 0.769),
+]
+
+
+def mensaje(texto: str) -> str:
+    """Frase de cierre en tamano normal: reemplaza a las notas en letra chica."""
+    return "\n\\vfill\n" + r"{\normalsize\bfseries\color{verdeosc}" + texto + "}"
+
+
+def construir_final(res: dict, comp: dict | None, s: dict | None = None) -> str:
+    if s is None:
+        s = cargar_comp("semillas")
+    r, v = res["resnet50"], res["vit_small"]
+    disponibles = [k for k in ETIQUETA if res.get(k)]
+    ref = s["referencia"]["test"]
+    rr = fila_semillas(s, "ResNet-50")
+    vv = fila_semillas(s, "ViT-S/16")
+    rm = fila_semillas(s, "ResNet-50 + temp. y día")
+    vm = fila_semillas(s, "ViT-S/16 + temp. y día")
+    cal = {(c["modelo"], c["subconjunto"]): c for c in s.get("calendario", [])}
+    temp = {(t["modelo"], t["grupo"]): t["mean"] for t in s["por_temperatura"]}
+
+    cuerpo = portada(
+        "Clasificación del estado de\\\\madurez de paltas Hass",
+        "ResNet-50 frente a ViT-S/16 con presupuesto equiparado",
+        AUTOR, FECHA_FINAL,
+        "14.710 fotografías, 478 frutas, índice ordinal de 5 niveles")
+
+    # 1. Problema
+    cuerpo += frame(
+        "El problema", "",
+        columnas(
+            items([
+                ("Hoy la madurez de la palta se clasifica a ojo y al tacto.", True),
+                "Son 5 niveles ordenados: equivocarse por un nivel no es lo mismo "
+                "que equivocarse por cuatro.",
+                "Queremos estimar el nivel desde una foto y saber si una red "
+                "convolucional y un transformer lo resuelven distinto.",
+            ], tam=r"\small", sep="0.5em"),
+            tabla(["Índ.", "Estado", "Decisión"],
+                  [["1", "Verde", "Dejar madurar"],
+                   ["2", "Iniciando", "Lista en 2--3 días"],
+                   ["3", "Maduro I", "Venta inmediata"],
+                   ["4", "Maduro II", "Último día"],
+                   ["5", "Sobremaduro", "Fuera de punto"]],
+                  spec="cll", tam=r"\small"),
+            "0.50", "0.46"))
+
+    # 2. Datos
+    cuerpo += frame(
+        "Los datos: 5 etapas de madurez",
+        "Xavier, Rodrigues y Silva (2024), Mendeley Data, CC BY 4.0",
+        columnas(
+            figura("03_ejemplos_por_clase", r"\textwidth", "5.3cm"),
+            items([
+                ("14.710 fotos de 478 paltas Hass.", True),
+                "Una foto diaria por cada cara, hasta 26 días.",
+                "Tres condiciones de guarda: 10\\,\\textdegree C, "
+                "20\\,\\textdegree C y ambiente.",
+                "Etiqueta: índice de madurez de 1 a 5, asignado por un experto.",
+                "Fotos de laboratorio: fondo blanco y una fruta centrada.",
+            ], tam=r"\small", sep="0.45em"),
+            "0.46", "0.50"))
+
+    # 3. Split por fruta
+    cuerpo += frame(
+        "El riesgo de que la IA haga trampa", "",
+        columnas(
+            items([
+                ("La misma palta aparece en fotos de días seguidos, casi idénticas.", True),
+                "Si se reparten las fotos al azar, el modelo reconoce la palta en "
+                "vez de juzgar su madurez.",
+                ("Repartimos las 478 paltas, no las fotos: 334 / 72 / 72.", True),
+                "Un chequeo automático falla si una palta queda en dos grupos.",
+            ], tam=r"\small", sep="0.5em"),
+            figura("04_particiones", r"\textwidth", "4.6cm"),
+            "0.50", "0.46"))
+
+    # 4. Las dos redes
+    cuerpo += frame(
+        "Las dos redes", "",
+        figura("30_como_mira_cada_red", r"0.95\textwidth", "5.0cm")
+        + mensaje("ResNet mira de cerca, por pedazos. "
+                  "ViT compara todos los pedazos entre sí."))
+
+    # 5. Comparacion justa
+    cuerpo += frame(
+        "Una comparación justa", "",
+        tabla(["Qué igualamos", "ResNet-50", "ViT-S/16"],
+              [["Parámetros", f"{num(r['params_M'], 1)} millones",
+                f"{num(v['params_M'], 1)} millones"],
+               ["Cómputo por foto (GFLOPs)", num(r["gflops"], 1), num(v["gflops"], 1)],
+               ["Pre-entrenamiento", "ImageNet-1k", "ImageNet-1k"]],
+              spec="lcc", tam=r"\small")
+        + "\n\\vspace{0.8em}\n"
+        + items([
+            "Misma receta de entrenamiento; en el ViT solo cambian el learning "
+            "rate y el warmup.",
+            "Cada modelo se entrenó 3 veces (semillas 42, 1 y 2).",
+            "Todo se elige en validación; la prueba se mira una sola vez.",
+        ], tam=r"\small", sep="0.45em"))
+
+    # 6. La regla del calendario
+    cuerpo += frame(
+        "La vara que hay que superar: el calendario", "",
+        cajas([
+            ("grisSuave", "La regla",
+             r"\small Para cada temperatura y día de guarda, responder el estado "
+             r"más común en las paltas de entrenamiento. No mira la foto."),
+            ("verdeosc", "Lo que logra",
+             r"\small Acierta la clase exacta en el \textbf{" + pct(ref["accuracy"])
+             + r"} de las fotos de prueba, con QWK " + num(ref["qwk"], 3) + "."),
+        ])
+        + "\n\\vspace{0.9em}\n"
+        + items([
+            "Las paltas se cosecharon juntas y maduran casi al mismo ritmo: "
+            "los días de guarda ya dicen casi todo.",
+        ], tam=r"\small", sep="0.4em")
+        + mensaje("Todos los modelos se comparan contra esta regla."))
+
+    # 7. Tabla principal + resultados publicados
+    filas = [["Solo temperatura y día (sin foto)", pct(ref["accuracy"]), num(ref["qwk"], 3)]]
+    for nombre, f in (("ResNet-50", rr), ("ViT-S/16", vv),
+                      ("ResNet-50 + temperatura y día", rm),
+                      ("ViT-S/16 + temperatura y día", vm)):
+        filas.append([nombre, pm(f["test_accuracy"], f["test_accuracy_sd"]),
+                      num(f["test_qwk"], 3)])
+    for nombre, acc in PUBLICADO:
+        filas.append([rf"\textit{{Publicado (Xavier et al., 2024): {nombre}}}",
+                      pct(acc), "---"])
+    cuerpo += frame(
+        "Resultados",
+        "Prueba: 2.262 fotos de 72 paltas nunca vistas; media $\\pm$ desviación de 3 semillas",
+        tabla(["Modelo", "Clase exacta", "QWK"], filas, spec="lcc",
+              tam=r"\small", destacar=3)
+        + "\n\\vspace{0.4em}\n"
+        + items([
+            "La foto sola no supera al calendario; foto + temperatura + día queda "
+            "arriba, sin diferencia concluyente.",
+        ], tam=r"\small", sep="0.25em"))
+
+    # 8. ResNet vs ViT
+    acc = comparacion(s, "resnet50", "vit_small", "accuracy")
+    sig_acc = sum(c["significativo"] and c["diff"] > 0 for c in acc)
+    vit = [x["accuracy"] for x in s["por_semilla"] if x["modelo"] == "vit_small"]
+    cuerpo += frame(
+        "ResNet-50 frente a ViT-S/16", "",
+        figura("35_semillas", r"0.95\textwidth", "3.6cm")
+        + "\n\\vspace{0.3em}\n"
+        + items([
+            (f"ResNet {pm(rr['test_accuracy'], rr['test_accuracy_sd'])}, "
+             f"ViT {pm(vv['test_accuracy'], vv['test_accuracy_sd'])}: "
+             f"la ResNet gana con claridad en {sig_acc} de 3 semillas.", True),
+            f"La ResNet da casi lo mismo cada vez; el ViT sale entre {pct(min(vit))} "
+            f"y {pct(max(vit))}.",
+        ], tam=r"\small", sep="0.3em"))
+
+    # 9. Que aporta la foto
+    n_fuera = cal[("resnet50", "fuera de calendario")]["n"]
+    cuerpo += frame(
+        "\\textquestiondown{}Qué aporta la foto?", "",
+        figura("36b_calendario", r"0.90\textwidth", "3.9cm")
+        + "\n\\vspace{0.3em}\n"
+        + items([
+            (f"En las {n_fuera} fotos de paltas fuera de ritmo la regla falla siempre; "
+             f"la foto sola acierta "
+             f"{pct(cal[('resnet50', 'fuera de calendario')]['accuracy'])}.", True),
+            "Con temperatura y día la ResNet baja ahí a "
+            f"{pct(cal[('resnet50_meta', 'fuera de calendario')]['accuracy'])}: "
+            "confía en el calendario y mira menos la foto.",
+        ], tam=r"\small", sep="0.3em"))
+
+    # 10. Por temperatura
+    cuerpo += frame(
+        "Por temperatura de almacenamiento", "",
+        figura("36a_por_temperatura", r"0.90\textwidth", "4.1cm")
+        + "\n\\vspace{0.3em}\n"
+        + items([
+            (f"El ViT baja de {pct(temp[('vit_small', 'T10')])} a 10\\,\\textdegree C "
+             f"a {pct(temp[('vit_small', 'T20')])} a 20\\,\\textdegree C; "
+             "la ResNet es más pareja.", True),
+            f"A temperatura ambiente el calendario cae a "
+            f"{pct(temp[('referencia_metadatos', 'Tam')])} y la foto sola lo supera.",
+        ], tam=r"\small", sep="0.3em"))
+
+    # 11. Errores
+    cuerpo += frame(
+        "Cómo se equivoca", "",
+        figura("37_ejemplos_errores", r"0.74\textwidth", "5.2cm")
+        + mensaje("557 de 574 errores son de un nivel. Los estados 3, 4 y 5 se ven "
+                  "igual de oscuros."))
+
+    # 12. Ablacion
+    rs, vs = res.get("resnet50_scratch"), res.get("vit_small_scratch")
+    if rs and vs:
+        d_r = r["test"]["qwk"] - rs["test"]["qwk"]
+        d_v = v["test"]["qwk"] - vs["test"]["qwk"]
+        cuerpo += frame(
+            "Sin ImageNet, la diferencia aparece", "",
+            figura("32_dependencia_pretraining", r"0.90\textwidth", "4.0cm")
+            + "\n\\vspace{0.3em}\n"
+            + items([
+                (f"Entrenando desde cero, el ViT pierde {num(d_v / d_r, 1)} veces "
+                 "más QWK que la ResNet.", True),
+                "La ResNet trae incorporado cómo mirar una imagen; el ViT lo "
+                "aprende de los datos, y 10.208 fotos no alcanzan.",
+            ], tam=r"\small", sep="0.3em"))
+
+    # 13. Interpretabilidad e hipotesis
+    cuerpo += frame(
+        "\\textquestiondown{}Dónde mira cada red?", "",
+        columnas(
+            figura("20_interpretabilidad_desacuerdo", r"\textwidth", "5.8cm"),
+            items([
+                "ResNet (Grad-CAM): puntos chicos, como manchas y arrugas.",
+                "ViT (attention rollout): zonas amplias de la cáscara.",
+                "En varios desacuerdos la ResNet mira el fondo, y se equivoca.",
+                ("Hipótesis local frente a global: coherente con estos mapas y con "
+                 "la ablación, pero no la probamos con oclusión.", True),
+            ], tam=r"\small", sep="0.5em"),
+            "0.44", "0.52"))
+
+    # 14. Asimetria
+    cuerpo += frame(
+        "Castigar más el falso inmaduro", "",
+        tabla(["Modelo", "Clase exacta", "Subestima", "Sobreestima"],
+              [f[:4] for f in filas_asimetria()], spec="lccc", tam=r"\small")
+        + "\n\\vspace{0.6em}\n"
+        + items([
+            ("En la ResNet el falso inmaduro baja a la mitad, a cambio de más "
+             "falsos maduros y menos aciertos.", True),
+            "Los modelos asimétricos tienen una sola semilla: resultado preliminar.",
+        ], tam=r"\small", sep="0.3em"))
+
+    # 15. Recomendacion
+    cuerpo += frame(
+        "\\textquestiondown{}Cuál llevaríamos a una planta?", "",
+        tabla(["Si la planta\\ldots{}", "Modelo", "Clase exacta"],
+              [["registra temperatura y fecha", "ResNet-50 + temp. y día",
+                pm(rm["test_accuracy"], rm["test_accuracy_sd"])],
+               ["no conoce la historia de la fruta", "ResNet-50",
+                pm(rr["test_accuracy"], rr["test_accuracy_sd"])],
+               ["busca paltas fuera de ritmo", "ResNet-50, solo foto",
+                pct(cal[("resnet50", "fuera de calendario")]["accuracy"])
+                + " (en esas)"]],
+              spec="llc", tam=r"\small", destacar=0)
+        + "\n\\vspace{0.8em}\n"
+        + items([
+            "Entre ResNet y ViT preferimos la ResNet: rinde parecido y es más estable.",
+            "Clasificar con las dos caras de la fruta mejora a todos los modelos.",
+        ], tam=r"\small", sep="0.4em"))
+
+    # 16. Demo
+    cuerpo += frame(
+        "Demo", "",
+        items([
+            "Se sube una foto o se usa la cámara.",
+            "Responde el nivel de madurez y qué tan seguro está.",
+            "Muestra en qué zona de la foto se fijó.",
+        ], tam=r"\large", sep="0.9em"))
+
+    # 17. Conclusiones
+    cuerpo += frame(
+        "Conclusiones", "",
+        items([
+            ("El calendario explica la mayor parte de la madurez en este dataset.", True),
+            "La foto aporta en las paltas fuera de ritmo y cuando no se conoce "
+            "su historia.",
+            ("ResNet y ViT rinden parecido; la ResNet es más estable y depende "
+             "menos de ImageNet.", True),
+            "No aportaron: los híbridos ni un modelo casi cuatro veces más grande.",
+            ("Pendiente: fotos de celular, pérdida ordinal y prueba de oclusión.", True),
+        ], tam=r"\small", sep="0.55em")
+        + mensaje(REPO))
+
+    cuerpo += frames_anexo_final(res, comp, s, disponibles)
+    return cuerpo
+
+
+def frames_anexo_final(res: dict, comp: dict | None, s: dict,
+                       disponibles: list[str]) -> str:
+    """Anexo de la version de 15 minutos: el detalle que salio del cuerpo."""
+    r = res["resnet50"]
+    salida = seccion("A", "Anexo")
+
+    salida += frame(
+        "Anexo: resultados publicados sobre este dataset",
+        "Xavier, Rodrigues y Silva (2024), Foods 13(8):1150",
+        tabla(["Modelo", "Clase exacta", "Clase exacta o vecina"],
+              [["AlexNet (publicado)", "76{,}9\\,\\%", "99{,}4\\,\\%"],
+               ["ResNet-18 (publicado)", "78{,}4\\,\\%", "99{,}7\\,\\%"],
+               ["ResNet-50 (nuestro, 3 semillas)",
+                pm(fila_semillas(s, "ResNet-50")["test_accuracy"],
+                   fila_semillas(s, "ResNet-50")["test_accuracy_sd"]),
+                pct(sum(metricas_predicciones("resnet50" + suf)["off_by_one"]
+                        for suf in ("", "_s1", "_s2")) / 3)],
+               ["ResNet-50 + temp. y día (nuestro)",
+                pm(fila_semillas(s, "ResNet-50 + temp. y día")["test_accuracy"],
+                   fila_semillas(s, "ResNet-50 + temp. y día")["test_accuracy_sd"]),
+                "---"]],
+              spec="lcc", tam=r"\small")
+        + "\n\\vspace{0.6em}\n"
+        + items([
+            "Son los autores del dataset: mismo índice de 5 niveles y también "
+            "reparten 70/15/15 por fruta.",
+            "Reportan el promedio de los tres grupos de almacenamiento, con otra "
+            "partición y sin repetir semillas: la comparación es orientativa.",
+            "Sus cifras quedan en el mismo rango que las nuestras.",
+        ], tam=r"\small", sep="0.3em"))
+
+    hib = [k for k in ("hybrid_fusion", "hybrid_vit_r26") if res.get(k)]
+    if hib:
+        filas_h = []
+        for k in ["resnet50"] + hib:
+            d = res[k]
+            filas_h.append([ETIQUETA[k], num(d["val"]["qwk"], 3), pct(d["val"]["accuracy"]),
+                            num(d["test"]["qwk"], 3), pct(d["test"]["accuracy"]),
+                            num(d["gflops"] / r["gflops"], 2) + r"$\times$"])
+        puntos = [
+            "En validación, que es donde se decide, ningún híbrido supera a la "
+            "ResNet-50. Tienen una sola semilla.",
+        ]
+        grande, base = cargar_comp("vit_base_app_v3_val"), cargar_comp("resnet50_app_s1_v2_val")
+        if grande and base:
+            puntos.append(
+                "Exploratorio: un ViT-Base de 85,8 millones de parámetros empata en "
+                f"validación con la ResNet-50 (QWK {num(grande['val']['qwk'], 3)} "
+                f"frente a {num(base['val']['qwk'], 3)}).")
+        salida += frame(
+            "Anexo: híbridos y modelos más grandes", "Semilla 42",
+            tabla(["Modelo", "QWK val.", "Exacta val.", "QWK prueba", "Exacta prueba",
+                   "Costo"], filas_h, spec="lccccc", tam=r"\footnotesize")
+            + "\n\\vspace{0.6em}\n" + items(puntos, tam=r"\small", sep="0.3em"))
+
+    salida += frames_datos(solo_anexo=True)
+    salida += frame_por_que_entrenan_distinto()
+    salida += frame_hibridos_arquitectura()
+    salida += FRAME_RECETA
+    salida += frame_asimetria_figura()
+    salida += frame_mejoras_gratis()
+    salida += frames_anexo(disponibles, res, comp, por_grupo=False).replace(
+        seccion("A", "Anexo"), "", 1)
+    salida += frames_anexo_semillas(s)
+    return salida
+
+
 def frames_anexo_semillas(s: dict) -> str:
     """Tabla completa por semilla y todas las comparaciones pareadas."""
     filas = []
@@ -1170,6 +1542,12 @@ def main() -> None:
     if "--avance" in sys.argv:
         trabajos.insert(0, ("avance", "presentacion_avance.tex", "Avance",
                             construir_avance(res, cargar_comp("avance"))))
+    if "--extendida" in sys.argv:
+        # La version larga anterior (35 laminas), por si se prefiere a la corta.
+        trabajos.append(("final/version_extendida", "presentacion_final_extendida.tex",
+                         "Final (extendida)",
+                         construir_final_extendida(res, cargar_comp("final"),
+                                                   cargar_comp("semillas"))))
     for carpeta, archivo, etiqueta, cuerpo in trabajos:
         destino = ROOT / "entregables" / carpeta
         n_figs = copiar_figuras(cuerpo, destino / "figuras")

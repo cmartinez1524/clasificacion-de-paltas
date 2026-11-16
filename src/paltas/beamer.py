@@ -169,10 +169,12 @@ def frame(titulo: str, subtitulo: str, cuerpo: str, nota: str = "") -> str:
 
     Con `subtitulo` vacio se omite el segundo grupo de llaves en vez de dejarlo
     vacio: asi el encabezado no reserva una linea en blanco bajo el titulo.
+    El \\relax evita que Beamer tome como subtitulo un cuerpo que empieza con
+    una llave (una tabla o una lista con tamano de letra).
     """
     n = f"\n\\note{{{nota}}}" if nota else ""
     encabezado = (rf"\begin{{frame}}{{{titulo}}}{{{subtitulo}}}" if subtitulo
-                  else rf"\begin{{frame}}{{{titulo}}}")
+                  else rf"\begin{{frame}}{{{titulo}}}\relax")
     return f"""
 {encabezado}
 {cuerpo}
