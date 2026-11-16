@@ -1,0 +1,94 @@
+{
+  "config": {
+    "name": "resnet101_app_s5_v6",
+    "model": "resnet101",
+    "pretrained": true,
+    "init_checkpoint": "E:\\PaltasExperimentos\\semillas_v6\\checkpoints\\resnet101_app_base_s5_v6.pt",
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 12,
+    "lr": 1e-05,
+    "head_lr_mult": 1.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "layer_decay": 1.0,
+    "freeze_resnet_stages": 0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 5,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Cinco semillas v6: receta resnet101_refinada, semilla 5; sin fotos nuevas."
+  },
+  "best_epoch": 1,
+  "train_minutes": 12.98,
+  "seed": 5,
+  "val": {
+    "accuracy": 0.7379464285714286,
+    "balanced_accuracy": 0.7307894901657731,
+    "macro_f1": 0.7300414958918948,
+    "qwk": 0.9289797873559029,
+    "mae": 0.2741071428571429,
+    "asymmetric_mae": 0.40535714285714286,
+    "underestimation_rate": 0.121875,
+    "overestimation_rate": 0.14017857142857143,
+    "off_by_one": 0.9910714285714286,
+    "per_class_f1": [
+      0.88272157564906,
+      0.701058201058201,
+      0.6811397557666214,
+      0.6536964980544747,
+      0.7315914489311164
+    ],
+    "confusion_matrix": [
+      [
+        493,
+        85,
+        0,
+        0,
+        0
+      ],
+      [
+        46,
+        265,
+        37,
+        0,
+        0
+      ],
+      [
+        0,
+        47,
+        251,
+        88,
+        6
+      ],
+      [
+        0,
+        4,
+        54,
+        336,
+        98
+      ],
+      [
+        0,
+        7,
+        3,
+        112,
+        308
+      ]
+    ]
+  }
+}

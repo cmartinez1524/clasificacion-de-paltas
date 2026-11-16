@@ -1,0 +1,22 @@
+name: resnet101_app_parcial_v5
+model: resnet101
+pretrained: true
+freeze_resnet_stages: 3
+img_size: 224
+batch_size: 32
+num_workers: 4
+use_cache: true
+use_class_weights: true
+epochs: 20
+lr: 0.00015
+head_lr_mult: 10.0
+weight_decay: 0.05
+warmup_epochs: 1.0
+label_smoothing: 0.05
+drop_path_rate: 0.0
+grad_clip: 1.0
+amp: true
+seed: 42
+early_stop_patience: 6
+primary_metric: qwk
+notes: "Misma receta ResNet-101 v3, desde ImageNet; unico ajuste: stem y layer1-3 congelados, incluidas estadisticas BatchNorm. Se entrenan layer4 y fc. Sin fotos nuevas."

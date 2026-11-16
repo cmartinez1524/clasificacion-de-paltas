@@ -21,12 +21,16 @@ def test_selection_uses_validation_qwk_then_accuracy():
 
 
 @pytest.mark.parametrize('candidate_wins', [False, True])
-@pytest.mark.parametrize('mode', ['--grandes', '--ajustar-resnet101'])
+@pytest.mark.parametrize('mode', ['--grandes', '--ajustar-resnet101', '--por-capas'])
 def test_large_models_only_test_validation_winner(tmp_path, monkeypatch, candidate_wins, mode):
     tuning = mode == '--ajustar-resnet101'
     candidates = ('resnet101_app_refinado_v4', 'resnet101_app_regularizado_v4') if tuning else ('resnet101_app_v3', 'vit_base_app_v3')
     baseline = 'vit_base_app_v3' if tuning else 'resnet50_app_s1_v2'
     report = 'app_resnet101_v4.json' if tuning else 'app_grandes_v3.json'
+    if mode == '--por-capas':
+        candidates = ('resnet101_app_parcial_v5', 'vit_base_app_capas_v5')
+        baseline = 'vit_base_app_v3'
+        report = 'app_capas_v5.json'
     source = Path(__file__).resolve().parents[1]
     spec = importlib.util.spec_from_file_location('improvement', source / 'scripts/mejorar_modelo_app.py')
     mod = importlib.util.module_from_spec(spec)

@@ -31,6 +31,8 @@ class TrainConfig:
     warmup_epochs: float = 1.0
     label_smoothing: float = 0.05
     drop_path_rate: float = 0.0
+    layer_decay: float = 1.0       # ViT: menor LR en las primeras capas
+    freeze_resnet_stages: int = 0 # congela stem y los primeros N bloques ResNet
     grad_clip: float = 1.0
     amp: bool = True
 
@@ -63,6 +65,14 @@ class TrainConfig:
         if desconocidos:
             raise KeyError(f"Claves desconocidas en {path.name}: {sorted(desconocidos)}")
         cfg = cls(**raw)
+        if not 0 < cfg.layer_decay <= 1:
+            raise ValueError('layer_decay debe estar en (0, 1]')
+        if cfg.layer_decay < 1 and cfg.model not in ('vit_small', 'vit_base'):
+            raise ValueError('layer_decay requiere vit_small o vit_base')
+        if type(cfg.freeze_resnet_stages) is not int or cfg.freeze_resnet_stages not in range(4):
+            raise ValueError('freeze_resnet_stages debe ser un entero de 0 a 3')
+        if cfg.freeze_resnet_stages and cfg.model not in ('resnet50', 'resnet101'):
+            raise ValueError('freeze_resnet_stages requiere resnet50 o resnet101')
         if cfg.primary_metric not in ("qwk", "asymmetric_mae"):
             raise ValueError(
                 f"primary_metric invalida en {path.name}: {cfg.primary_metric!r} "

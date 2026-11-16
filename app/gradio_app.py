@@ -43,6 +43,8 @@ DISPONIBLES = {
     "resnet50_app": ("resnet50", "ResNet-50 · nueva app"),
     "resnet50_app_s1_v2": ("resnet50", "ResNet-50 · v2 experimental (semilla 1)"),
     "resnet101_app_v3": ("resnet101", "ResNet-101 · v3 experimental"),
+    "resnet101_app_parcial_v5": ("resnet101", "ResNet-101 · v5 parcial experimental"),
+    "vit_base_app_capas_v5": ("vit_base", "ViT-Base/16 · v5 por capas experimental"),
     "resnet101_app_refinado_v4": ("resnet101", "ResNet-101 · v4 refinada experimental"),
     "resnet101_app_regularizado_v4": ("resnet101", "ResNet-101 · v4 regularizada experimental"),
     "vit_base_app_v3": ("vit_base", "ViT-Base/16 · v3 experimental"),
@@ -57,6 +59,17 @@ for semilla in (1, 2):
     for arquitectura, etiqueta in (("resnet50", "ResNet-50"), ("vit_small", "ViT-S/16")):
         DISPONIBLES[f"{arquitectura}_asimetrico_s{semilla}"] = (
             arquitectura, f"{etiqueta} (asimétrico, semilla {semilla})")
+
+for semilla in range(1, 6):
+    for prefijo, arquitectura, etiqueta in (
+        ('resnet50_app', 'resnet50', 'ResNet-50'),
+        ('vit_base_app', 'vit_base', 'ViT-Base'),
+        ('resnet101_app', 'resnet101', 'ResNet-101 refinada'),
+        ('resnet101_app_parcial', 'resnet101', 'ResNet-101 parcial'),
+        ('vit_base_app_capas', 'vit_base', 'ViT-Base por capas'),
+    ):
+        DISPONIBLES[f'{prefijo}_s{semilla}_v6'] = (
+            arquitectura, f'{etiqueta} · v6 experimental (semilla {semilla})')
 
 ACCION = {
     1: "Aun no comestible. Dejar madurar varios dias a temperatura ambiente.",

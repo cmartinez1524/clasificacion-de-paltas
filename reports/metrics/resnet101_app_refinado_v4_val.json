@@ -1,0 +1,92 @@
+{
+  "config": {
+    "name": "resnet101_app_refinado_v4",
+    "model": "resnet101",
+    "pretrained": true,
+    "init_checkpoint": "checkpoints/resnet101_app_v3.pt",
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 12,
+    "lr": 1e-05,
+    "head_lr_mult": 1.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Refinar el mejor checkpoint ResNet-101 v3 con LR bajo y cabeza al mismo LR; sin cambiar perdida ni regularizacion. Seleccion solo por validacion."
+  },
+  "best_epoch": 11,
+  "train_minutes": 9.31,
+  "seed": 42,
+  "val": {
+    "accuracy": 0.7535714285714286,
+    "balanced_accuracy": 0.7432524838334971,
+    "macro_f1": 0.7450323836168563,
+    "qwk": 0.9366808924583532,
+    "mae": 0.2544642857142857,
+    "asymmetric_mae": 0.384375,
+    "underestimation_rate": 0.12455357142857143,
+    "overestimation_rate": 0.121875,
+    "off_by_one": 0.9928571428571429,
+    "per_class_f1": [
+      0.8879235447437012,
+      0.7053824362606232,
+      0.7150395778364116,
+      0.674373795761079,
+      0.7424425634824667
+    ],
+    "confusion_matrix": [
+      [
+        511,
+        67,
+        0,
+        0,
+        0
+      ],
+      [
+        62,
+        249,
+        37,
+        0,
+        0
+      ],
+      [
+        0,
+        36,
+        271,
+        79,
+        6
+      ],
+      [
+        0,
+        4,
+        54,
+        350,
+        84
+      ],
+      [
+        0,
+        2,
+        4,
+        117,
+        307
+      ]
+    ]
+  }
+}

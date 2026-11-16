@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Paltas: cinco semillas de cinco recetas en GPU (E:)",
+      "type": "process",
+      "command": "${env:LOCALAPPDATA}/paltas-gpu/.venv/Scripts/python.exe",
+      "args": ["-u", "scripts/comparar_semillas.py", "--salida", "E:/PaltasExperimentos/semillas_v6"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Paltas: ajustar por capas en GPU (una sola vez)",
+      "type": "process",
+      "command": "${env:LOCALAPPDATA}/paltas-gpu/.venv/Scripts/python.exe",
+      "args": ["-u", "scripts/mejorar_modelo_app.py", "--por-capas"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Paltas: vigilar experimentos",
+      "type": "process",
+      "command": "${env:LOCALAPPDATA}/paltas-gpu/.venv/Scripts/python.exe",
+      "args": ["-u", "scripts/vigilar_experimentos.py", "--carpeta", "E:/PaltasExperimentos/semillas_v6", "--solo-plan"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Paltas: abrir app local",
+      "type": "process",
+      "command": "${env:LOCALAPPDATA}/paltas-gpu/.venv/Scripts/python.exe",
+      "args": ["-u", "app/gradio_app.py", "--open-browser"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Paltas: ajustar ResNet-101 en GPU (una sola vez)",
+      "type": "process",
+      "command": "${env:LOCALAPPDATA}/paltas-gpu/.venv/Scripts/python.exe",
+      "args": ["-u", "scripts/mejorar_modelo_app.py", "--ajustar-resnet101"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Paltas: comparar modelos grandes en GPU (una sola vez)",
+      "type": "process",
+      "command": "${env:LOCALAPPDATA}/paltas-gpu/.venv/Scripts/python.exe",
+      "args": ["-u", "scripts/mejorar_modelo_app.py", "--grandes"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    }
+  ]
+}

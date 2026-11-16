@@ -17,10 +17,11 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "data"
 CACHE_DIR = DATA_DIR / "cache"
 CONFIG_DIR = ROOT / "configs"
-REPORTS_DIR = ROOT / "reports"
+OUTPUT_DIR = Path(os.environ.get("PALTAS_OUTPUT_DIR", ROOT))
+REPORTS_DIR = OUTPUT_DIR / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
 METRICS_DIR = REPORTS_DIR / "metrics"
-CHECKPOINT_DIR = ROOT / "checkpoints"
+CHECKPOINT_DIR = OUTPUT_DIR / "checkpoints"
 
 MANIFEST_CSV = DATA_DIR / "manifest.csv"
 SPLITS_CSV = DATA_DIR / "splits.csv"

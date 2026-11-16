@@ -1,0 +1,8 @@
+{
+  "folders": [
+    { "name": "Paltas - entrenamiento local", "path": "." }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "${env:LOCALAPPDATA}/paltas-gpu/.venv/Scripts/python.exe"
+  }
+}

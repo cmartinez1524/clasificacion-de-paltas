@@ -13,24 +13,31 @@ ROOT = Path(__file__).resolve().parents[1]
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--modelo', default='resnet50_app', help='nombre del experimento entrenado y evaluado')
+    parser.add_argument('--resultados', type=Path, default=ROOT, help='carpeta con checkpoints y reports, por ejemplo en E:')
     args = parser.parse_args(argv)
     experiment = args.modelo
     if Path(experiment).name != experiment:
         parser.error('El modelo debe ser un nombre, no una ruta')
-    checkpoint = ROOT / 'checkpoints' / f'{experiment}.pt'
+    results_root = args.resultados
+    checkpoint = results_root / 'checkpoints' / f'{experiment}.pt'
     if not checkpoint.is_file():
         raise SystemExit(f'Falta {checkpoint}. Copia el checkpoint entrenado antes de empaquetar.')
-    metrics = json.loads((ROOT / 'reports/metrics' / f'{experiment}_test.json').read_text(encoding='utf-8'))
+    metrics = json.loads((results_root / 'reports/metrics' / f'{experiment}_test.json').read_text(encoding='utf-8'))
     architecture = metrics['config']['model']
     supported = {'resnet101_app_v3': 'resnet101', 'vit_base_app_v3': 'vit_base',
-                 'resnet101_app_refinado_v4': 'resnet101', 'resnet101_app_regularizado_v4': 'resnet101'}
+                 'resnet101_app_refinado_v4': 'resnet101', 'resnet101_app_regularizado_v4': 'resnet101',
+                 'resnet101_app_parcial_v5': 'resnet101', 'vit_base_app_capas_v5': 'vit_base'}
+    for seed in range(1, 6):
+        for stem, arch in (('resnet101_app', 'resnet101'), ('resnet101_app_parcial', 'resnet101'),
+                           ('vit_base_app', 'vit_base'), ('vit_base_app_capas', 'vit_base')):
+            supported[f'{stem}_s{seed}_v6'] = arch
     if architecture != 'resnet50' and supported.get(experiment) != architecture:
         raise SystemExit('Arquitectura o experimento no registrado en la app local.')
     packaged_name = 'resnet50_app' if architecture == 'resnet50' else experiment
     packaged_checkpoint = f'checkpoints/{packaged_name}.pt'
     examples = json.loads((ROOT / 'reports/metrics/resnet50_app_mapas.json').read_text(encoding='utf-8'))
     filename = 'PaltasDemo.zip' if experiment == 'resnet50_app' else f'PaltasDemo-{experiment}.zip'
-    output = ROOT / 'dist' / filename
+    output = results_root / 'dist' / filename
     output.parent.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='paltas-demo-') as temp:
         package = Path(temp) / 'PaltasDemo'

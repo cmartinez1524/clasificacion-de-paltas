@@ -1,0 +1,94 @@
+{
+  "config": {
+    "name": "resnet50_app_s4_v6",
+    "model": "resnet50",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 64,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 15,
+    "lr": 0.0003,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "layer_decay": 1.0,
+    "freeze_resnet_stages": 0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 4,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Cinco semillas v6: receta resnet50, semilla 4; sin fotos nuevas."
+  },
+  "best_epoch": 13,
+  "train_minutes": 7.61,
+  "seed": 4,
+  "val": {
+    "accuracy": 0.7508928571428571,
+    "balanced_accuracy": 0.7466533184522568,
+    "macro_f1": 0.7427806412038838,
+    "qwk": 0.9315216714641023,
+    "mae": 0.26339285714285715,
+    "asymmetric_mae": 0.390625,
+    "underestimation_rate": 0.11696428571428572,
+    "overestimation_rate": 0.13214285714285715,
+    "off_by_one": 0.9870535714285714,
+    "per_class_f1": [
+      0.875,
+      0.6920980926430518,
+      0.7142857142857143,
+      0.6631130063965884,
+      0.769406392694064
+    ],
+    "confusion_matrix": [
+      [
+        490,
+        88,
+        0,
+        0,
+        0
+      ],
+      [
+        52,
+        254,
+        42,
+        0,
+        0
+      ],
+      [
+        0,
+        36,
+        290,
+        57,
+        9
+      ],
+      [
+        0,
+        5,
+        76,
+        311,
+        100
+      ],
+      [
+        0,
+        3,
+        12,
+        78,
+        337
+      ]
+    ]
+  }
+}

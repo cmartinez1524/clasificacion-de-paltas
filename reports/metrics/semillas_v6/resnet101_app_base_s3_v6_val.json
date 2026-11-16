@@ -1,0 +1,94 @@
+{
+  "config": {
+    "name": "resnet101_app_base_s3_v6",
+    "model": "resnet101",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 20,
+    "lr": 0.00015,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "layer_decay": 1.0,
+    "freeze_resnet_stages": 0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 3,
+    "early_stop_patience": 6,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Exploracion de capacidad para la app: ResNet-101 a1 ImageNet-1k, seleccion solo en validacion; presupuesto distinto al estudio original."
+  },
+  "best_epoch": 8,
+  "train_minutes": 10.66,
+  "seed": 3,
+  "val": {
+    "accuracy": 0.7571428571428571,
+    "balanced_accuracy": 0.7423582600780622,
+    "macro_f1": 0.7454951035554904,
+    "qwk": 0.9353077429737021,
+    "mae": 0.2544642857142857,
+    "asymmetric_mae": 0.3964285714285714,
+    "underestimation_rate": 0.13303571428571428,
+    "overestimation_rate": 0.10982142857142857,
+    "off_by_one": 0.9901785714285715,
+    "per_class_f1": [
+      0.9051217464315701,
+      0.7044776119402985,
+      0.7051114023591087,
+      0.6718446601941748,
+      0.7409200968523002
+    ],
+    "confusion_matrix": [
+      [
+        539,
+        39,
+        0,
+        0,
+        0
+      ],
+      [
+        74,
+        236,
+        38,
+        0,
+        0
+      ],
+      [
+        0,
+        38,
+        269,
+        79,
+        6
+      ],
+      [
+        0,
+        5,
+        57,
+        346,
+        84
+      ],
+      [
+        0,
+        4,
+        7,
+        113,
+        306
+      ]
+    ]
+  }
+}

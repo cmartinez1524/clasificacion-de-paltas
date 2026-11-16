@@ -8,13 +8,19 @@ import pytest
 
 @pytest.mark.parametrize('model,architecture', [('resnet50_app', 'resnet50'),
     ('resnet50_app_ce_v2', 'resnet50'), ('resnet101_app_v3', 'resnet101'), ('vit_base_app_v3', 'vit_base'),
-    ('resnet101_app_refinado_v4', 'resnet101'), ('resnet101_app_regularizado_v4', 'resnet101')])
-def test_package_contains_weights_and_no_training_dataset(tmp_path, monkeypatch, model, architecture):
+    ('resnet101_app_refinado_v4', 'resnet101'), ('resnet101_app_regularizado_v4', 'resnet101'),
+    ('resnet101_app_parcial_v5', 'resnet101'), ('vit_base_app_capas_v5', 'vit_base'),
+    ('resnet50_app_s3_v6', 'resnet50'), ('vit_base_app_s3_v6', 'vit_base'),
+    ('resnet101_app_s3_v6', 'resnet101'), ('resnet101_app_parcial_s3_v6', 'resnet101'),
+    ('vit_base_app_capas_s3_v6', 'vit_base')])
+@pytest.mark.parametrize('external', [False, True])
+def test_package_contains_weights_and_no_training_dataset(tmp_path, monkeypatch, model, architecture, external):
     source = Path(__file__).resolve().parents[1]
     spec = importlib.util.spec_from_file_location('package_app', source / 'scripts/empaquetar_app.py')
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     monkeypatch.setattr(mod, 'ROOT', tmp_path)
+    results = tmp_path / 'external-results' if external else tmp_path
     for folder in ('app', 'src/paltas', 'checkpoints', 'reports/metrics', 'data/cache'):
         (tmp_path / folder).mkdir(parents=True, exist_ok=True)
     for name in ('gradio_app.py', 'requirements-local.txt', 'instalar.ps1', 'iniciar.ps1',
@@ -23,14 +29,16 @@ def test_package_contains_weights_and_no_training_dataset(tmp_path, monkeypatch,
     (tmp_path / 'src/paltas/__init__.py').write_text('')
     (tmp_path / 'LICENSE').write_text('fixture')
     weights = b'fixed trained checkpoint fixture'
-    (tmp_path / 'checkpoints' / f'{model}.pt').write_bytes(weights)
+    (results / 'checkpoints').mkdir(parents=True, exist_ok=True)
+    (results / 'reports/metrics').mkdir(parents=True, exist_ok=True)
+    (results / 'checkpoints' / f'{model}.pt').write_bytes(weights)
     (tmp_path / 'data/cache/example.jpg').write_bytes(b'image fixture')
-    (tmp_path / 'reports/metrics' / f'{model}_test.json').write_text(json.dumps(
+    (results / 'reports/metrics' / f'{model}_test.json').write_text(json.dumps(
         {'config': {'model': architecture}, 'best_epoch': 8, 'test': {'accuracy': .7, 'qwk': .9, 'mae': .3}}))
     (tmp_path / 'reports/metrics/resnet50_app_mapas.json').write_text(json.dumps([{'imagen': 'example.jpg'}]))
-    mod.main(['--modelo', model])
+    mod.main(['--modelo', model, '--resultados', str(results)])
     filename = 'PaltasDemo.zip' if model == 'resnet50_app' else f'PaltasDemo-{model}.zip'
-    with zipfile.ZipFile(tmp_path / 'dist' / filename) as archive:
+    with zipfile.ZipFile(results / 'dist' / filename) as archive:
         names = archive.namelist()
         info = json.loads(archive.read('PaltasDemo/modelo.json'))
         assert info['experimento_origen'] == model

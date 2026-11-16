@@ -8,7 +8,9 @@ import re
 import sys
 import time
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parent
+if ROOT.name == 'scripts':
+    ROOT = ROOT.parent
 
 
 def leer_json(path, avisos):
@@ -31,18 +33,20 @@ def cola(path):
         return ''
 
 
-def capturar(root, plan_name='app_resnet101_v4.json'):
+def capturar(root, plan_name='app_semillas_v6.json', solo_plan=False):
     metrics = root / 'reports/metrics'
     avisos = []
     plan = leer_json(metrics / plan_name, avisos) or {}
-    configs = {c['name']: c for c in plan.get('candidatos', []) if isinstance(c, dict) and 'name' in c}
+    configs = {c['name']: c for c in plan.get('candidatos', []) + plan.get('etapas_auxiliares', [])
+               if isinstance(c, dict) and 'name' in c}
     names = set(configs)
     if plan.get('baseline'):
         names.add(plan['baseline'])
     for row in plan.get('validacion', []):
         names.add(row['nombre'])
-    for suffix in ('_history.json', '_val.json', '_test.json'):
-        names.update(p.name.removesuffix(suffix) for p in metrics.glob('*app*' + suffix))
+    if not solo_plan:
+        for suffix in ('_history.json', '_val.json', '_test.json'):
+            names.update(p.name.removesuffix(suffix) for p in metrics.glob('*app*' + suffix))
     rows = []
     for name in sorted(names):
         # Los nombres del plan tambien pueden venir de un archivo externo.
@@ -91,6 +95,9 @@ def mostrar(plan, rows, avisos):
              'Orden: mejor QWK de VALIDACION. Accuracy y MAE corresponden al mismo checkpoint.',
              f"Elegido por el protocolo: {plan.get('elegido_en_validacion', 'pendiente')}", '',
              f"{'Experimento':36} {'Estado':13} {'Epocas':8} {'Mejor ep':8} {'QWK val':9} {'Acc val':9} {'MAE val':9}"]
+    if 'estado' in plan:
+        lines[1:1] = [f"Estado: {plan['estado']} | etapa {plan.get('etapa', 0)}/{plan.get('total_etapas', len(plan.get('corridas', [])))}",
+                      f"Corrida actual: {plan.get('corrida_actual') or '--'}"]
     for r in rows:
         v = r['val']
         lines.append(f"{r['nombre']:36} {r['estado']:13} {str(r['epoca']) + '/' + str(r['max_epocas']):8} "
@@ -98,6 +105,14 @@ def mostrar(plan, rows, avisos):
                      f"{numero(v.get('accuracy'), True):9} {numero(v.get('mae')):9}")
     if not rows:
         lines.append('Todavia no hay experimentos. Esperando archivos en reports/metrics/.')
+    if plan.get('resumen_por_receta'):
+        lines.extend(['', 'PROMEDIO +/- DESVIACION ENTRE SEMILLAS (VALIDACION):'])
+        for name, stats in plan['resumen_por_receta'].items():
+            lines.append(f"{name:24} n={stats['n']}/{len(plan.get('semillas', []))} | "
+                         f"QWK {numero(stats['qwk']['media'])} +/- {numero(stats['qwk']['desviacion'])} | "
+                         f"Acc {numero(stats['accuracy']['media'], True)} +/- {numero(stats['accuracy']['desviacion'], True)} | "
+                         f"MAE {numero(stats['mae']['media'])} +/- {numero(stats['mae']['desviacion'])}")
+        lines.append(f"Mejor receta por promedio: {plan.get('mejor_receta_por_promedio', 'pendiente hasta completar las cinco semillas')}")
     lines.extend(['', 'TEST DISPONIBLE (no se usa para ordenar ni elegir):'])
     for r in rows:
         if r['test']:
@@ -117,6 +132,8 @@ def mostrar(plan, rows, avisos):
                   'Las metricas se actualizan al completar cada epoca. -- significa dato no disponible.',
                   'Ctrl+C para cerrar el monitor; los entrenamientos continuan.'])
     lines.extend('AVISO: ' + a for a in avisos)
+    if plan.get('error'):
+        lines.append('ERROR DEL EXPERIMENTO: ' + plan['error'])
     return '\n'.join(lines)
 
 
@@ -124,7 +141,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--una-vez', action='store_true', help='mostrar una captura y salir')
     parser.add_argument('--intervalo', type=float, default=10, help='segundos entre actualizaciones (10)')
-    parser.add_argument('--plan', default='app_resnet101_v4.json', help='nombre del plan en reports/metrics/')
+    parser.add_argument('--plan', default='app_semillas_v6.json', help='nombre del plan en reports/metrics/')
+    parser.add_argument('--carpeta', type=Path, default=ROOT, help='carpeta que contiene checkpoints, logs y reports')
+    parser.add_argument('--solo-plan', action='store_true', help='mostrar solo las corridas del plan seleccionado')
     args = parser.parse_args(argv)
     if not (0 < args.intervalo < float('inf')):
         parser.error('--intervalo debe ser positivo y finito')
@@ -132,7 +151,7 @@ def main(argv=None):
         parser.error('--plan debe ser un nombre de archivo dentro de reports/metrics/')
     try:
         while True:
-            snapshot = capturar(ROOT, args.plan)
+            snapshot = capturar(args.carpeta, args.plan, args.solo_plan)
             if not args.una_vez and sys.stdout.isatty():
                 os.system('cls' if os.name == 'nt' else 'clear')
             print(mostrar(*snapshot), flush=True)

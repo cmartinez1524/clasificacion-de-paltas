@@ -30,16 +30,18 @@ def main(argv=None):
     mode.add_argument('--semillas', action='store_true', help='compara dos inicializaciones de la receta original')
     mode.add_argument('--grandes', action='store_true', help='ResNet-101 y ViT-Base frente a la mejor ResNet-50 actual')
     mode.add_argument('--ajustar-resnet101', action='store_true', help='refinamiento y regularizacion de ResNet-101 en GPU')
+    mode.add_argument('--por-capas', action='store_true', help='ViT con LR por capas y ResNet parcialmente congelada; CUDA obligatorio')
     args = parser.parse_args(argv)
-    baseline = 'vit_base_app_v3' if args.ajustar_resnet101 else 'resnet50_app_s1_v2' if args.grandes else BASELINE
-    candidatos = (('resnet101_app_refinado_v4', 'resnet101_app_regularizado_v4') if args.ajustar_resnet101 else
+    baseline = 'vit_base_app_v3' if args.ajustar_resnet101 or args.por_capas else 'resnet50_app_s1_v2' if args.grandes else BASELINE
+    candidatos = (('resnet101_app_parcial_v5', 'vit_base_app_capas_v5') if args.por_capas else
+                  ('resnet101_app_refinado_v4', 'resnet101_app_regularizado_v4') if args.ajustar_resnet101 else
                   ('resnet101_app_v3', 'vit_base_app_v3') if args.grandes else
                   ('resnet50_app_s1_v2', 'resnet50_app_s2_v2') if args.semillas else
                   ('resnet50_app_refinado_v2',) if args.refinar else CANDIDATOS)
     metrics = ROOT / 'reports/metrics'
     logs = ROOT / 'logs'
     logs.mkdir(exist_ok=True)
-    report = metrics / ('app_resnet101_v4.json' if args.ajustar_resnet101 else 'app_grandes_v3.json' if args.grandes else 'app_semillas_v2.json' if args.semillas else
+    report = metrics / ('app_capas_v5.json' if args.por_capas else 'app_resnet101_v4.json' if args.ajustar_resnet101 else 'app_grandes_v3.json' if args.grandes else 'app_semillas_v2.json' if args.semillas else
                         'app_refinado_v2.json' if args.refinar else 'app_mejoras_v2.json')
     if report.exists():
         raise SystemExit(f'Ya existe {report.name}; no se sobrescribe el experimento.')
@@ -58,7 +60,7 @@ def main(argv=None):
     def ejecutar(name, *flags):
         with (logs / f'{name}_{"evaluar" if "--eval-only" in flags else "entrenar"}.log').open('w', encoding='utf-8') as output:
             subprocess.run([sys.executable, '-u', 'scripts/train.py', '--config',
-                            f'configs/{name}.yaml', *(['--require-cuda'] if args.grandes or args.ajustar_resnet101 else []), *flags], cwd=ROOT, stdout=output,
+                            f'configs/{name}.yaml', *(['--require-cuda'] if args.grandes or args.ajustar_resnet101 or args.por_capas else []), *flags], cwd=ROOT, stdout=output,
                            stderr=subprocess.STDOUT, check=True)
 
     def metricas(name, split):

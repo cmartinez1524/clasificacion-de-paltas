@@ -1,0 +1,94 @@
+{
+  "config": {
+    "name": "vit_base_app_capas_v5",
+    "model": "vit_base",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 20,
+    "lr": 5e-05,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 2.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.1,
+    "layer_decay": 0.75,
+    "freeze_resnet_stages": 0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 6,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Misma receta DeiT-B v3 desde ImageNet; unico ajuste: LR por capas, factor 0.75. Ultimo bloque y norm LR base; cabeza LR x10. Sin fotos nuevas."
+  },
+  "best_epoch": 11,
+  "train_minutes": 16.73,
+  "seed": 42,
+  "val": {
+    "accuracy": 0.7642857142857142,
+    "balanced_accuracy": 0.759224500752037,
+    "macro_f1": 0.7569835169288746,
+    "qwk": 0.9377320585234504,
+    "mae": 0.24464285714285713,
+    "asymmetric_mae": 0.3736607142857143,
+    "underestimation_rate": 0.12142857142857143,
+    "overestimation_rate": 0.11428571428571428,
+    "off_by_one": 0.9919642857142857,
+    "per_class_f1": [
+      0.8948306595365418,
+      0.723055934515689,
+      0.7083333333333334,
+      0.676923076923077,
+      0.7817745803357314
+    ],
+    "confusion_matrix": [
+      [
+        502,
+        76,
+        0,
+        0,
+        0
+      ],
+      [
+        42,
+        265,
+        41,
+        0,
+        0
+      ],
+      [
+        0,
+        39,
+        289,
+        61,
+        3
+      ],
+      [
+        0,
+        3,
+        84,
+        330,
+        75
+      ],
+      [
+        0,
+        2,
+        10,
+        92,
+        326
+      ]
+    ]
+  }
+}

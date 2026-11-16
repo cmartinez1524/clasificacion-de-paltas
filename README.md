@@ -2,6 +2,12 @@
 
 ### Experimentos de mejora de la app
 
+La comparacion de cinco semillas para cada una de las cinco recetas se ejecuta
+con `python scripts/comparar_semillas.py`. Guarda sus resultados en
+`E:\PaltasExperimentos\semillas_v6`; el monitor se encuentra tambien en esa carpeta.
+Protocolo y comandos: [`reports/comparacion_cinco_semillas_v6.md`](reports/comparacion_cinco_semillas_v6.md).
+Resultados terminados: [`reports/resultados_semillas_v6.md`](reports/resultados_semillas_v6.md).
+
 La exploración de mayor capacidad usa `python scripts/mejorar_modelo_app.py --grandes`:
 ResNet-101 y ViT-Base/16 con ImageNet-1k frente a la mejor ResNet-50 actual.
 Protocolo y límites: [`reports/estudio_app_v3.md`](reports/estudio_app_v3.md).
@@ -9,6 +15,11 @@ Protocolo y límites: [`reports/estudio_app_v3.md`](reports/estudio_app_v3.md).
 Para los dos ajustes adicionales de ResNet-101 en GPU:
 `python scripts/mejorar_modelo_app.py --ajustar-resnet101`.
 Detalles: [`reports/ajuste_resnet101_v4.md`](reports/ajuste_resnet101_v4.md).
+
+El ajuste por capas usa el dataset existente: ViT con LR por capa y ResNet-101
+parcialmente congelada, incluidas sus estadisticas BatchNorm. Ejecutar en GPU:
+`python scripts/mejorar_modelo_app.py --por-capas`.
+Protocolo: [`reports/ajuste_capas_v5.md`](reports/ajuste_capas_v5.md).
 
 Para vigilar avance y resultados sin detener los entrenamientos:
 
@@ -20,6 +31,14 @@ Se actualiza cada 10 segundos, usa solo la biblioteca estándar y no requiere GP
 Muestra épocas completadas, mejores métricas de validación, test disponible y errores.
 `--una-vez` muestra una captura; `--intervalo 5` cambia la frecuencia.
 Ctrl+C cierra únicamente el monitor. Los resultados de test no participan en el orden.
+
+En VS Code abre `Paltas.code-workspace` como espacio de trabajo local. Configura
+el Python de `LOCALAPPDATA/paltas-gpu/.venv` y permite usar **Terminal > Ejecutar tarea**
+para vigilar experimentos, abrir la app o lanzar los ajustes en GPU. La carpeta
+virtual de GitHub no sirve para ejecutar estos procesos locales.
+Las tareas de entrenamiento son de una sola ejecución: si ya hay resultados,
+el orquestador se detiene para conservarlos. Para observar un entrenamiento en
+curso, usa la tarea **Paltas: vigilar experimentos**.
 
 `scripts/mejorar_modelo_app.py` compara dos recetas nuevas de ResNet-50 (ajuste
 gradual sin pesos de clase y la misma receta con costo ordinal simétrico).

@@ -1,0 +1,94 @@
+{
+  "config": {
+    "name": "resnet101_app_base_s2_v6",
+    "model": "resnet101",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 20,
+    "lr": 0.00015,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "layer_decay": 1.0,
+    "freeze_resnet_stages": 0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 2,
+    "early_stop_patience": 6,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Exploracion de capacidad para la app: ResNet-101 a1 ImageNet-1k, seleccion solo en validacion; presupuesto distinto al estudio original."
+  },
+  "best_epoch": 7,
+  "train_minutes": 23.0,
+  "seed": 2,
+  "val": {
+    "accuracy": 0.7366071428571429,
+    "balanced_accuracy": 0.7255079444241929,
+    "macro_f1": 0.7216350263528157,
+    "qwk": 0.9326685815798382,
+    "mae": 0.278125,
+    "asymmetric_mae": 0.38660714285714287,
+    "underestimation_rate": 0.10044642857142858,
+    "overestimation_rate": 0.16294642857142858,
+    "off_by_one": 0.9852678571428571,
+    "per_class_f1": [
+      0.9028475711892797,
+      0.699523052464229,
+      0.7026348808030113,
+      0.5678160919540229,
+      0.7353535353535353
+    ],
+    "confusion_matrix": [
+      [
+        539,
+        39,
+        0,
+        0,
+        0
+      ],
+      [
+        77,
+        220,
+        50,
+        1,
+        0
+      ],
+      [
+        0,
+        19,
+        280,
+        79,
+        14
+      ],
+      [
+        0,
+        3,
+        60,
+        247,
+        182
+      ],
+      [
+        0,
+        0,
+        15,
+        51,
+        364
+      ]
+    ]
+  }
+}

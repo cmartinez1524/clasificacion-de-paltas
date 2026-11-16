@@ -1,0 +1,94 @@
+{
+  "config": {
+    "name": "resnet101_app_base_s1_v6",
+    "model": "resnet101",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 20,
+    "lr": 0.00015,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "layer_decay": 1.0,
+    "freeze_resnet_stages": 0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 1,
+    "early_stop_patience": 6,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Exploracion de capacidad para la app: ResNet-101 a1 ImageNet-1k, seleccion solo en validacion; presupuesto distinto al estudio original."
+  },
+  "best_epoch": 11,
+  "train_minutes": 11.92,
+  "seed": 1,
+  "val": {
+    "accuracy": 0.7473214285714286,
+    "balanced_accuracy": 0.7375069317776457,
+    "macro_f1": 0.7385325508867342,
+    "qwk": 0.9296839996837362,
+    "mae": 0.265625,
+    "asymmetric_mae": 0.4191964285714286,
+    "underestimation_rate": 0.14241071428571428,
+    "overestimation_rate": 0.11026785714285714,
+    "off_by_one": 0.9897321428571428,
+    "per_class_f1": [
+      0.893136403127715,
+      0.7150837988826816,
+      0.704225352112676,
+      0.6653883029721956,
+      0.714828897338403
+    ],
+    "confusion_matrix": [
+      [
+        514,
+        64,
+        0,
+        0,
+        0
+      ],
+      [
+        58,
+        256,
+        34,
+        0,
+        0
+      ],
+      [
+        0,
+        41,
+        275,
+        72,
+        4
+      ],
+      [
+        0,
+        3,
+        69,
+        347,
+        73
+      ],
+      [
+        1,
+        4,
+        11,
+        132,
+        282
+      ]
+    ]
+  }
+}

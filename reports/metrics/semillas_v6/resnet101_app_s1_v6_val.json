@@ -1,0 +1,94 @@
+{
+  "config": {
+    "name": "resnet101_app_s1_v6",
+    "model": "resnet101",
+    "pretrained": true,
+    "init_checkpoint": "E:\\PaltasExperimentos\\semillas_v6\\checkpoints\\resnet101_app_base_s1_v6.pt",
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 12,
+    "lr": 1e-05,
+    "head_lr_mult": 1.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "layer_decay": 1.0,
+    "freeze_resnet_stages": 0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 1,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Cinco semillas v6: receta resnet101_refinada, semilla 1; sin fotos nuevas."
+  },
+  "best_epoch": 1,
+  "train_minutes": 4.75,
+  "seed": 1,
+  "val": {
+    "accuracy": 0.7446428571428572,
+    "balanced_accuracy": 0.7367149846319616,
+    "macro_f1": 0.7365832539547371,
+    "qwk": 0.9304072791392503,
+    "mae": 0.2683035714285714,
+    "asymmetric_mae": 0.40580357142857143,
+    "underestimation_rate": 0.12857142857142856,
+    "overestimation_rate": 0.12678571428571428,
+    "off_by_one": 0.9888392857142857,
+    "per_class_f1": [
+      0.8835978835978836,
+      0.7086183310533516,
+      0.6954248366013072,
+      0.6627450980392157,
+      0.7325301204819277
+    ],
+    "confusion_matrix": [
+      [
+        501,
+        77,
+        0,
+        0,
+        0
+      ],
+      [
+        55,
+        259,
+        34,
+        0,
+        0
+      ],
+      [
+        0,
+        40,
+        266,
+        77,
+        9
+      ],
+      [
+        0,
+        3,
+        64,
+        338,
+        87
+      ],
+      [
+        0,
+        4,
+        9,
+        113,
+        304
+      ]
+    ]
+  }
+}

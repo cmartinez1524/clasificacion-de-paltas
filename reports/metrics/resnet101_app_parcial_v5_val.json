@@ -1,0 +1,94 @@
+{
+  "config": {
+    "name": "resnet101_app_parcial_v5",
+    "model": "resnet101",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 20,
+    "lr": 0.00015,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "layer_decay": 1.0,
+    "freeze_resnet_stages": 3,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 6,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Misma receta ResNet-101 v3, desde ImageNet; unico ajuste: stem y layer1-3 congelados, incluidas estadisticas BatchNorm. Se entrenan layer4 y fc. Sin fotos nuevas."
+  },
+  "best_epoch": 6,
+  "train_minutes": 5.08,
+  "seed": 42,
+  "val": {
+    "accuracy": 0.7263392857142857,
+    "balanced_accuracy": 0.7150239199434092,
+    "macro_f1": 0.7154882282732962,
+    "qwk": 0.9214189608205621,
+    "mae": 0.2941964285714286,
+    "asymmetric_mae": 0.45223214285714286,
+    "underestimation_rate": 0.14285714285714285,
+    "overestimation_rate": 0.13080357142857144,
+    "off_by_one": 0.9821428571428571,
+    "per_class_f1": [
+      0.874675885911841,
+      0.6666666666666666,
+      0.6730506155950753,
+      0.650294695481336,
+      0.7127532777115614
+    ],
+    "confusion_matrix": [
+      [
+        506,
+        72,
+        0,
+        0,
+        0
+      ],
+      [
+        72,
+        245,
+        26,
+        5,
+        0
+      ],
+      [
+        1,
+        58,
+        246,
+        80,
+        7
+      ],
+      [
+        0,
+        6,
+        52,
+        331,
+        103
+      ],
+      [
+        0,
+        6,
+        15,
+        110,
+        299
+      ]
+    ]
+  }
+}

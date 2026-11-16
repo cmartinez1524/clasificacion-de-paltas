@@ -189,6 +189,19 @@ def build_model(
     return timm.create_model(timm_id, pretrained=pretrained, num_classes=num_classes, **extra)
 
 
+def freeze_resnet_prefix(model: nn.Module, stages: int) -> None:
+    """Congela pesos y estadisticas BatchNorm del stem y primeros bloques."""
+    if stages == 0:
+        return
+    if type(stages) is not int or stages not in range(1, 4):
+        raise ValueError('Se pueden congelar de 1 a 3 bloques iniciales ResNet')
+    names = ('conv1', 'bn1', *(f'layer{i}' for i in range(1, stages + 1)))
+    modules = [model.get_submodule(name) for name in names]
+    for module in modules:
+        module.requires_grad_(False)
+        module.eval()
+
+
 def count_parameters(model: nn.Module) -> tuple[int, int]:
     """Devuelve (totales, entrenables)."""
     total = sum(p.numel() for p in model.parameters())

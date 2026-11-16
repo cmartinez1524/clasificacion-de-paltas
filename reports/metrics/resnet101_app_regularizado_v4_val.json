@@ -1,0 +1,92 @@
+{
+  "config": {
+    "name": "resnet101_app_regularizado_v4",
+    "model": "resnet101",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 25,
+    "lr": 5e-05,
+    "head_lr_mult": 5.0,
+    "weight_decay": 0.1,
+    "warmup_epochs": 2.0,
+    "label_smoothing": 0.1,
+    "drop_path_rate": 0.1,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 42,
+    "early_stop_patience": 7,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Nuevo ajuste ResNet-101 desde ImageNet-1k: LR y multiplicador de cabeza menores, warmup mas largo y regularizacion mayor. Paquete de ajustes, no ablacion de cada factor."
+  },
+  "best_epoch": 23,
+  "train_minutes": 19.54,
+  "seed": 42,
+  "val": {
+    "accuracy": 0.7366071428571429,
+    "balanced_accuracy": 0.7216511619978905,
+    "macro_f1": 0.7240059743560192,
+    "qwk": 0.9288186186875728,
+    "mae": 0.27589285714285716,
+    "asymmetric_mae": 0.43392857142857144,
+    "underestimation_rate": 0.14821428571428572,
+    "overestimation_rate": 0.11517857142857142,
+    "off_by_one": 0.9892857142857143,
+    "per_class_f1": [
+      0.9005145797598628,
+      0.7024793388429752,
+      0.65625,
+      0.6684782608695652,
+      0.6923076923076923
+    ],
+    "confusion_matrix": [
+      [
+        525,
+        53,
+        0,
+        0,
+        0
+      ],
+      [
+        63,
+        255,
+        30,
+        0,
+        0
+      ],
+      [
+        0,
+        60,
+        231,
+        95,
+        6
+      ],
+      [
+        0,
+        6,
+        43,
+        369,
+        74
+      ],
+      [
+        0,
+        4,
+        8,
+        148,
+        270
+      ]
+    ]
+  }
+}

@@ -1,5 +1,21 @@
 # Ajuste de ResNet-101
 
+## Resultados terminados
+
+| Modelo | Accuracy validacion | QWK validacion | MAE validacion |
+|---|---:|---:|---:|
+| ViT-Base v3 (referencia) | 77,59 % | 0,93997 | 0,23304 |
+| ResNet-101 original v3 | 75,54 % | 0,93442 | 0,25625 |
+| ResNet-101 refinada v4 | 75,36 % | 0,93668 | 0,25446 |
+| ResNet-101 regularizada v4 | 73,66 % | 0,92882 | 0,27589 |
+
+El refinamiento mejoro QWK y MAE respecto de la ResNet-101 anterior, pero no
+accuracy. La variante regularizada empeoro las tres metricas. Como cambia varios
+hiperparametros a la vez, no se puede atribuir el resultado a un unico cambio.
+Ninguna supero a ViT-Base por el criterio fijado; se reutilizo su evaluacion de
+test y no se evaluaron los candidatos v4 en test. La mejor epoca del refinamiento
+fue la 11 de 12, y la de la variante regularizada la 23 de 25.
+
 Dos candidatos fijados antes de entrenar, en CUDA obligatorio, a 224 px y con
 los mismos splits por fruto. No se sobrescriben los checkpoints anteriores.
 

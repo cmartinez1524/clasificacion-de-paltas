@@ -1,0 +1,94 @@
+{
+  "config": {
+    "name": "resnet101_app_base_s4_v6",
+    "model": "resnet101",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 20,
+    "lr": 0.00015,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "layer_decay": 1.0,
+    "freeze_resnet_stages": 0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 4,
+    "early_stop_patience": 6,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Exploracion de capacidad para la app: ResNet-101 a1 ImageNet-1k, seleccion solo en validacion; presupuesto distinto al estudio original."
+  },
+  "best_epoch": 11,
+  "train_minutes": 12.18,
+  "seed": 4,
+  "val": {
+    "accuracy": 0.7464285714285714,
+    "balanced_accuracy": 0.7381433917509826,
+    "macro_f1": 0.7359920813281916,
+    "qwk": 0.9318167423894425,
+    "mae": 0.2674107142857143,
+    "asymmetric_mae": 0.40535714285714286,
+    "underestimation_rate": 0.12946428571428573,
+    "overestimation_rate": 0.12410714285714286,
+    "off_by_one": 0.9879464285714286,
+    "per_class_f1": [
+      0.8875432525951558,
+      0.695054945054945,
+      0.6955380577427821,
+      0.6498422712933754,
+      0.7519818799546999
+    ],
+    "confusion_matrix": [
+      [
+        513,
+        65,
+        0,
+        0,
+        0
+      ],
+      [
+        65,
+        253,
+        30,
+        0,
+        0
+      ],
+      [
+        0,
+        53,
+        265,
+        62,
+        12
+      ],
+      [
+        0,
+        5,
+        69,
+        309,
+        109
+      ],
+      [
+        0,
+        4,
+        6,
+        88,
+        332
+      ]
+    ]
+  }
+}

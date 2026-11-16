@@ -21,6 +21,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from .models import freeze_resnet_prefix
 
 from .metrics import (
     PRIMARY_METRIC,
@@ -114,13 +115,35 @@ def set_seed(seed: int) -> None:
     torch.backends.cudnn.benchmark = True
 
 
-def param_groups(model: nn.Module, lr: float, head_lr_mult: float, weight_decay: float):
+def param_groups(model: nn.Module, lr: float, head_lr_mult: float, weight_decay: float,
+                 layer_decay: float = 1.0):
     """Separa cabeza de backbone y excluye de weight decay bias y normalizaciones.
 
     Aplicar weight decay a los parametros de BatchNorm/LayerNorm y a los bias
     degrada el resultado; es el default de todas las recetas modernas.
     """
     head_keys = ("fc.", "head.", "classifier.", "proj_cnn.", "proj_vit.", "meta_enc.")
+    if not 0 < layer_decay <= 1:
+        raise ValueError('layer_decay debe estar en (0, 1]')
+    if layer_decay < 1:
+        if not hasattr(model, 'blocks'):
+            raise ValueError('layer_decay requiere un ViT con bloques transformer')
+        depth = len(model.blocks)
+        groups = {}
+        for name, parameter in model.named_parameters():
+            if not parameter.requires_grad:
+                continue
+            scale = 1.0
+            if name.startswith(head_keys):
+                scale = head_lr_mult
+            elif name.startswith('blocks.'):
+                scale = layer_decay ** (depth - 1 - int(name.split('.')[1]))
+            elif name.startswith(('patch_embed.', 'cls_token', 'pos_embed')):
+                scale = layer_decay ** depth
+            decay = 0.0 if parameter.ndim <= 1 or name.endswith('.bias') else weight_decay
+            key = (scale, decay)
+            groups.setdefault(key, {'params': [], 'lr': lr * scale, 'weight_decay': decay})['params'].append(parameter)
+        return list(groups.values())
     grupos = {
         "backbone_decay": {"params": [], "lr": lr, "weight_decay": weight_decay},
         "backbone_nodecay": {"params": [], "lr": lr, "weight_decay": 0.0},
@@ -198,8 +221,10 @@ def evaluate(
 
 
 def train_one_epoch(model, loader, criterion, optimizer, scheduler, scaler, device,
-                    amp: bool, grad_clip: float, desc: str) -> dict:
+                    amp: bool, grad_clip: float, desc: str, freeze_resnet_stages: int = 0) -> dict:
     model.train()
+    # model.train() reactiva BatchNorm: los bloques congelados deben volver a eval.
+    freeze_resnet_prefix(model, freeze_resnet_stages)
     perdida_total, n, correctos = 0.0, 0, 0
     barra = tqdm(loader, desc=desc, leave=False, ncols=100)
 
@@ -241,6 +266,7 @@ def fit(
 ) -> dict:
     """Entrena, selecciona el mejor checkpoint por la metrica primaria y lo guarda."""
     model.to(device)
+    freeze_resnet_prefix(model, getattr(cfg, 'freeze_resnet_stages', 0))
     criterion = build_criterion(cfg, class_weights, device)
     metric_name = getattr(cfg, "primary_metric", PRIMARY_METRIC) or PRIMARY_METRIC
     use_bayes = getattr(cfg, "use_bayes_risk_eval", False)
@@ -248,7 +274,8 @@ def fit(
     over_pen = getattr(cfg, "overripe_penalty", 1.0)
 
     optimizer = torch.optim.AdamW(
-        param_groups(model, cfg.lr, cfg.head_lr_mult, cfg.weight_decay), lr=cfg.lr
+        param_groups(model, cfg.lr, cfg.head_lr_mult, cfg.weight_decay,
+                     getattr(cfg, 'layer_decay', 1.0)), lr=cfg.lr
     )
     pasos_por_epoca = len(loaders["train"])
     scheduler = cosine_schedule(
@@ -266,7 +293,8 @@ def fit(
         t_ep = time.time()
         tr = train_one_epoch(model, loaders["train"], criterion, optimizer, scheduler,
                              scaler, device, cfg.amp, cfg.grad_clip,
-                             desc=f"{cfg.name} ep{ep}/{cfg.epochs}")
+                             desc=f"{cfg.name} ep{ep}/{cfg.epochs}",
+                             freeze_resnet_stages=getattr(cfg, 'freeze_resnet_stages', 0))
         va = evaluate(
             model,
             loaders["val"],

@@ -16,7 +16,7 @@ def test_monitor_uses_validation_and_same_best_epoch(tmp_path):
     metrics = tmp_path / 'reports/metrics'
     metrics.mkdir(parents=True)
     (tmp_path / 'logs').mkdir()
-    (metrics / 'app_resnet101_v4.json').write_text(json.dumps({
+    (metrics / 'app_semillas_v6.json').write_text(json.dumps({
         'baseline': 'baseline_app', 'candidatos': [{'name': 'new_app', 'epochs': 12}, {'name': 'queued_app', 'epochs': 25}]}))
     (metrics / 'baseline_app_test.json').write_text(json.dumps({
         'config': {'epochs': 15}, 'best_epoch': 8,
@@ -56,3 +56,22 @@ def test_monitor_survives_partial_writes_and_reports_tracebacks(tmp_path):
 def test_monitor_empty_directory(tmp_path):
     mod = monitor()
     assert 'Todavia no hay experimentos' in mod.mostrar(*mod.capturar(tmp_path))
+
+
+def test_monitor_group_summary_and_auxiliary_stages(tmp_path):
+    mod = monitor()
+    metrics = tmp_path / 'reports/metrics'
+    metrics.mkdir(parents=True)
+    plan = {'estado': 'entrenando', 'etapa': 2, 'total_etapas': 30, 'semillas': [1, 2, 3, 4, 5],
+            'candidatos': [{'name': 'final_app', 'epochs': 12}],
+            'etapas_auxiliares': [{'name': 'base_app', 'epochs': 20}],
+            'resumen_por_receta': {'vit_base': {'n': 2,
+                'qwk': {'media': .94, 'desviacion': .01},
+                'accuracy': {'media': .75, 'desviacion': .02},
+                'mae': {'media': .25, 'desviacion': .03}}}}
+    (metrics / 'app_semillas_v6.json').write_text(json.dumps(plan))
+    (metrics / 'outside_app_history.json').write_text(json.dumps([{'epoch': 1, 'qwk': .95}]))
+    snapshot = mod.capturar(tmp_path, solo_plan=True)
+    assert {r['nombre'] for r in snapshot[1]} == {'final_app', 'base_app'}
+    output = mod.mostrar(*snapshot)
+    assert 'n=2/5' in output and '0.9400 +/- 0.0100' in output and 'etapa 2/30' in output

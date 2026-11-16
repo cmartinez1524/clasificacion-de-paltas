@@ -32,7 +32,7 @@ from paltas.config import TrainConfig  # noqa: E402
 from paltas.data import build_dataloaders  # noqa: E402
 from paltas.engine import evaluate, fit, set_seed  # noqa: E402
 from paltas.metrics import cost_matrix, format_metrics  # noqa: E402
-from paltas.models import build_model, count_parameters, estimate_gflops  # noqa: E402
+from paltas.models import build_model, count_parameters, estimate_gflops, freeze_resnet_prefix  # noqa: E402
 from paltas.paths import (  # noqa: E402
     CACHE_DIR,
     CHECKPOINT_DIR,
@@ -125,6 +125,7 @@ def main() -> None:
         if cfg.freeze_backbones:
             model.set_backbones_trainable(False)
 
+    freeze_resnet_prefix(model, cfg.freeze_resnet_stages)
     total, entrenables = count_parameters(model)
     gflops = estimate_gflops(model, cfg.img_size)
     print(f"  params: {total/1e6:.2f} M (entrenables {entrenables/1e6:.2f} M)  "

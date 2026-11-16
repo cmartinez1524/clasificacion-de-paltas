@@ -1,0 +1,94 @@
+{
+  "config": {
+    "name": "resnet101_app_s4_v6",
+    "model": "resnet101",
+    "pretrained": true,
+    "init_checkpoint": "E:\\PaltasExperimentos\\semillas_v6\\checkpoints\\resnet101_app_base_s4_v6.pt",
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 12,
+    "lr": 1e-05,
+    "head_lr_mult": 1.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 1.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.0,
+    "layer_decay": 1.0,
+    "freeze_resnet_stages": 0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 4,
+    "early_stop_patience": 5,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Cinco semillas v6: receta resnet101_refinada, semilla 4; sin fotos nuevas."
+  },
+  "best_epoch": 1,
+  "train_minutes": 4.78,
+  "seed": 4,
+  "val": {
+    "accuracy": 0.7459821428571428,
+    "balanced_accuracy": 0.7405594015267042,
+    "macro_f1": 0.7382105073816838,
+    "qwk": 0.9310501355114054,
+    "mae": 0.2669642857142857,
+    "asymmetric_mae": 0.3991071428571429,
+    "underestimation_rate": 0.12410714285714286,
+    "overestimation_rate": 0.1299107142857143,
+    "off_by_one": 0.9888392857142857,
+    "per_class_f1": [
+      0.873542600896861,
+      0.6967741935483871,
+      0.689280868385346,
+      0.6726726726726727,
+      0.7587822014051522
+    ],
+    "confusion_matrix": [
+      [
+        487,
+        91,
+        0,
+        0,
+        0
+      ],
+      [
+        50,
+        270,
+        26,
+        2,
+        0
+      ],
+      [
+        0,
+        57,
+        254,
+        72,
+        9
+      ],
+      [
+        0,
+        5,
+        60,
+        336,
+        91
+      ],
+      [
+        0,
+        4,
+        5,
+        97,
+        324
+      ]
+    ]
+  }
+}

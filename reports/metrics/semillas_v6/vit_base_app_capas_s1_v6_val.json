@@ -1,0 +1,94 @@
+{
+  "config": {
+    "name": "vit_base_app_capas_s1_v6",
+    "model": "vit_base",
+    "pretrained": true,
+    "init_checkpoint": null,
+    "img_size": 224,
+    "batch_size": 32,
+    "num_workers": 4,
+    "use_cache": true,
+    "use_class_weights": true,
+    "epochs": 20,
+    "lr": 5e-05,
+    "head_lr_mult": 10.0,
+    "weight_decay": 0.05,
+    "warmup_epochs": 2.0,
+    "label_smoothing": 0.05,
+    "drop_path_rate": 0.1,
+    "layer_decay": 0.75,
+    "freeze_resnet_stages": 0,
+    "grad_clip": 1.0,
+    "amp": true,
+    "seed": 1,
+    "early_stop_patience": 6,
+    "eval_tta_hflip": false,
+    "asymmetric_loss_weight": 0.0,
+    "underripe_penalty": 2.0,
+    "overripe_penalty": 1.0,
+    "primary_metric": "qwk",
+    "use_bayes_risk_eval": false,
+    "freeze_backbones": false,
+    "cnn_ckpt": null,
+    "vit_ckpt": null,
+    "notes": "Cinco semillas v6: receta vit_base_capas, semilla 1; sin fotos nuevas."
+  },
+  "best_epoch": 12,
+  "train_minutes": 16.0,
+  "seed": 1,
+  "val": {
+    "accuracy": 0.765625,
+    "balanced_accuracy": 0.7581629818107423,
+    "macro_f1": 0.7584079558842669,
+    "qwk": 0.9360916561406014,
+    "mae": 0.24419642857142856,
+    "asymmetric_mae": 0.37991071428571427,
+    "underestimation_rate": 0.128125,
+    "overestimation_rate": 0.10625,
+    "off_by_one": 0.9924107142857143,
+    "per_class_f1": [
+      0.8916518650088809,
+      0.7158469945355191,
+      0.7222222222222222,
+      0.6993275696445725,
+      0.7629911280101395
+    ],
+    "confusion_matrix": [
+      [
+        502,
+        76,
+        0,
+        0,
+        0
+      ],
+      [
+        46,
+        262,
+        40,
+        0,
+        0
+      ],
+      [
+        0,
+        37,
+        286,
+        64,
+        5
+      ],
+      [
+        0,
+        4,
+        71,
+        364,
+        53
+      ],
+      [
+        0,
+        5,
+        3,
+        121,
+        301
+      ]
+    ]
+  }
+}
