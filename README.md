@@ -9,6 +9,15 @@ Los modelos estan disponibles en [GitHub Releases: demo-v6](https://github.com/c
 - [Solo pesos ViT-Base](https://github.com/cmartinez1524/clasificacion-de-paltas/releases/download/demo-v6/vit_base_app_s2_v6.pt): guardar como `checkpoints/vit_base_app_s2_v6.pt` para usar con la app del repo y sus dependencias instaladas.
 - [SHA256 de las descargas](https://github.com/cmartinez1524/clasificacion-de-paltas/releases/download/demo-v6/SHA256SUMS.txt).
 
+La misma Release incluye **los 42 checkpoints locales** como archivos individuales
+(aproximadamente 7,8 GiB en total), ademas de los ZIP de la demo:
+[inventario y enlaces de cada modelo](https://github.com/cmartinez1524/clasificacion-de-paltas/releases/download/demo-v6/MANIFIESTO_PESOS.json),
+[hashes de todos los pesos](https://github.com/cmartinez1524/clasificacion-de-paltas/releases/download/demo-v6/SHA256_TODOS_LOS_PESOS.txt)
+y [guia de uso](https://github.com/cmartinez1524/clasificacion-de-paltas/releases/download/demo-v6/LEEME_TODOS_LOS_PESOS.md).
+El inventario identifica los 33 checkpoints reconocidos por el selector actual y
+los restantes de entrenamiento, incluidos cinco auxiliares. Para usarlos en el
+repo, conservar su nombre de archivo y guardarlos en `checkpoints/`.
+
 Para la demo completa: extraer el ZIP, ejecutar `INSTALAR.cmd` una vez y despues
 `INICIAR.cmd`. La instalacion inicial necesita Internet; la inferencia funciona
 localmente. CPU es el modo predeterminado, con GPU NVIDIA opcional. No requiere
