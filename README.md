@@ -1,5 +1,20 @@
 # Clasificación del estado de madurez de paltas Hass
 
+### Descargar la demo con los pesos entrenados
+
+Los modelos estan disponibles en [GitHub Releases: demo-v6](https://github.com/cmartinez1524/clasificacion-de-paltas/releases/tag/demo-v6).
+
+- [Demo completa Windows con ViT-Base elegido](https://github.com/cmartinez1524/clasificacion-de-paltas/releases/download/demo-v6/PaltasDemo-vit_base_app_s2_v6.zip): incluye app, pesos, ejemplos e instaladores.
+- [Demo anterior ResNet-50, mas liviana](https://github.com/cmartinez1524/clasificacion-de-paltas/releases/download/demo-v6/PaltasDemo.zip).
+- [Solo pesos ViT-Base](https://github.com/cmartinez1524/clasificacion-de-paltas/releases/download/demo-v6/vit_base_app_s2_v6.pt): guardar como `checkpoints/vit_base_app_s2_v6.pt` para usar con la app del repo y sus dependencias instaladas.
+- [SHA256 de las descargas](https://github.com/cmartinez1524/clasificacion-de-paltas/releases/download/demo-v6/SHA256SUMS.txt).
+
+Para la demo completa: extraer el ZIP, ejecutar `INSTALAR.cmd` una vez y despues
+`INICIAR.cmd`. La instalacion inicial necesita Internet; la inferencia funciona
+localmente. CPU es el modo predeterminado, con GPU NVIDIA opcional. No requiere
+volver a entrenar. El prototipo estima madurez por apariencia; no verifica el
+estado interno ni garantiza resultados con camaras nuevas.
+
 ### Experimentos de mejora de la app
 
 La comparacion de cinco semillas para cada una de las cinco recetas se ejecuta
