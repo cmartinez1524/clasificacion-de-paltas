@@ -150,7 +150,7 @@ def predecir(imagen: Image.Image, clave_modelo: str, mostrar_mapa: bool):
                 print(f"[aviso] no se pudo generar el mapa: {e}")
                 aviso_mapa = "No se pudo generar el mapa de calor para esta imagen."
 
-        texto = tarjeta(pred, probs, esperado, clave_modelo,
+        texto = tarjeta(pred, probs, esperado, NOMBRE_STAND.get(clave, (clave_modelo,))[0],
                         segunda if duda else None, aviso_mapa)
         return etiquetas, overlay, texto
 
@@ -349,6 +349,18 @@ button[role="tab"] { font-size: 17px !important; padding: 10px 16px !important; 
 
 .entrada .block, .salida .block { border-radius: 22px !important; }
 .como-funciona { font-size: 17px; }
+#selector-ia { background: transparent !important; border: 0 !important; padding: 0 0 6px !important; }
+#selector-ia .wrap { gap: 10px !important; }
+div:has(> #selector-ia) { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+#selector-ia > .wrap.default { background: transparent !important; }
+#selector-ia .has-info { font-size: 19px !important; font-weight: 700; color: var(--cascara) !important; }
+#selector-ia .info-text { font-size: 15px !important; margin-bottom: 8px; color: #3A4630 !important; }
+#selector-ia label { font-size: 17px !important; padding: 12px 18px !important; border-radius: 999px !important;
+  border: 2px solid var(--linea) !important; background: var(--hueso) !important; cursor: pointer; }
+#selector-ia label.selected, #selector-ia label:has(input:checked) {
+  background: var(--cascara) !important; color: var(--pulpa) !important; border-color: var(--cascara) !important; }
+#selector-ia label.selected span, #selector-ia label:has(input:checked) span { color: var(--pulpa) !important; }
+#selector-ia label:focus-within { outline: 3px solid var(--carozo); outline-offset: 2px; }
 .pie-equipo { text-align: center; font-size: 14px; color: #55613F; padding: 18px 0 8px; }
 
 @media (max-width: 760px) {
@@ -377,8 +389,14 @@ TEMA = gr.themes.Base(
     font_mono=["JetBrains Mono", "Consolas", "monospace"],
 ).set(color_accent="#3F5F2A", **_C, **{f"{k}_dark": v for k, v in _C.items()})
 
-#: Modelo que se muestra primero si sus pesos están en checkpoints/.
-PREFERIDOS = ("vit_base_app_s2_v6", "resnet50_app_s1_v2", "resnet50_app", "resnet50")
+#: Las dos IA que se comparan en el stand: (nombre corto, tipo de red).
+NOMBRE_STAND = {
+    "resnet50": ("ResNet-50", "red convolucional"),
+    "resnet50_app": ("ResNet-50", "red convolucional"),
+    "vit_base_app_s2_v6": ("ViT-Base", "transformer de visión"),
+}
+#: Orden en el selector; si ninguno tiene pesos, se muestran todos los entrenados.
+STAND = ("resnet50", "resnet50_app", "vit_base_app_s2_v6")
 
 
 def construir_interfaz() -> gr.Blocks:
@@ -388,8 +406,13 @@ def construir_interfaz() -> gr.Blocks:
             "Falta el modelo entrenado en checkpoints/. Usa el ZIP completo de la demo, "
             "que incluye resnet50_app.pt; no necesitas reentrenar."
         )
-    entrenados.sort(key=lambda k: PREFERIDOS.index(k) if k in PREFERIDOS else len(PREFERIDOS))
-    opciones = [DISPONIBLES[k][1] for k in entrenados]
+    elegidos = [k for k in STAND if k in entrenados]
+    # Una sola ResNet-50 en el selector aunque existan ambas versiones.
+    if "resnet50" in elegidos and "resnet50_app" in elegidos:
+        elegidos.remove("resnet50_app")
+    elegidos = elegidos or entrenados
+    opciones = [(f"{NOMBRE_STAND[k][0]} · {NOMBRE_STAND[k][1]}" if k in NOMBRE_STAND
+                 else DISPONIBLES[k][1], DISPONIBLES[k][1]) for k in elegidos]
 
     with gr.Blocks(title="PaltIA · madurez de paltas", analytics_enabled=False) as demo:
         gr.HTML(ENCABEZADO)
@@ -415,6 +438,10 @@ def construir_interfaz() -> gr.Blocks:
                     gr.Markdown("Activa la cámara y apunta a una palta: el resultado se "
                                 "actualiza cada segundo.")
             with gr.Column(scale=6, elem_classes="salida"):
+                modelo = gr.Radio(opciones, value=opciones[0][1], label="¿Qué IA quieres usar?",
+                                  info="Son dos tipos de red neuronal distintos. Cambia de una "
+                                       "a otra y mira si están de acuerdo.",
+                                  elem_id="selector-ia", visible=len(opciones) > 1)
                 salida_txt = gr.HTML(tarjeta_vacia())
                 overlay = gr.Image(label="Dónde miró la IA", height=300,
                                    format="png", buttons=["download", "fullscreen"],
@@ -422,8 +449,6 @@ def construir_interfaz() -> gr.Blocks:
 
         with gr.Accordion("Cómo funciona", open=False):
             gr.Markdown(COMO_FUNCIONA, elem_classes="como-funciona")
-            modelo = gr.Radio(opciones, value=opciones[0], label="Modelo",
-                              visible=len(opciones) > 1)
             mapa_chk = gr.Checkbox(True, label="Mostrar dónde miró la IA")
         gr.HTML(f'<p class="pie-equipo">{PIE}</p>')
 
@@ -438,6 +463,16 @@ def construir_interfaz() -> gr.Blocks:
               queue=False, trigger_mode="always_last")
         camara.stream(a_pantalla, [camara, modelo, mapa_chk], [salida_txt, overlay],
                       stream_every=1.0, queue=False, trigger_mode="always_last")
+
+        def cambiar_ia(imagen, modelo_elegido, mostrar):
+            # Al cambiar de IA se vuelve a analizar la misma foto; con la cámara,
+            # el cambio se ve en el cuadro siguiente.
+            if imagen is None:
+                return gr.skip(), gr.skip()
+            return a_pantalla(imagen, modelo_elegido, mostrar)
+
+        modelo.change(cambiar_ia, [img, modelo, mapa_chk], [salida_txt, overlay],
+                      queue=False, trigger_mode="always_last")
 
     return demo
 
