@@ -349,6 +349,15 @@ button[role="tab"] { font-size: 17px !important; padding: 10px 16px !important; 
 
 .entrada .block, .salida .block { border-radius: 22px !important; }
 .como-funciona { font-size: 17px; }
+/* Controles de la cámara: botón de inicio y selector de cámara bien visibles. */
+.button-wrap { background: var(--hueso) !important; color: var(--cascara) !important;
+  border: 2px solid var(--cascara) !important; font-size: 17px !important; padding: 6px 8px !important; }
+.button-wrap button, .button-wrap .icon-with-text { color: var(--cascara) !important; font-weight: 700; }
+.device-select-button { border-left: 2px solid var(--linea) !important; padding: 4px 6px 4px 12px !important;
+  color: var(--cascara) !important; }
+.device-select-button svg { width: 22px !important; height: 22px !important; }
+.select-wrap { background: var(--hueso) !important; color: var(--cascara) !important;
+  font-size: 16px !important; border: 2px solid var(--cascara) !important; width: min(320px, 90vw) !important; }
 #selector-ia { background: transparent !important; border: 0 !important; padding: 0 0 6px !important; }
 #selector-ia .wrap { gap: 10px !important; }
 div:has(> #selector-ia) { background: transparent !important; border: 0 !important; box-shadow: none !important; }
@@ -381,6 +390,7 @@ _C = {
     "border_color_primary": "#CBD3A8", "input_background_fill": "#FBFBF3",
     "button_primary_background_fill": "#1E2618", "button_primary_text_color": "#EDF1D6",
     "checkbox_background_color_selected": "#3F5F2A", "color_accent_soft": "#DDE6BE",
+    "button_secondary_text_color": "#1E2618", "button_secondary_background_fill": "#EDF1D6",
 }
 #: Mismo aspecto con el sistema en modo claro u oscuro: la pantalla del stand no cambia.
 TEMA = gr.themes.Base(
@@ -436,7 +446,8 @@ def construir_interfaz() -> gr.Blocks:
                             "video": {"facingMode": {"ideal": "environment"}}}),
                         label="Cámara", height=380)
                     gr.Markdown("Activa la cámara y apunta a una palta: el resultado se "
-                                "actualiza cada segundo.")
+                                "actualiza cada segundo. Para cambiar de cámara, usa la "
+                                "flecha a la derecha del botón de la cámara.")
             with gr.Column(scale=6, elem_classes="salida"):
                 modelo = gr.Radio(opciones, value=opciones[0][1], label="¿Qué IA quieres usar?",
                                   info="Son dos tipos de red neuronal distintos. Cambia de una "
